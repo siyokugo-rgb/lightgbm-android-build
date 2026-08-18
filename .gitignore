@@ -1,3 +1,4 @@
 LightGBM/
 build-android-arm64/
 *.zip
+build-jni-arm64/
