@@ -6,4 +6,5 @@ object LightGbmNative {
     }
 
     external fun nativeStatus(): String
+    external fun nativeTrainPredictTest(): String
 }

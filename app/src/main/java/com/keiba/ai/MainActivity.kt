@@ -10,9 +10,11 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
 
         val status = try {
-            LightGbmNative.nativeStatus()
+            LightGbmNative.nativeStatus() +
+                "\n\n" +
+                LightGbmNative.nativeTrainPredictTest()
         } catch (t: Throwable) {
-            "LightGBM load failed\n${t.javaClass.simpleName}: ${t.message}"
+            "LightGBM test failed\n${t.javaClass.simpleName}: ${t.message}"
         }
 
         val view = TextView(this).apply {
