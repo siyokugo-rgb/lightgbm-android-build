@@ -54,6 +54,7 @@ object NarLocalParserTest {
         return try {
             var raceText: String? = null
             var horseText: String? = null
+            var paybackText: String? = null
 
             resolver.openInputStream(zipUri)!!.use { input ->
                 ZipInputStream(input.buffered()).use { zip ->
@@ -65,7 +66,8 @@ object NarLocalParserTest {
 
                             if (
                                 name == "199808_racelist.csv" ||
-                                name == "199808_horselist.csv"
+                                name == "199808_horselist.csv" ||
+                                name == "199808_payback.csv"
                             ) {
                                 val out = ByteArrayOutputStream()
                                 val buffer = ByteArray(8192)
@@ -82,6 +84,7 @@ object NarLocalParserTest {
                                 when (name) {
                                     "199808_racelist.csv" -> raceText = text
                                     "199808_horselist.csv" -> horseText = text
+                                    "199808_payback.csv" -> paybackText = text
                                 }
                             }
                         }
@@ -99,6 +102,10 @@ object NarLocalParserTest {
                 horseText ?: return "LOCAL PARSE FAIL\nhorselist not found"
             )
 
+            val paybacks = parseTable(
+                paybackText ?: return "LOCAL PARSE FAIL\npayback not found"
+            )
+
             val raceRow = races.rows.firstOrNull { row ->
                 value(races, row, "競馬場") == TARGET_TRACK &&
                     value(races, row, "競走年月日") == TARGET_DATE &&
@@ -113,12 +120,26 @@ object NarLocalParserTest {
                 value(horses, it, "馬番").toIntOrNull() ?: 999
             }
 
+            val paybackRow = paybacks.rows.firstOrNull { row ->
+                value(paybacks, row, "競馬場") == TARGET_TRACK &&
+                    value(paybacks, row, "競走年月日") == TARGET_DATE &&
+                    value(paybacks, row, "レース番号") == TARGET_RACE
+            } ?: return "LOCAL PARSE FAIL\nTarget payback not found"
+
             val declaredCount =
                 value(races, raceRow, "頭数").toIntOrNull() ?: -1
 
+            val paybackPass =
+                value(paybacks, paybackRow, "単勝組番") == "6" &&
+                    value(paybacks, paybackRow, "単勝払戻金（円）") == "350" &&
+                    value(paybacks, paybackRow, "馬複組番1") == "5" &&
+                    value(paybacks, paybackRow, "馬複組番2") == "6" &&
+                    value(paybacks, paybackRow, "馬複払戻金（円）") == "1290"
+
             val pass =
                 declaredCount == horseRows.size &&
-                    horseRows.size == 12
+                    horseRows.size == 12 &&
+                    paybackPass
 
             buildString {
                 append("LOCAL CSV PARSE ")
@@ -154,6 +175,47 @@ object NarLocalParserTest {
                     append(" / 着順=")
                     append(value(horses, row, "着順"))
                 }
+
+                append("\n\n=== PAYBACK ===")
+                append("\n単勝=")
+                append(value(paybacks, paybackRow, "単勝組番"))
+                append(" ")
+                append(value(paybacks, paybackRow, "単勝払戻金（円）"))
+                append("円")
+
+                append("\n複勝1=")
+                append(value(paybacks, paybackRow, "複勝組番1"))
+                append(" ")
+                append(value(paybacks, paybackRow, "複勝払戻金1（円）"))
+                append("円")
+
+                append("\n複勝2=")
+                append(value(paybacks, paybackRow, "複勝組番2"))
+                append(" ")
+                append(value(paybacks, paybackRow, "複勝払戻金2（円）"))
+                append("円")
+
+                append("\n複勝3=")
+                append(value(paybacks, paybackRow, "複勝組番3"))
+                append(" ")
+                append(value(paybacks, paybackRow, "複勝払戻金3（円）"))
+                append("円")
+
+                append("\n枠複=")
+                append(value(paybacks, paybackRow, "枠複組番1"))
+                append("-")
+                append(value(paybacks, paybackRow, "枠複組番2"))
+                append(" ")
+                append(value(paybacks, paybackRow, "枠複払戻金（円）"))
+                append("円")
+
+                append("\n馬複=")
+                append(value(paybacks, paybackRow, "馬複組番1"))
+                append("-")
+                append(value(paybacks, paybackRow, "馬複組番2"))
+                append(" ")
+                append(value(paybacks, paybackRow, "馬複払戻金（円）"))
+                append("円")
             }
         } catch (t: Throwable) {
             "LOCAL PARSE FAIL\n${t.javaClass.simpleName}: ${t.message}"
