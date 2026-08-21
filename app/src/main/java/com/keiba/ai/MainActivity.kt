@@ -62,7 +62,7 @@ class MainActivity : Activity() {
             }
 
             val narStart = SystemClock.elapsedRealtime()
-            val narStatus = NarFileSaveTest.run(this@MainActivity)
+            val narStatus = NarLocalParserTest.run(this@MainActivity)
             val narMs = SystemClock.elapsedRealtime() - narStart
 
             runOnUiThread {
