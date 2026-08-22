@@ -30,6 +30,7 @@ enum class BetType {
     WIN,
     PLACE,
     BRACKET_QUINELLA,
+    BRACKET_EXACTA,
     QUINELLA,
     EXACTA,
     WIDE,

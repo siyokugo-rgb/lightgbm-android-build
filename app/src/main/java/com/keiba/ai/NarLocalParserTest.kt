@@ -101,6 +101,17 @@ object NarLocalParserTest {
                 paybackText ?: return "LOCAL PARSE FAIL\npayback not found"
             )
 
+            val mapped = NarRaceMapper.map(
+                races = races,
+                horses = horses,
+                paybacks = paybacks,
+                key = com.keiba.ai.model.RaceKey(
+                    track = TARGET_TRACK,
+                    date = TARGET_DATE.toInt(),
+                    raceNumber = TARGET_RACE.toInt()
+                )
+            )
+
             val raceRow = races.rows.firstOrNull { row ->
                 NarCsvParser.value(races, row, "競馬場") == TARGET_TRACK &&
                     NarCsvParser.value(races, row, "競走年月日") == TARGET_DATE &&
@@ -131,23 +142,44 @@ object NarLocalParserTest {
                     NarCsvParser.value(paybacks, paybackRow, "馬複組番2") == "6" &&
                     NarCsvParser.value(paybacks, paybackRow, "馬複払戻金（円）") == "1290"
 
+            val mapperPass =
+                mapped.race.declaredCount == 12 &&
+                    mapped.horses.size == 12 &&
+                    mapped.payouts.any {
+                        it.betType == com.keiba.ai.model.BetType.WIN &&
+                            it.combination == listOf(6) &&
+                            it.amountYen == 350
+                    } &&
+                    mapped.payouts.any {
+                        it.betType == com.keiba.ai.model.BetType.QUINELLA &&
+                            it.combination == listOf(5, 6) &&
+                            it.amountYen == 1290
+                    }
+
             val pass =
                 declaredCount == horseRows.size &&
                     horseRows.size == 12 &&
-                    paybackPass
+                    paybackPass &&
+                    mapperPass
 
             buildString {
                 append("LOCAL CSV PARSE ")
                 append(if (pass) "OK" else "FAIL")
 
-                append("\n\n=== CSV HEADERS ===")
-                append("\nRACE=")
-                append(races.header.keys.joinToString(" | "))
-                append("\nHORSE=")
-                append(horses.header.keys.joinToString(" | "))
-                append("\nPAYBACK=")
-                append(paybacks.header.keys.joinToString(" | "))
-
+                append("\n\n=== MAPPER ===")
+                append("\nrace=")
+                append(mapped.race.key.track)
+                append(" ")
+                append(mapped.race.key.date)
+                append(" ")
+                append(mapped.race.key.raceNumber)
+                append("R")
+                append("\nhorses=")
+                append(mapped.horses.size)
+                append("\npayouts=")
+                append(mapped.payouts.size)
+                append("\nstatus=")
+                append(if (mapperPass) "PASS" else "FAIL")
 
                 append("\nsource=Download/KeibaAI/").append(ZIP_NAME)
 
