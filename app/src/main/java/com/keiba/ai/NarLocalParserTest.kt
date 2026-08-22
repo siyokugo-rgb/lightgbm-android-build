@@ -140,6 +140,15 @@ object NarLocalParserTest {
                 append("LOCAL CSV PARSE ")
                 append(if (pass) "OK" else "FAIL")
 
+                append("\n\n=== CSV HEADERS ===")
+                append("\nRACE=")
+                append(races.header.keys.joinToString(" | "))
+                append("\nHORSE=")
+                append(horses.header.keys.joinToString(" | "))
+                append("\nPAYBACK=")
+                append(paybacks.header.keys.joinToString(" | "))
+
+
                 append("\nsource=Download/KeibaAI/").append(ZIP_NAME)
 
                 append("\n\n=== RACE ===")
