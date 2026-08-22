@@ -16,13 +16,20 @@ data class RaceRecord(
     val raceName: String?
 )
 
-data class HorseResult(
+// 発走前に利用できる馬情報
+data class HorseEntry(
     val key: RaceKey,
     val horseNumber: Int,
     val horseName: String,
     val jockey: String?,
     val assignedWeightKg: Double?,
-    val bodyWeightKg: Int?,
+    val bodyWeightKg: Int?
+)
+
+// 発走後に確定する結果
+data class HorseOutcome(
+    val key: RaceKey,
+    val horseNumber: Int,
     val finishPosition: Int?
 )
 
@@ -47,6 +54,7 @@ data class Payout(
 
 data class NarRaceBundle(
     val race: RaceRecord,
-    val horses: List<HorseResult>,
+    val entries: List<HorseEntry>,
+    val outcomes: List<HorseOutcome>,
     val payouts: List<Payout>
 )

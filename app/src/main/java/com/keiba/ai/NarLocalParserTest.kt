@@ -144,7 +144,8 @@ object NarLocalParserTest {
 
             val mapperPass =
                 mapped.race.declaredCount == 12 &&
-                    mapped.horses.size == 12 &&
+                    mapped.entries.size == 12 &&
+                    mapped.outcomes.size == 12 &&
                     mapped.payouts.any {
                         it.betType == com.keiba.ai.model.BetType.WIN &&
                             it.combination == listOf(6) &&
@@ -174,8 +175,10 @@ object NarLocalParserTest {
                 append(" ")
                 append(mapped.race.key.raceNumber)
                 append("R")
-                append("\nhorses=")
-                append(mapped.horses.size)
+                append("\nentries=")
+                append(mapped.entries.size)
+                append("\noutcomes=")
+                append(mapped.outcomes.size)
                 append("\npayouts=")
                 append(mapped.payouts.size)
                 append("\nstatus=")

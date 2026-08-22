@@ -1,7 +1,8 @@
 package com.keiba.ai
 
 import com.keiba.ai.model.BetType
-import com.keiba.ai.model.HorseResult
+import com.keiba.ai.model.HorseEntry
+import com.keiba.ai.model.HorseOutcome
 import com.keiba.ai.model.NarRaceBundle
 import com.keiba.ai.model.Payout
 import com.keiba.ai.model.RaceKey
@@ -42,7 +43,7 @@ object NarRaceMapper {
             raceName = textValue(races, raceRow, "レース名")
         )
 
-        val horseResults = horseRows.map { row ->
+        val horseEntries = horseRows.map { row ->
 
             val horseNumber =
                 intValue(horses, row, "馬番")
@@ -52,7 +53,7 @@ object NarRaceMapper {
                 textValue(horses, row, "馬名")
                     ?: error("Horse name missing: $key / $horseNumber")
 
-            HorseResult(
+            HorseEntry(
                 key = key,
                 horseNumber = horseNumber,
                 horseName = horseName,
@@ -60,7 +61,18 @@ object NarRaceMapper {
                 assignedWeightKg =
                     doubleValue(horses, row, "負担重量"),
                 bodyWeightKg =
-                    intValue(horses, row, "馬体重"),
+                    intValue(horses, row, "馬体重")
+            )
+        }
+
+        val horseOutcomes = horseRows.map { row ->
+            val horseNumber =
+                intValue(horses, row, "馬番")
+                    ?: error("Horse number missing: $key")
+
+            HorseOutcome(
+                key = key,
+                horseNumber = horseNumber,
                 finishPosition =
                     intValue(horses, row, "着順")
             )
@@ -75,7 +87,8 @@ object NarRaceMapper {
 
         return NarRaceBundle(
             race = race,
-            horses = horseResults,
+            entries = horseEntries,
+            outcomes = horseOutcomes,
             payouts = payouts
         )
     }
