@@ -4,6 +4,7 @@ import android.app.Activity
 import android.os.Bundle
 import android.os.SystemClock
 import android.view.Gravity
+import android.view.View
 import android.widget.ScrollView
 import android.widget.TextView
 import java.io.File
@@ -11,6 +12,7 @@ import java.io.File
 class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        actionBar?.hide()
 
         val view = TextView(this).apply {
             text = "Starting test..."
@@ -20,7 +22,19 @@ class MainActivity : Activity() {
         }
 
         val scrollView = ScrollView(this).apply {
+            isSaveEnabled = false
             addView(view)
+
+            setOnApplyWindowInsetsListener { v, insets ->
+                @Suppress("DEPRECATION")
+                v.setPadding(
+                    v.paddingLeft,
+                    insets.systemWindowInsetTop,
+                    v.paddingRight,
+                    insets.systemWindowInsetBottom
+                )
+                insets
+            }
         }
 
         setContentView(scrollView)
@@ -58,19 +72,115 @@ class MainActivity : Activity() {
                 view.text =
                     lightGbmStatus +
                     "\n\nLightGBM elapsed=${lightMs}ms" +
-                    "\n\nNAR: downloading..."
+                    "\n\n保存済みNARデータを検証しています..."
             }
 
             val narStart = SystemClock.elapsedRealtime()
             val narStatus = NarLocalParserTest.run(this@MainActivity)
             val narMs = SystemClock.elapsedRealtime() - narStart
 
+            val lightGbmOk =
+                lightGbmStatus.contains("LightGBM C API linked successfully") &&
+                    !lightGbmStatus.contains("LightGBM FAIL") &&
+                    (
+                        lightGbmStatus.contains("LOAD/PREDICT OK") ||
+                            lightGbmStatus.contains("TRAIN/SAVE OK")
+                    )
+
+            val narOk =
+                narStatus.startsWith("LOCAL CSV PARSE OK") &&
+                    narStatus.contains("status=PASS")
+
+            val entries =
+                Regex("(?m)^entries=(\\d+)$")
+                    .find(narStatus)
+                    ?.groupValues
+                    ?.get(1)
+                    ?.toIntOrNull()
+
+            val outcomes =
+                Regex("(?m)^outcomes=(\\d+)$")
+                    .find(narStatus)
+                    ?.groupValues
+                    ?.get(1)
+                    ?.toIntOrNull()
+
+            val payouts =
+                Regex("(?m)^payouts=(\\d+)$")
+                    .find(narStatus)
+                    ?.groupValues
+                    ?.get(1)
+                    ?.toIntOrNull()
+
+            val narDataOk =
+                narOk &&
+                    entries == 12 &&
+                    outcomes == 12 &&
+                    payouts != null
+
+            val overallOk = lightGbmOk && narDataOk
+
+            val summary = buildString {
+                append("=== 実機検証結果 ===")
+                append("\n総合判定=")
+                append(if (overallOk) "正常" else "要確認")
+
+                append("\nLightGBM/JNI=")
+                append(if (lightGbmOk) "正常" else "異常")
+
+                append("\n保存済みNARデータ=")
+                append(if (narDataOk) "正常" else "異常")
+
+                append("\nこの検証でのNAR通信=なし")
+                append("\n検証対象=大井 1998/08/06 1R")
+
+                append("\n\n発走前エントリー=")
+                append(entries?.let { "${it}頭" } ?: "取得失敗")
+
+                append("\n発走後結果=")
+                append(outcomes?.let { "${it}頭" } ?: "取得失敗")
+
+                append("\n払戻レコード=")
+                append(payouts?.toString() ?: "取得失敗")
+
+                append("\n期待頭数=12頭")
+                append("\n頭数一致=")
+                append(
+                    if (entries == 12 && outcomes == 12) {
+                        "正常"
+                    } else {
+                        "要確認"
+                    }
+                )
+
+                append("\n払戻検証=")
+                append(
+                    if (narOk && payouts != null) {
+                        "正常"
+                    } else {
+                        "要確認"
+                    }
+                )
+
+                append(
+                    "\n\n※「正常」は、この検証対象について" +
+                        "実データを解析し期待値との一致を確認した結果です。"
+                )
+            }
+
             runOnUiThread {
                 view.text =
+                    summary +
+                    "\n\n--- 詳細ログ ---\n\n" +
                     lightGbmStatus +
                     "\n\nLightGBM elapsed=${lightMs}ms" +
                     "\n\n" + narStatus +
-                    "\nNAR elapsed=${narMs}ms"
+                    "\nLocal data elapsed=${narMs}ms"
+
+                scrollView.post {
+                    scrollView.fullScroll(View.FOCUS_UP)
+                    scrollView.scrollTo(0, 0)
+                }
             }
         }.start()
     }
