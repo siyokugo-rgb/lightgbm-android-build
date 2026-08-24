@@ -9,3 +9,4 @@ LightGbmAndroidTest.apk
 test-data/
 
 *.apk
+app/.cxx/

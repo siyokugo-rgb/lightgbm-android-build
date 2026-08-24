@@ -6,6 +6,7 @@ plugins {
 android {
     namespace = "com.keiba.ai"
     compileSdk = 35
+    ndkVersion = "27.3.13750724"
 
     defaultConfig {
         applicationId = "com.keiba.ai"
@@ -16,6 +17,12 @@ android {
 
         ndk {
             abiFilters += listOf("arm64-v8a")
+        }
+
+        externalNativeBuild {
+            cmake {
+                arguments += listOf("-DANDROID_STL=c++_shared")
+            }
         }
     }
 
@@ -31,6 +38,12 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("../android-native/CMakeLists.txt")
         }
     }
 }
