@@ -65,7 +65,14 @@ object NarRaceMapper {
             )
         }
 
-        val horseOutcomes = horseRows.map { row ->
+        val horseOutcomes = horseRows.mapNotNull { row ->
+            val finishRaw =
+                NarCsvParser.value(horses, row, "着順").trim()
+
+            if (finishRaw.isEmpty()) {
+                return@mapNotNull null
+            }
+
             val horseNumber =
                 intValue(horses, row, "馬番")
                     ?: error("Horse number missing: $key")
