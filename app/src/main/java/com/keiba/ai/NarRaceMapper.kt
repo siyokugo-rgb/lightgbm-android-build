@@ -3,6 +3,9 @@ package com.keiba.ai
 import com.keiba.ai.model.BetType
 import com.keiba.ai.model.HorseEntry
 import com.keiba.ai.model.HorseOutcome
+import com.keiba.ai.model.HorseOutcomeStatus
+import com.keiba.ai.model.HorseNonStart
+import com.keiba.ai.model.HorseNonStartStatus
 import com.keiba.ai.model.NarRaceBundle
 import com.keiba.ai.model.Payout
 import com.keiba.ai.model.RaceKey
@@ -69,8 +72,47 @@ object NarRaceMapper {
             val finishRaw =
                 NarCsvParser.value(horses, row, "着順").trim()
 
-            if (finishRaw.isEmpty()) {
-                return@mapNotNull null
+            val finishPosition =
+                finishRaw.toIntOrNull()?.takeIf { it > 0 }
+
+            val specialResult =
+                NarCsvParser.value(horses, row, "着差").trim()
+
+            val hasSpecialResult =
+                specialResult == "出走取消" ||
+                    specialResult == "競走除外" ||
+                    specialResult == "競走中止" ||
+                    specialResult == "失格"
+
+            if (finishPosition != null && hasSpecialResult) {
+                error(
+                    "Conflicting horse outcome: " +
+                        "$key / finish=$finishRaw / result=$specialResult"
+                )
+            }
+
+            val status = when {
+                finishPosition != null ->
+                    HorseOutcomeStatus.FINISHED
+
+                specialResult == "競走中止" ->
+                    HorseOutcomeStatus.DID_NOT_FINISH
+
+                specialResult == "失格" ->
+                    HorseOutcomeStatus.DISQUALIFIED
+
+                finishRaw.isEmpty() && specialResult.isEmpty() ->
+                    return@mapNotNull null
+
+                specialResult == "出走取消" ||
+                    specialResult == "競走除外" ->
+                    return@mapNotNull null
+
+                else ->
+                    error(
+                        "Unsupported horse outcome: " +
+                            "$key / finish=$finishRaw / result=$specialResult"
+                    )
             }
 
             val horseNumber =
@@ -80,8 +122,34 @@ object NarRaceMapper {
             HorseOutcome(
                 key = key,
                 horseNumber = horseNumber,
+                status = status,
                 finishPosition =
-                    intValue(horses, row, "着順")
+                    if (status == HorseOutcomeStatus.FINISHED) {
+                        finishPosition
+                    } else {
+                        null
+                    }
+            )
+        }
+
+        val nonStarts = horseRows.mapNotNull { row ->
+            val specialResult =
+                NarCsvParser.value(horses, row, "着差").trim()
+
+            val status = when (specialResult) {
+                "出走取消" -> HorseNonStartStatus.SCRATCHED
+                "競走除外" -> HorseNonStartStatus.EXCLUDED
+                else -> return@mapNotNull null
+            }
+
+            val horseNumber =
+                intValue(horses, row, "馬番")
+                    ?: error("Horse number missing: $key")
+
+            HorseNonStart(
+                key = key,
+                horseNumber = horseNumber,
+                status = status
             )
         }
 
@@ -96,6 +164,7 @@ object NarRaceMapper {
             race = race,
             entries = horseEntries,
             outcomes = horseOutcomes,
+            nonStarts = nonStarts,
             payouts = payouts
         )
     }

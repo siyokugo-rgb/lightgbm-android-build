@@ -8,12 +8,16 @@ NARデータの利用可能時点とDomain Model境界を定義する。
 ## Domain boundary
 
 - HorseEntry = 発走前情報
-- HorseOutcome = 発走後に確定する結果
+- HorseOutcome = 実際に競走した馬の結果
+- HorseNonStart = 出走取消・競走除外などの非出走確定状態
 - Payout = 発走後情報
 
 HorseEntry に着順・タイム・払戻などの発走後情報を入れない。
 
 HorseOutcome / Payout を予測特徴量生成へ渡さない。
+
+HorseNonStart は取得可能時刻を確認せず
+予測特徴量生成へ渡さない。
 
 ## PIT categories
 
@@ -72,6 +76,46 @@ payback.csv:
 - 全払戻情報
 
 payback.csv 自体を予測入力経路から参照させない。
+
+## Special race result audit
+
+1998年8月 horselist.csv では、
+着順空欄146件の全件について「着差」欄に
+以下の特殊状態が記録されていた。
+
+- 出走取消: 50件
+- 競走除外: 44件
+- 競走中止: 46件
+- 失格: 6件
+
+同月内で次走まで追跡可能なケースを監査した結果、
+「全成績」は以下の更新規則と整合した。
+
+- 出走取消: 加算なし
+- 競走除外: 加算なし
+- 競走中止: 4着以下相当へ1件加算
+- 失格: 4着以下相当へ1件加算
+
+同じ馬・騎手の次回騎乗まで追跡可能なケースでも、
+「騎手成績」は同じ規則と整合した。
+
+Domainでは、
+競走中止と失格は HorseOutcome として区別して保持する。
+
+出走取消と競走除外は HorseOutcome とは分離し、
+HorseNonStart として保持する。
+
+発走前で結果未確定の状態は、
+HorseOutcome も HorseNonStart も生成しない。
+
+HorseNonStart は最終的な非出走状態を表す。
+予測時点で利用可能かどうかは、
+取消・除外が確定・取得できる時刻を別途確認して判断する。
+
+未知の特殊結果表記や不正な着順形式は、
+既知状態へ推測変換せずFAILさせる。
+
+この監査結果は1998年8月データに基づく。
 
 ## NAR provided overall record
 

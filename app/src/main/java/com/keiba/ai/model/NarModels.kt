@@ -26,11 +26,30 @@ data class HorseEntry(
     val bodyWeightKg: Int?
 )
 
-// 発走後に確定する結果
+enum class HorseOutcomeStatus {
+    FINISHED,
+    DID_NOT_FINISH,
+    DISQUALIFIED
+}
+
+// 発走後に確定する競走結果
 data class HorseOutcome(
     val key: RaceKey,
     val horseNumber: Int,
+    val status: HorseOutcomeStatus,
     val finishPosition: Int?
+)
+
+enum class HorseNonStartStatus {
+    SCRATCHED,
+    EXCLUDED
+}
+
+// 出走しなかったことが確定した状態
+data class HorseNonStart(
+    val key: RaceKey,
+    val horseNumber: Int,
+    val status: HorseNonStartStatus
 )
 
 enum class BetType {
@@ -56,5 +75,6 @@ data class NarRaceBundle(
     val race: RaceRecord,
     val entries: List<HorseEntry>,
     val outcomes: List<HorseOutcome>,
+    val nonStarts: List<HorseNonStart>,
     val payouts: List<Payout>
 )
