@@ -55,6 +55,10 @@ object NarCsvParser {
             i++
         }
 
+        require(!quoted) {
+            "Unclosed quoted field"
+        }
+
         result += field.toString()
         return result
     }
