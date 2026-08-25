@@ -1,0 +1,139 @@
+{
+  "version": 1,
+
+  "categorical_dictionary": {
+    "fit_split": "train",
+    "normalization": "none",
+    "missing_id": 0,
+    "unknown_id": 1,
+    "known_id_start": 2,
+    "known_value_order": "unicode_lexicographic"
+  },
+
+  "numeric_passthrough": [
+    "feature_race__距離",
+    "feature_race__1着賞金(円)",
+    "feature_race__2着賞金(円)",
+    "feature_race__3着賞金(円)",
+    "feature_race__4着賞金(円)",
+    "feature_race__5着賞金(円)",
+    "feature_entry__枠番",
+    "feature_entry__馬番",
+    "feature_entry__齢"
+  ],
+
+  "categorical_passthrough": [
+    "feature_race__競馬場",
+    "feature_race__競走種類名称",
+    "feature_race__回り",
+    "feature_race__条件",
+    "feature_entry__性",
+    "feature_entry__毛色",
+    "feature_entry__父馬名",
+    "feature_entry__母父馬名",
+    "feature_entry__騎手名",
+    "feature_entry__騎手所属",
+    "feature_entry__調教師",
+    "feature_entry__調教師所属"
+  ],
+
+  "race_date": {
+    "source": "feature_race__競走年月日",
+    "format": "YYYYMMDD",
+    "outputs": [
+      "race_month",
+      "race_day_of_year",
+      "race_weekday_mon0"
+    ]
+  },
+
+  "birth_date": {
+    "source": "feature_entry__生年月日",
+    "format": "YYYYMMDD",
+    "race_date_source": "feature_race__競走年月日",
+    "outputs": [
+      "age_days"
+    ]
+  },
+
+  "surface": {
+    "source": "feature_race__芝ダート区分",
+    "venue_source": "feature_race__競馬場",
+    "output": "surface_type",
+    "rules": {
+      "帯広ば_and_blank": "ばんえい",
+      "otherwise": "source_value",
+      "unexpected_blank": "__MISSING__"
+    }
+  },
+
+  "burden_weight": {
+    "source": "feature_entry__負担重量",
+    "numeric_output": "burden_weight_deci_kg",
+    "mark_output": "burden_weight_mark",
+    "numeric_scale": 10,
+    "mark_none_value": "NONE",
+    "interpret_allowance_semantics": false
+  },
+
+  "record4": {
+    "sources": [
+      "feature_entry__騎手成績",
+      "feature_entry__全成績",
+      "feature_entry__ダート左成績",
+      "feature_entry__ダート右成績",
+      "feature_entry__当競馬場成績",
+      "feature_entry__うち当距離成績"
+    ],
+    "format": "first-second-third-other",
+    "outputs_per_source": [
+      "first",
+      "second",
+      "third",
+      "other",
+      "total"
+    ],
+    "blank_policy": {
+      "counts": 0,
+      "add_missing_flag": true
+    }
+  },
+
+  "best_time": {
+    "source": "feature_entry__最高タイム",
+    "format": "M:SS.T",
+    "output": "best_time_deciseconds",
+    "missing_output": "best_time_missing"
+  },
+
+  "best_time_good": {
+    "source": "feature_entry__最高タイム良馬場",
+    "format": "良M:SS.T",
+    "output": "best_time_good_deciseconds",
+    "missing_output": "best_time_good_missing"
+  },
+
+  "drop_from_v1_model": [
+    "feature_race__競走年月日",
+    "feature_race__芝ダート区分",
+    "feature_entry__生年月日",
+    "feature_entry__母馬名",
+    "feature_entry__負担重量",
+    "feature_entry__騎手成績",
+    "feature_entry__全成績",
+    "feature_entry__ダート左成績",
+    "feature_entry__ダート右成績",
+    "feature_entry__当競馬場成績",
+    "feature_entry__うち当距離成績",
+    "feature_entry__最高タイム",
+    "feature_entry__最高タイム良馬場"
+  ],
+
+  "android_parity": {
+    "category_unknown_required": true,
+    "category_dictionary_must_be_exported": true,
+    "floating_time_conversion_forbidden": true,
+    "time_unit": "decisecond",
+    "raw_string_unicode_normalization": "none"
+  }
+}
