@@ -1,0 +1,5 @@
+anomaly_type,race_count,etl_policy
+SOURCE_NO_RESULT,218,exclude_from_supervised_labels
+SOURCE_RACELIST_MISSING,55,no_racelist_dependent_features
+SOURCE_HORSELIST_MISSING,10,exclude_from_entry_training
+PAYBACK_MULTIROW,2495,preserve_all_source_rows
