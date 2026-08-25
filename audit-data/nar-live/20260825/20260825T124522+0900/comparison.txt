@@ -1,0 +1,5 @@
+snapshot=20260825T124522+0900
+previous=20260825T124417+0900
+racelist=identical
+horselist=identical
+payback=identical
