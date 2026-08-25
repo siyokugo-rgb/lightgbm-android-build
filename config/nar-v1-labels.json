@@ -1,0 +1,98 @@
+{
+  "version": 1,
+
+  "numeric_finish": {
+    "source_column": "着順",
+    "valid_when": "decimal_integer"
+  },
+
+  "entry_status_source": {
+    "column": "着差"
+  },
+
+  "prestart_no_order_label": [
+    "出走取消",
+    "競走除外"
+  ],
+
+  "started_special_no_order_label": [
+    "競走中止",
+    "失格"
+  ],
+
+  "race_void_statuses": [
+    "競走取止め",
+    "競走不成立"
+  ],
+
+  "race_exclusion_rules": {
+    "exclude_if_any_void_status": true,
+    "exclude_if_numeric_finish_count_is_zero": true
+  },
+
+  "derived_labels": {
+    "numeric_finish_position": {
+      "numeric_finish": "source_numeric_value",
+      "prestart_no_order_label": null,
+      "started_special_no_order_label": null
+    },
+
+    "order_label_valid": {
+      "numeric_finish": 1,
+      "prestart_no_order_label": 0,
+      "started_special_no_order_label": 0
+    },
+
+    "started": {
+      "numeric_finish": 1,
+      "出走取消": 0,
+      "競走除外": 0,
+      "競走中止": 1,
+      "失格": 1
+    },
+
+    "finished": {
+      "numeric_finish": 1,
+      "出走取消": 0,
+      "競走除外": 0,
+      "競走中止": 0,
+      "失格": 0
+    },
+
+    "win": {
+      "numeric_finish_equals_1": 1,
+      "other_numeric_finish": 0,
+      "競走中止": 0,
+      "失格": 0,
+      "出走取消": null,
+      "競走除外": null
+    },
+
+    "top2": {
+      "numeric_finish_lte_2": 1,
+      "other_numeric_finish": 0,
+      "競走中止": 0,
+      "失格": 0,
+      "出走取消": null,
+      "競走除外": null
+    },
+
+    "top3": {
+      "numeric_finish_lte_3": 1,
+      "other_numeric_finish": 0,
+      "競走中止": 0,
+      "失格": 0,
+      "出走取消": null,
+      "競走除外": null
+    }
+  },
+
+  "dead_heat_policy": {
+    "preserve_official_equal_finish_positions": true
+  },
+
+  "pit_policy": {
+    "final_prestart_status_is_not_a_prediction_feature": true,
+    "prestart_status_may_only_mask_result_labels": true
+  }
+}
