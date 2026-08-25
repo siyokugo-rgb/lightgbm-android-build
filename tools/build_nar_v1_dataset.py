@@ -36,6 +36,45 @@ def entry_id(key, horse_no):
     return f"{race_id(key)}|{horse_no}"
 
 
+def valid_ym(value):
+    if (
+        len(value) != 6
+        or not value.isdigit()
+    ):
+        raise ValueError(
+            f"invalid YYYYMM: {value}"
+        )
+
+    year = int(value[:4])
+    month = int(value[4:])
+
+    if not 1 <= month <= 12:
+        raise ValueError(
+            f"invalid YYYYMM: {value}"
+        )
+
+    return year, month
+
+
+def month_range(start, end):
+    year, month = valid_ym(start)
+    end_year, end_month = valid_ym(end)
+
+    if (year, month) > (end_year, end_month):
+        raise ValueError(
+            "start is after end"
+        )
+
+    while (year, month) <= (end_year, end_month):
+        yield f"{year:04d}{month:02d}"
+
+        month += 1
+
+        if month == 13:
+            year += 1
+            month = 1
+
+
 def split_for_year(year):
     if 2021 <= year <= 2023:
         return "train"
@@ -446,8 +485,17 @@ def main():
 
     parser.add_argument(
         "--ym",
-        required=True,
-        help="YYYYMM",
+        help="single YYYYMM",
+    )
+
+    parser.add_argument(
+        "--start",
+        help="first YYYYMM",
+    )
+
+    parser.add_argument(
+        "--end",
+        help="last YYYYMM",
     )
 
     parser.add_argument(
@@ -491,11 +539,42 @@ def main():
 
     args = parser.parse_args()
 
-    if (
-        len(args.ym) != 6
-        or not args.ym.isdigit()
-    ):
-        raise SystemExit("invalid --ym")
+    if args.ym is not None:
+        if (
+            args.start is not None
+            or args.end is not None
+        ):
+            raise SystemExit(
+                "--ym cannot be combined "
+                "with --start/--end"
+            )
+
+        try:
+            valid_ym(args.ym)
+        except ValueError as exc:
+            raise SystemExit(str(exc)) from exc
+
+        months = [args.ym]
+
+    else:
+        if (
+            args.start is None
+            or args.end is None
+        ):
+            raise SystemExit(
+                "specify --ym or both "
+                "--start and --end"
+            )
+
+        try:
+            months = list(
+                month_range(
+                    args.start,
+                    args.end,
+                )
+            )
+        except ValueError as exc:
+            raise SystemExit(str(exc)) from exc
 
     feature_cfg = json.loads(
         args.features.read_text(
@@ -516,34 +595,46 @@ def main():
         ],
     )
 
-    out_path, counts = build_month(
-        args.ym,
-        args.history_root,
-        args.out,
-        feature_cfg,
-        label_cfg,
-        anomalies,
-    )
+    totals = Counter()
+
+    for ym in months:
+        print()
+        print(f"=== {ym} ===")
+
+        out_path, counts = build_month(
+            ym,
+            args.history_root,
+            args.out,
+            feature_cfg,
+            label_cfg,
+            anomalies,
+        )
+
+        print("output =", out_path)
+
+        for key in sorted(counts):
+            print(key, "=", counts[key])
+            totals[key] += counts[key]
+
+        print(
+            "bytes =",
+            out_path.stat().st_size,
+        )
+
+        print(
+            "sha256 =",
+            sha256_file(out_path),
+        )
 
     print()
-    print("=== BUILD RESULT ===")
-    print("output =", out_path)
+    print("=== TOTAL ===")
+    print("months =", len(months))
 
-    for key in sorted(counts):
-        print(key, "=", counts[key])
-
-    print(
-        "bytes =",
-        out_path.stat().st_size,
-    )
-
-    print(
-        "sha256 =",
-        sha256_file(out_path),
-    )
+    for key in sorted(totals):
+        print(key, "=", totals[key])
 
     print()
-    print("NAR V1 MONTH BUILD OK")
+    print("NAR V1 RANGE BUILD OK")
 
 
 if __name__ == "__main__":
