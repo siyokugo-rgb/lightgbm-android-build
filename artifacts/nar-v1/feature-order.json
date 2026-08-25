@@ -1,0 +1,380 @@
+{
+  "categorical_feature_count": 14,
+  "categorical_feature_indices": [
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67
+  ],
+  "categorical_feature_names": [
+    "feature_race__競馬場",
+    "feature_race__競走種類名称",
+    "feature_race__回り",
+    "feature_race__条件",
+    "feature_entry__性",
+    "feature_entry__毛色",
+    "feature_entry__父馬名",
+    "feature_entry__母父馬名",
+    "feature_entry__騎手名",
+    "feature_entry__騎手所属",
+    "feature_entry__調教師",
+    "feature_entry__調教師所属",
+    "surface_type",
+    "burden_weight_mark"
+  ],
+  "feature_count": 68,
+  "features": [
+    {
+      "index": 0,
+      "name": "feature_race__距離",
+      "type": "numeric"
+    },
+    {
+      "index": 1,
+      "name": "feature_race__1着賞金(円)",
+      "type": "numeric"
+    },
+    {
+      "index": 2,
+      "name": "feature_race__2着賞金(円)",
+      "type": "numeric"
+    },
+    {
+      "index": 3,
+      "name": "feature_race__3着賞金(円)",
+      "type": "numeric"
+    },
+    {
+      "index": 4,
+      "name": "feature_race__4着賞金(円)",
+      "type": "numeric"
+    },
+    {
+      "index": 5,
+      "name": "feature_race__5着賞金(円)",
+      "type": "numeric"
+    },
+    {
+      "index": 6,
+      "name": "feature_entry__枠番",
+      "type": "numeric"
+    },
+    {
+      "index": 7,
+      "name": "feature_entry__馬番",
+      "type": "numeric"
+    },
+    {
+      "index": 8,
+      "name": "feature_entry__齢",
+      "type": "numeric"
+    },
+    {
+      "index": 9,
+      "name": "race_month",
+      "type": "numeric"
+    },
+    {
+      "index": 10,
+      "name": "race_day_of_year",
+      "type": "numeric"
+    },
+    {
+      "index": 11,
+      "name": "race_weekday_mon0",
+      "type": "numeric"
+    },
+    {
+      "index": 12,
+      "name": "age_days",
+      "type": "numeric"
+    },
+    {
+      "index": 13,
+      "name": "burden_weight_deci_kg",
+      "type": "numeric"
+    },
+    {
+      "index": 14,
+      "name": "騎手成績_first",
+      "type": "numeric"
+    },
+    {
+      "index": 15,
+      "name": "騎手成績_second",
+      "type": "numeric"
+    },
+    {
+      "index": 16,
+      "name": "騎手成績_third",
+      "type": "numeric"
+    },
+    {
+      "index": 17,
+      "name": "騎手成績_other",
+      "type": "numeric"
+    },
+    {
+      "index": 18,
+      "name": "騎手成績_total",
+      "type": "numeric"
+    },
+    {
+      "index": 19,
+      "name": "騎手成績_missing",
+      "type": "numeric"
+    },
+    {
+      "index": 20,
+      "name": "全成績_first",
+      "type": "numeric"
+    },
+    {
+      "index": 21,
+      "name": "全成績_second",
+      "type": "numeric"
+    },
+    {
+      "index": 22,
+      "name": "全成績_third",
+      "type": "numeric"
+    },
+    {
+      "index": 23,
+      "name": "全成績_other",
+      "type": "numeric"
+    },
+    {
+      "index": 24,
+      "name": "全成績_total",
+      "type": "numeric"
+    },
+    {
+      "index": 25,
+      "name": "全成績_missing",
+      "type": "numeric"
+    },
+    {
+      "index": 26,
+      "name": "ダート左成績_first",
+      "type": "numeric"
+    },
+    {
+      "index": 27,
+      "name": "ダート左成績_second",
+      "type": "numeric"
+    },
+    {
+      "index": 28,
+      "name": "ダート左成績_third",
+      "type": "numeric"
+    },
+    {
+      "index": 29,
+      "name": "ダート左成績_other",
+      "type": "numeric"
+    },
+    {
+      "index": 30,
+      "name": "ダート左成績_total",
+      "type": "numeric"
+    },
+    {
+      "index": 31,
+      "name": "ダート左成績_missing",
+      "type": "numeric"
+    },
+    {
+      "index": 32,
+      "name": "ダート右成績_first",
+      "type": "numeric"
+    },
+    {
+      "index": 33,
+      "name": "ダート右成績_second",
+      "type": "numeric"
+    },
+    {
+      "index": 34,
+      "name": "ダート右成績_third",
+      "type": "numeric"
+    },
+    {
+      "index": 35,
+      "name": "ダート右成績_other",
+      "type": "numeric"
+    },
+    {
+      "index": 36,
+      "name": "ダート右成績_total",
+      "type": "numeric"
+    },
+    {
+      "index": 37,
+      "name": "ダート右成績_missing",
+      "type": "numeric"
+    },
+    {
+      "index": 38,
+      "name": "当競馬場成績_first",
+      "type": "numeric"
+    },
+    {
+      "index": 39,
+      "name": "当競馬場成績_second",
+      "type": "numeric"
+    },
+    {
+      "index": 40,
+      "name": "当競馬場成績_third",
+      "type": "numeric"
+    },
+    {
+      "index": 41,
+      "name": "当競馬場成績_other",
+      "type": "numeric"
+    },
+    {
+      "index": 42,
+      "name": "当競馬場成績_total",
+      "type": "numeric"
+    },
+    {
+      "index": 43,
+      "name": "当競馬場成績_missing",
+      "type": "numeric"
+    },
+    {
+      "index": 44,
+      "name": "うち当距離成績_first",
+      "type": "numeric"
+    },
+    {
+      "index": 45,
+      "name": "うち当距離成績_second",
+      "type": "numeric"
+    },
+    {
+      "index": 46,
+      "name": "うち当距離成績_third",
+      "type": "numeric"
+    },
+    {
+      "index": 47,
+      "name": "うち当距離成績_other",
+      "type": "numeric"
+    },
+    {
+      "index": 48,
+      "name": "うち当距離成績_total",
+      "type": "numeric"
+    },
+    {
+      "index": 49,
+      "name": "うち当距離成績_missing",
+      "type": "numeric"
+    },
+    {
+      "index": 50,
+      "name": "best_time_deciseconds",
+      "type": "numeric"
+    },
+    {
+      "index": 51,
+      "name": "best_time_missing",
+      "type": "numeric"
+    },
+    {
+      "index": 52,
+      "name": "best_time_good_deciseconds",
+      "type": "numeric"
+    },
+    {
+      "index": 53,
+      "name": "best_time_good_missing",
+      "type": "numeric"
+    },
+    {
+      "index": 54,
+      "name": "feature_race__競馬場",
+      "type": "categorical"
+    },
+    {
+      "index": 55,
+      "name": "feature_race__競走種類名称",
+      "type": "categorical"
+    },
+    {
+      "index": 56,
+      "name": "feature_race__回り",
+      "type": "categorical"
+    },
+    {
+      "index": 57,
+      "name": "feature_race__条件",
+      "type": "categorical"
+    },
+    {
+      "index": 58,
+      "name": "feature_entry__性",
+      "type": "categorical"
+    },
+    {
+      "index": 59,
+      "name": "feature_entry__毛色",
+      "type": "categorical"
+    },
+    {
+      "index": 60,
+      "name": "feature_entry__父馬名",
+      "type": "categorical"
+    },
+    {
+      "index": 61,
+      "name": "feature_entry__母父馬名",
+      "type": "categorical"
+    },
+    {
+      "index": 62,
+      "name": "feature_entry__騎手名",
+      "type": "categorical"
+    },
+    {
+      "index": 63,
+      "name": "feature_entry__騎手所属",
+      "type": "categorical"
+    },
+    {
+      "index": 64,
+      "name": "feature_entry__調教師",
+      "type": "categorical"
+    },
+    {
+      "index": 65,
+      "name": "feature_entry__調教師所属",
+      "type": "categorical"
+    },
+    {
+      "index": 66,
+      "name": "surface_type",
+      "type": "categorical"
+    },
+    {
+      "index": 67,
+      "name": "burden_weight_mark",
+      "type": "categorical"
+    }
+  ],
+  "numeric_feature_count": 54,
+  "version": 1
+}
