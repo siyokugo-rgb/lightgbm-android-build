@@ -241,16 +241,36 @@ def main():
             size = final_path.stat().st_size
             digest = sha256_file(final_path)
 
-            record = {
-                "ym": ym,
+            now_utc = (
+                datetime.now(UTC)
+                .isoformat(timespec="seconds")
+                .replace("+00:00", "Z")
+            )
+
+            stable_fields = {
                 "status": "OK",
                 "bytes": str(size),
                 "sha256": digest,
                 "racelist_rows": str(rows["racelist"]),
                 "horselist_rows": str(rows["horselist"]),
                 "payback_rows": str(rows["payback"]),
-                "checked_at_utc": datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
                 "error": "",
+            }
+
+            previous = records.get(ym)
+
+            if previous is not None and all(
+                previous.get(key, "") == value
+                for key, value in stable_fields.items()
+            ):
+                checked_at_utc = previous.get("checked_at_utc") or now_utc
+            else:
+                checked_at_utc = now_utc
+
+            record = {
+                "ym": ym,
+                **stable_fields,
+                "checked_at_utc": checked_at_utc,
             }
 
             records[ym] = record
