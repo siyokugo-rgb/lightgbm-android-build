@@ -9,4 +9,9 @@ object LightGbmNative {
     external fun nativeTrainPredictTest(): String
     external fun nativeTrainSaveTest(modelPath: String): String
     external fun nativeLoadPredictTest(modelPath: String): String
+
+    external fun nativePredict(
+        modelPath: String,
+        features: DoubleArray
+    ): Double
 }

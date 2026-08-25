@@ -422,3 +422,113 @@ Java_com_keiba_ai_LightGbmNative_nativeLoadPredictTest(
     const std::string text = result.str();
     return env->NewStringUTF(text.c_str());
 }
+
+extern "C"
+JNIEXPORT jdouble JNICALL
+Java_com_keiba_ai_LightGbmNative_nativePredict(
+        JNIEnv* env,
+        jobject /* thiz */,
+        jstring model_path_j,
+        jdoubleArray features_j) {
+
+    if (model_path_j == nullptr || features_j == nullptr) {
+        return -1.0;
+    }
+
+    const jsize feature_count =
+        env->GetArrayLength(features_j);
+
+    if (feature_count != 68) {
+        return -2.0;
+    }
+
+    const char* model_path =
+        env->GetStringUTFChars(
+            model_path_j,
+            nullptr
+        );
+
+    if (model_path == nullptr) {
+        return -3.0;
+    }
+
+    jdouble* features =
+        env->GetDoubleArrayElements(
+            features_j,
+            nullptr
+        );
+
+    if (features == nullptr) {
+        env->ReleaseStringUTFChars(
+            model_path_j,
+            model_path
+        );
+        return -4.0;
+    }
+
+    BoosterHandle booster = nullptr;
+    int loaded_iterations = 0;
+
+    const int load_rc =
+        LGBM_BoosterCreateFromModelfile(
+            model_path,
+            &loaded_iterations,
+            &booster
+        );
+
+    if (load_rc != 0) {
+        env->ReleaseDoubleArrayElements(
+            features_j,
+            features,
+            JNI_ABORT
+        );
+
+        env->ReleaseStringUTFChars(
+            model_path_j,
+            model_path
+        );
+
+        return -5.0;
+    }
+
+    int64_t out_len = 0;
+    double prediction[1] = {0.0};
+
+    const int predict_rc =
+        LGBM_BoosterPredictForMat(
+            booster,
+            features,
+            C_API_DTYPE_FLOAT64,
+            1,
+            feature_count,
+            1,
+            C_API_PREDICT_NORMAL,
+            0,
+            -1,
+            "",
+            &out_len,
+            prediction
+        );
+
+    LGBM_BoosterFree(booster);
+
+    env->ReleaseDoubleArrayElements(
+        features_j,
+        features,
+        JNI_ABORT
+    );
+
+    env->ReleaseStringUTFChars(
+        model_path_j,
+        model_path
+    );
+
+    if (
+        predict_rc != 0
+        || out_len != 1
+    ) {
+        return -6.0;
+    }
+
+    return prediction[0];
+}

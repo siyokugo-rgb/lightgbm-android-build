@@ -75,6 +75,18 @@ class MainActivity : Activity() {
                     "\n\n保存済みNARデータを検証しています..."
             }
 
+            val parityStart = SystemClock.elapsedRealtime()
+
+            val parityStatus = try {
+                NarModelParityTest.run(this@MainActivity)
+            } catch (t: Throwable) {
+                "NAR MODEL PARITY FAIL\n" +
+                    "${t.javaClass.simpleName}: ${t.message}"
+            }
+
+            val parityMs =
+                SystemClock.elapsedRealtime() - parityStart
+
             val narStart = SystemClock.elapsedRealtime()
             val narStatus = NarLocalParserTest.run(this@MainActivity)
             val narMs = SystemClock.elapsedRealtime() - narStart
@@ -118,7 +130,15 @@ class MainActivity : Activity() {
                     outcomes == 12 &&
                     payouts != null
 
-            val overallOk = lightGbmOk && narDataOk
+            val parityOk =
+                parityStatus.startsWith(
+                    "NAR MODEL PARITY OK"
+                )
+
+            val overallOk =
+                lightGbmOk &&
+                    parityOk &&
+                    narDataOk
 
             val summary = buildString {
                 append("=== 実機検証結果 ===")
@@ -127,6 +147,9 @@ class MainActivity : Activity() {
 
                 append("\nLightGBM/JNI=")
                 append(if (lightGbmOk) "正常" else "異常")
+
+                append("\nBaseline V1実モデル=")
+                append(if (parityOk) "正常" else "異常")
 
                 append("\n保存済みNARデータ=")
                 append(if (narDataOk) "正常" else "異常")
@@ -174,7 +197,11 @@ class MainActivity : Activity() {
                     "\n\n--- 詳細ログ ---\n\n" +
                     lightGbmStatus +
                     "\n\nLightGBM elapsed=${lightMs}ms" +
-                    "\n\n" + narStatus +
+                    "\n\n--- Baseline V1 parity ---\n\n" +
+                    parityStatus +
+                    "\nParity elapsed=${parityMs}ms" +
+                    "\n\n--- Local NAR data ---\n\n" +
+                    narStatus +
                     "\nLocal data elapsed=${narMs}ms"
 
                 scrollView.post {
