@@ -167,7 +167,7 @@ def write_manifest(path: Path, records: dict[str, dict]):
     tmp = path.with_suffix(".tmp")
 
     with tmp.open("w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fields)
+        writer = csv.DictWriter(f, fieldnames=fields, lineterminator="\n")
         writer.writeheader()
 
         for ym in sorted(records):
