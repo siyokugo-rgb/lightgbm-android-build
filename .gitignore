@@ -10,3 +10,6 @@ test-data/
 
 *.apk
 app/.cxx/
+
+# Local Python virtual environment
+.venv/
