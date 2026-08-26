@@ -87,6 +87,22 @@ class MainActivity : Activity() {
             val parityMs =
                 SystemClock.elapsedRealtime() - parityStart
 
+            val transformParityStart =
+                SystemClock.elapsedRealtime()
+
+            val transformParityStatus = try {
+                NarV1TransformParityTest.run(
+                    this@MainActivity
+                )
+            } catch (t: Throwable) {
+                "NAR V1 TRANSFORM PARITY FAIL\n" +
+                    "${t.javaClass.simpleName}: ${t.message}"
+            }
+
+            val transformParityMs =
+                SystemClock.elapsedRealtime() -
+                    transformParityStart
+
             val narStart = SystemClock.elapsedRealtime()
             val narStatus = NarLocalParserTest.run(this@MainActivity)
             val narMs = SystemClock.elapsedRealtime() - narStart
@@ -135,9 +151,15 @@ class MainActivity : Activity() {
                     "NAR MODEL PARITY OK"
                 )
 
+            val transformParityOk =
+                transformParityStatus.startsWith(
+                    "NAR V1 TRANSFORM PARITY OK"
+                )
+
             val overallOk =
                 lightGbmOk &&
                     parityOk &&
+                    transformParityOk &&
                     narDataOk
 
             val summary = buildString {
@@ -150,6 +172,15 @@ class MainActivity : Activity() {
 
                 append("\nBaseline V1実モデル=")
                 append(if (parityOk) "正常" else "異常")
+
+                append("\nV1 raw→68特徴変換=")
+                append(
+                    if (transformParityOk) {
+                        "正常"
+                    } else {
+                        "異常"
+                    }
+                )
 
                 append("\n保存済みNARデータ=")
                 append(if (narDataOk) "正常" else "異常")
@@ -200,6 +231,9 @@ class MainActivity : Activity() {
                     "\n\n--- Baseline V1 parity ---\n\n" +
                     parityStatus +
                     "\nParity elapsed=${parityMs}ms" +
+                    "\n\n--- V1 raw -> 68 transform parity ---\n\n" +
+                    transformParityStatus +
+                    "\nTransform parity elapsed=${transformParityMs}ms" +
                     "\n\n--- Local NAR data ---\n\n" +
                     narStatus +
                     "\nLocal data elapsed=${narMs}ms"
