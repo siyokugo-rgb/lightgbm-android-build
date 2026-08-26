@@ -119,6 +119,16 @@ class MainActivity : Activity() {
                 SystemClock.elapsedRealtime() -
                     sourceParityStart
 
+            val dailyStart =
+                SystemClock.elapsedRealtime()
+
+            val dailyStatus =
+                NarDailyRaceDownloadTest.run()
+
+            val dailyMs =
+                SystemClock.elapsedRealtime() -
+                    dailyStart
+
             val narStart = SystemClock.elapsedRealtime()
             val narStatus = NarLocalParserTest.run(this@MainActivity)
             val narMs = SystemClock.elapsedRealtime() - narStart
@@ -177,11 +187,17 @@ class MainActivity : Activity() {
                     "NAR V1 SOURCE PARITY OK"
                 )
 
+            val dailyOk =
+                dailyStatus.startsWith(
+                    "NAR DAILY DOWNLOAD OK"
+                )
+
             val overallOk =
                 lightGbmOk &&
                     parityOk &&
                     transformParityOk &&
                     sourceParityOk &&
+                    dailyOk &&
                     narDataOk
 
             val summary = buildString {
@@ -213,10 +229,19 @@ class MainActivity : Activity() {
                     }
                 )
 
+                append("\n当日NAR公式通信=")
+                append(
+                    if (dailyOk) {
+                        "正常"
+                    } else {
+                        "異常"
+                    }
+                )
+
                 append("\n保存済みNARデータ=")
                 append(if (narDataOk) "正常" else "異常")
 
-                append("\nこの検証でのNAR通信=なし")
+                append("\nこの検証でのNAR通信=あり")
                 append("\n検証対象=大井 1998/08/06 1R")
 
                 append("\n\n発走前エントリー=")
@@ -268,6 +293,9 @@ class MainActivity : Activity() {
                     "\n\n--- V1 source CSV -> prediction parity ---\n\n" +
                     sourceParityStatus +
                     "\nSource parity elapsed=${sourceParityMs}ms" +
+                    "\n\n--- NAR daily live download ---\n\n" +
+                    dailyStatus +
+                    "\nDaily download elapsed=${dailyMs}ms" +
                     "\n\n--- Local NAR data ---\n\n" +
                     narStatus +
                     "\nLocal data elapsed=${narMs}ms"
