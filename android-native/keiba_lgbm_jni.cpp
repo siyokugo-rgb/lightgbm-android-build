@@ -438,7 +438,7 @@ Java_com_keiba_ai_LightGbmNative_nativePredict(
     const jsize feature_count =
         env->GetArrayLength(features_j);
 
-    if (feature_count != 68) {
+    if (feature_count <= 0) {
         return -2.0;
     }
 
@@ -489,6 +489,51 @@ Java_com_keiba_ai_LightGbmNative_nativePredict(
         );
 
         return -5.0;
+    }
+
+    int model_feature_count = 0;
+
+    const int feature_count_rc =
+        LGBM_BoosterGetNumFeature(
+            booster,
+            &model_feature_count
+        );
+
+    if (feature_count_rc != 0) {
+        LGBM_BoosterFree(booster);
+
+        env->ReleaseDoubleArrayElements(
+            features_j,
+            features,
+            JNI_ABORT
+        );
+
+        env->ReleaseStringUTFChars(
+            model_path_j,
+            model_path
+        );
+
+        return -7.0;
+    }
+
+    if (
+        model_feature_count !=
+            static_cast<int>(feature_count)
+    ) {
+        LGBM_BoosterFree(booster);
+
+        env->ReleaseDoubleArrayElements(
+            features_j,
+            features,
+            JNI_ABORT
+        );
+
+        env->ReleaseStringUTFChars(
+            model_path_j,
+            model_path
+        );
+
+        return -2.0;
     }
 
     int64_t out_len = 0;

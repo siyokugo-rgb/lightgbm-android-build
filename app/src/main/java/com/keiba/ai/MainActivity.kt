@@ -87,6 +87,38 @@ class MainActivity : Activity() {
             val parityMs =
                 SystemClock.elapsedRealtime() - parityStart
 
+            val v2ParityStart =
+                SystemClock.elapsedRealtime()
+
+            val v2ParityStatus = try {
+                NarV2ModelParityTest.run(
+                    this@MainActivity
+                )
+            } catch (t: Throwable) {
+                "NAR V2 MODEL PARITY FAIL\n" +
+                    "${t.javaClass.simpleName}: ${t.message}"
+            }
+
+            val v2ParityMs =
+                SystemClock.elapsedRealtime() -
+                    v2ParityStart
+
+            val v2TransformParityStart =
+                SystemClock.elapsedRealtime()
+
+            val v2TransformParityStatus = try {
+                NarV2TransformParityTest.run(
+                    this@MainActivity
+                )
+            } catch (t: Throwable) {
+                "NAR V2 TRANSFORM PARITY FAIL\n" +
+                    "${t.javaClass.simpleName}: ${t.message}"
+            }
+
+            val v2TransformParityMs =
+                SystemClock.elapsedRealtime() -
+                    v2TransformParityStart
+
             val transformParityStart =
                 SystemClock.elapsedRealtime()
 
@@ -141,6 +173,18 @@ class MainActivity : Activity() {
                 SystemClock.elapsedRealtime() -
                     dailyPredictStart
 
+            val dailyV2PredictStart =
+                SystemClock.elapsedRealtime()
+
+            val dailyV2PredictStatus =
+                NarDailyV2PredictTest.run(
+                    this@MainActivity
+                )
+
+            val dailyV2PredictMs =
+                SystemClock.elapsedRealtime() -
+                    dailyV2PredictStart
+
             val narStart = SystemClock.elapsedRealtime()
             val narStatus = NarLocalParserTest.run(this@MainActivity)
             val narMs = SystemClock.elapsedRealtime() - narStart
@@ -189,6 +233,16 @@ class MainActivity : Activity() {
                     "NAR MODEL PARITY OK"
                 )
 
+            val v2ParityOk =
+                v2ParityStatus.startsWith(
+                    "NAR V2 MODEL PARITY OK"
+                )
+
+            val v2TransformParityOk =
+                v2TransformParityStatus.startsWith(
+                    "NAR V2 TRANSFORM PARITY OK"
+                )
+
             val transformParityOk =
                 transformParityStatus.startsWith(
                     "NAR V1 TRANSFORM PARITY OK"
@@ -209,13 +263,21 @@ class MainActivity : Activity() {
                     "NAR DAILY V1 PREDICT OK"
                 )
 
+            val dailyV2PredictOk =
+                dailyV2PredictStatus.startsWith(
+                    "NAR DAILY V2 PREDICT OK"
+                )
+
             val overallOk =
                 lightGbmOk &&
                     parityOk &&
+                    v2ParityOk &&
+                    v2TransformParityOk &&
                     transformParityOk &&
                     sourceParityOk &&
                     dailyOk &&
                     dailyPredictOk &&
+                    dailyV2PredictOk &&
                     narDataOk
 
             val summary = buildString {
@@ -228,6 +290,24 @@ class MainActivity : Activity() {
 
                 append("\nBaseline V1実モデル=")
                 append(if (parityOk) "正常" else "異常")
+
+                append("\nV2 64特徴実モデル=")
+                append(
+                    if (v2ParityOk) {
+                        "正常"
+                    } else {
+                        "異常"
+                    }
+                )
+
+                append("\nV2 raw→64特徴変換=")
+                append(
+                    if (v2TransformParityOk) {
+                        "正常"
+                    } else {
+                        "異常"
+                    }
+                )
 
                 append("\nV1 raw→68特徴変換=")
                 append(
@@ -259,6 +339,15 @@ class MainActivity : Activity() {
                 append("\n当日V1実予測=")
                 append(
                     if (dailyPredictOk) {
+                        "正常"
+                    } else {
+                        "異常"
+                    }
+                )
+
+                append("\n当日V2実予測=")
+                append(
+                    if (dailyV2PredictOk) {
                         "正常"
                     } else {
                         "異常"
@@ -314,6 +403,12 @@ class MainActivity : Activity() {
                     "\n\n--- Baseline V1 parity ---\n\n" +
                     parityStatus +
                     "\nParity elapsed=${parityMs}ms" +
+                    "\n\n--- V2 64-feature model parity ---\n\n" +
+                    v2ParityStatus +
+                    "\nV2 parity elapsed=${v2ParityMs}ms" +
+                    "\n\n--- V2 raw -> 64 transform parity ---\n\n" +
+                    v2TransformParityStatus +
+                    "\nV2 transform parity elapsed=${v2TransformParityMs}ms" +
                     "\n\n--- V1 raw -> 68 transform parity ---\n\n" +
                     transformParityStatus +
                     "\nTransform parity elapsed=${transformParityMs}ms" +
@@ -326,6 +421,9 @@ class MainActivity : Activity() {
                     "\n\n--- NAR daily V1 prediction ---\n\n" +
                     dailyPredictStatus +
                     "\nDaily prediction elapsed=${dailyPredictMs}ms" +
+                    "\n\n--- NAR daily V2 prediction ---\n\n" +
+                    dailyV2PredictStatus +
+                    "\nDaily V2 prediction elapsed=${dailyV2PredictMs}ms" +
                     "\n\n--- Local NAR data ---\n\n" +
                     narStatus +
                     "\nLocal data elapsed=${narMs}ms"

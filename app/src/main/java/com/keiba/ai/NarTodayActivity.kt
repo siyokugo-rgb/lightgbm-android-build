@@ -23,11 +23,11 @@ class NarTodayActivity : Activity() {
     private lateinit var refreshButton: Button
 
     private var daily:
-        NarDailyV1Predictor.DailyPrediction? =
+        NarDailyV2Predictor.DailyPrediction? =
         null
 
     private var selectedRaces:
-        List<NarDailyV1Predictor.RacePrediction> =
+        List<NarDailyV2Predictor.RacePrediction> =
         emptyList()
 
     override fun onCreate(
@@ -63,7 +63,7 @@ class NarTodayActivity : Activity() {
 
         val title =
             TextView(this).apply {
-                text = "KeibaAI - NAR V1"
+                text = "KeibaAI - NAR V2"
                 textSize = 24f
                 gravity = Gravity.CENTER
             }
@@ -215,7 +215,7 @@ class NarTodayActivity : Activity() {
             try {
 
                 val prediction =
-                    NarDailyV1Predictor.predict(
+                    NarDailyV2Predictor.predict(
                         this@NarTodayActivity
                     )
 
@@ -355,7 +355,7 @@ class NarTodayActivity : Activity() {
 
     private fun renderRace(
         race:
-            NarDailyV1Predictor.RacePrediction
+            NarDailyV2Predictor.RacePrediction
     ) {
 
         resultView.text =
@@ -371,7 +371,7 @@ class NarTodayActivity : Activity() {
                 append("頭")
 
                 append(
-                    "\n\n=== V1予測順位 ==="
+                    "\n\n=== V2予測順位 ==="
                 )
 
                 for (
@@ -392,7 +392,7 @@ class NarTodayActivity : Activity() {
                         entry.horseName
                     )
 
-                    append("\nV1予測値=")
+                    append("\nV2予測値=")
 
                     append(
                         String.format(
@@ -404,7 +404,7 @@ class NarTodayActivity : Activity() {
                 }
 
                 append(
-                    "\n\n※V1予測値はモデル出力で、" +
+                    "\n\n※V2予測値はモデル出力で、" +
                         "レース内で合計100%になる" +
                         "正規化確率ではありません。"
                 )
