@@ -1,0 +1,10 @@
+{
+  "best_iteration": 842,
+  "categorical_feature_count": 10,
+  "feature_count": 64,
+  "model_file": "model.txt",
+  "model_name": "nar-v2-win-no-identity4",
+  "model_sha256": "9183817ba639c5972946514998c7e787f3e230c4f087006d69d09556eaa0448b",
+  "target": "label_win",
+  "version": 2
+}
