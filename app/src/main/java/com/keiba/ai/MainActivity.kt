@@ -129,6 +129,18 @@ class MainActivity : Activity() {
                 SystemClock.elapsedRealtime() -
                     dailyStart
 
+            val dailyPredictStart =
+                SystemClock.elapsedRealtime()
+
+            val dailyPredictStatus =
+                NarDailyV1PredictTest.run(
+                    this@MainActivity
+                )
+
+            val dailyPredictMs =
+                SystemClock.elapsedRealtime() -
+                    dailyPredictStart
+
             val narStart = SystemClock.elapsedRealtime()
             val narStatus = NarLocalParserTest.run(this@MainActivity)
             val narMs = SystemClock.elapsedRealtime() - narStart
@@ -192,12 +204,18 @@ class MainActivity : Activity() {
                     "NAR DAILY DOWNLOAD OK"
                 )
 
+            val dailyPredictOk =
+                dailyPredictStatus.startsWith(
+                    "NAR DAILY V1 PREDICT OK"
+                )
+
             val overallOk =
                 lightGbmOk &&
                     parityOk &&
                     transformParityOk &&
                     sourceParityOk &&
                     dailyOk &&
+                    dailyPredictOk &&
                     narDataOk
 
             val summary = buildString {
@@ -232,6 +250,15 @@ class MainActivity : Activity() {
                 append("\n当日NAR公式通信=")
                 append(
                     if (dailyOk) {
+                        "正常"
+                    } else {
+                        "異常"
+                    }
+                )
+
+                append("\n当日V1実予測=")
+                append(
+                    if (dailyPredictOk) {
                         "正常"
                     } else {
                         "異常"
@@ -296,6 +323,9 @@ class MainActivity : Activity() {
                     "\n\n--- NAR daily live download ---\n\n" +
                     dailyStatus +
                     "\nDaily download elapsed=${dailyMs}ms" +
+                    "\n\n--- NAR daily V1 prediction ---\n\n" +
+                    dailyPredictStatus +
+                    "\nDaily prediction elapsed=${dailyPredictMs}ms" +
                     "\n\n--- Local NAR data ---\n\n" +
                     narStatus +
                     "\nLocal data elapsed=${narMs}ms"
