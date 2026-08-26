@@ -103,6 +103,22 @@ class MainActivity : Activity() {
                 SystemClock.elapsedRealtime() -
                     transformParityStart
 
+            val sourceParityStart =
+                SystemClock.elapsedRealtime()
+
+            val sourceParityStatus = try {
+                NarV1SourceParityTest.run(
+                    this@MainActivity
+                )
+            } catch (t: Throwable) {
+                "NAR V1 SOURCE PARITY FAIL\n" +
+                    "${t.javaClass.simpleName}: ${t.message}"
+            }
+
+            val sourceParityMs =
+                SystemClock.elapsedRealtime() -
+                    sourceParityStart
+
             val narStart = SystemClock.elapsedRealtime()
             val narStatus = NarLocalParserTest.run(this@MainActivity)
             val narMs = SystemClock.elapsedRealtime() - narStart
@@ -156,10 +172,16 @@ class MainActivity : Activity() {
                     "NAR V1 TRANSFORM PARITY OK"
                 )
 
+            val sourceParityOk =
+                sourceParityStatus.startsWith(
+                    "NAR V1 SOURCE PARITY OK"
+                )
+
             val overallOk =
                 lightGbmOk &&
                     parityOk &&
                     transformParityOk &&
+                    sourceParityOk &&
                     narDataOk
 
             val summary = buildString {
@@ -176,6 +198,15 @@ class MainActivity : Activity() {
                 append("\nV1 raw→68特徴変換=")
                 append(
                     if (transformParityOk) {
+                        "正常"
+                    } else {
+                        "異常"
+                    }
+                )
+
+                append("\nV1 CSV→予測経路=")
+                append(
+                    if (sourceParityOk) {
                         "正常"
                     } else {
                         "異常"
@@ -234,6 +265,9 @@ class MainActivity : Activity() {
                     "\n\n--- V1 raw -> 68 transform parity ---\n\n" +
                     transformParityStatus +
                     "\nTransform parity elapsed=${transformParityMs}ms" +
+                    "\n\n--- V1 source CSV -> prediction parity ---\n\n" +
+                    sourceParityStatus +
+                    "\nSource parity elapsed=${sourceParityMs}ms" +
                     "\n\n--- Local NAR data ---\n\n" +
                     narStatus +
                     "\nLocal data elapsed=${narMs}ms"
