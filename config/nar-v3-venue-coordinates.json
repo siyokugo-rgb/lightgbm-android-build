@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "purpose": "NAR V3 weather join venue coordinates",
+  "coordinate_system": "WGS84",
+  "notes": [
+    "Nagoya Racecourse moved from Nagoya-shi Minato-ku to Yatomi-shi in 2022.",
+    "Use the old Nagoya location through 2022-03-11 and the new Yatomi location from 2022-04-08 for race-day weather joins.",
+    "Coordinates are fixed reference points for weather-grid lookup; sub-kilometre differences inside a racecourse are not material for Open-Meteo."
+  ],
+  "venues": {
+    "帯広ば": [
+      {
+        "from": null,
+        "to": null,
+        "latitude": 42.921,
+        "longitude": 143.182167
+      }
+    ],
+    "園田": [
+      {
+        "from": null,
+        "to": null,
+        "latitude": 34.766583,
+        "longitude": 135.445194
+      }
+    ],
+    "名古屋": [
+      {
+        "from": null,
+        "to": "2022-03-11",
+        "latitude": 35.112458,
+        "longitude": 136.866569,
+        "location": "旧・名古屋競馬場（名古屋市港区）"
+      },
+      {
+        "from": "2022-04-08",
+        "to": null,
+        "latitude": 35.0525,
+        "longitude": 136.78472,
+        "location": "現・名古屋競馬場（弥富市）"
+      }
+    ],
+    "佐賀": [
+      {
+        "from": null,
+        "to": null,
+        "latitude": 33.349361,
+        "longitude": 130.470861
+      }
+    ],
+    "高知": [
+      {
+        "from": null,
+        "to": null,
+        "latitude": 33.503194,
+        "longitude": 133.530556
+      }
+    ],
+    "大井": [
+      {
+        "from": null,
+        "to": null,
+        "latitude": 35.591339,
+        "longitude": 139.742608
+      }
+    ],
+    "金沢": [
+      {
+        "from": null,
+        "to": null,
+        "latitude": 36.636444,
+        "longitude": 136.67475
+      }
+    ],
+    "門別": [
+      {
+        "from": null,
+        "to": null,
+        "latitude": 42.537944,
+        "longitude": 142.002972
+      }
+    ],
+    "笠松": [
+      {
+        "from": null,
+        "to": null,
+        "latitude": 35.372167,
+        "longitude": 136.767528
+      }
+    ],
+    "水沢": [
+      {
+        "from": null,
+        "to": null,
+        "latitude": 39.129944,
+        "longitude": 141.170333
+      }
+    ],
+    "川崎": [
+      {
+        "from": null,
+        "to": null,
+        "latitude": 35.532361,
+        "longitude": 139.710667
+      }
+    ],
+    "盛岡": [
+      {
+        "from": null,
+        "to": null,
+        "latitude": 39.690822,
+        "longitude": 141.220067
+      }
+    ],
+    "船橋": [
+      {
+        "from": null,
+        "to": null,
+        "latitude": 35.684722,
+        "longitude": 139.997778
+      }
+    ],
+    "浦和": [
+      {
+        "from": null,
+        "to": null,
+        "latitude": 35.857806,
+        "longitude": 139.670389
+      }
+    ],
+    "姫路": [
+      {
+        "from": null,
+        "to": null,
+        "latitude": 34.856278,
+        "longitude": 134.701222
+      }
+    ]
+  }
+}
