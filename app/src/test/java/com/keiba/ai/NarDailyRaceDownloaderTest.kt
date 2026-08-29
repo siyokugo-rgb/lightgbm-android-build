@@ -39,6 +39,68 @@ class NarDailyRaceDownloaderTest {
             data.horselistCsv.contains("大井")
         )
         assertNull(data.paybackCsv)
+        assertNull(data.sourceFileName)
+        assertNull(data.sourceTimestampEpochSecond)
+        assertNull(data.downloadedAtEpochMillis)
+        assertNull(data.serverDateEpochMillis)
+    }
+
+    @Test
+    fun parsesOfficialSourceMetadata() {
+        val metadata =
+            NarDailyRaceDownloader
+                .parseSourceMetadataForTest(
+                    "attachment; filename=\"20260829_1788001087_race.zip\""
+                )
+
+        assertEquals(
+            "20260829",
+            metadata.date
+        )
+        assertEquals(
+            "20260829_1788001087_race.zip",
+            metadata.fileName
+        )
+        assertEquals(
+            1788001087L,
+            metadata.timestampEpochSecond
+        )
+    }
+
+    @Test
+    fun rejectsMissingSourceMetadata() {
+        assertThrows(
+            IllegalStateException::class.java
+        ) {
+            NarDailyRaceDownloader
+                .parseSourceMetadataForTest(
+                    null
+                )
+        }
+    }
+
+    @Test
+    fun rejectsMalformedSourceFilename() {
+        assertThrows(
+            IllegalStateException::class.java
+        ) {
+            NarDailyRaceDownloader
+                .parseSourceMetadataForTest(
+                    "attachment; filename=\"race.zip\""
+                )
+        }
+    }
+
+    @Test
+    fun rejectsSourceTimestampDateMismatch() {
+        assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            NarDailyRaceDownloader
+                .parseSourceMetadataForTest(
+                    "attachment; filename=\"20260828_1788001087_race.zip\""
+                )
+        }
     }
 
     @Test

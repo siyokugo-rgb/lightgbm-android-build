@@ -7,6 +7,9 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.charset.CodingErrorAction
 import java.net.URL
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.zip.ZipInputStream
 import javax.net.ssl.HttpsURLConnection
 
@@ -27,11 +30,30 @@ object NarDailyRaceDownloader {
     private val expectedEntryRegex =
         Regex("""^(\d{8})_(racelist|horselist|payback)\.csv$""")
 
+    private val sourceFileRegex =
+        Regex(
+            """^attachment;\s*filename="(\d{8})_(\d{10})_race\.zip"$""",
+            RegexOption.IGNORE_CASE
+        )
+
+    private val japanZone =
+        ZoneId.of("Asia/Tokyo")
+
     data class DailyRaceData(
         val date: String,
         val racelistCsv: String,
         val horselistCsv: String,
-        val paybackCsv: String?
+        val paybackCsv: String?,
+        val sourceFileName: String?,
+        val sourceTimestampEpochSecond: Long?,
+        val downloadedAtEpochMillis: Long?,
+        val serverDateEpochMillis: Long?
+    )
+
+    internal data class SourceMetadata(
+        val date: String,
+        val fileName: String,
+        val timestampEpochSecond: Long
     )
 
     fun download(): DailyRaceData {
@@ -97,6 +119,13 @@ object NarDailyRaceDownloader {
                 "unexpected Content-Type"
             }
 
+            val source =
+                parseSourceMetadata(
+                    connection.getHeaderField(
+                        "Content-Disposition"
+                    )
+                )
+
             val contentLength = connection.contentLengthLong
 
             require(
@@ -106,6 +135,10 @@ object NarDailyRaceDownloader {
                 "NAR daily response too large"
             }
 
+            val serverDate =
+                connection.date
+                    .takeIf { it > 0L }
+
             val limitedInput =
                 SizeLimitedInputStream(
                     connection.inputStream,
@@ -113,9 +146,25 @@ object NarDailyRaceDownloader {
                     "NAR daily compressed response"
                 )
 
-            return limitedInput
-                .buffered()
-                .use(::parseZip)
+            val parsed =
+                limitedInput
+                    .buffered()
+                    .use(::parseZip)
+
+            require(parsed.date == source.date) {
+                "NAR source filename/data date mismatch"
+            }
+
+            val downloadedAt =
+                System.currentTimeMillis()
+
+            return parsed.copy(
+                sourceFileName = source.fileName,
+                sourceTimestampEpochSecond =
+                    source.timestampEpochSecond,
+                downloadedAtEpochMillis = downloadedAt,
+                serverDateEpochMillis = serverDate
+            )
 
         } finally {
             connection.disconnect()
@@ -135,6 +184,61 @@ object NarDailyRaceDownloader {
         return limitedInput
             .buffered()
             .use(::parseZip)
+    }
+
+    internal fun parseSourceMetadataForTest(
+        contentDisposition: String?
+    ): SourceMetadata =
+        parseSourceMetadata(
+            contentDisposition
+        )
+
+    private fun parseSourceMetadata(
+        contentDisposition: String?
+    ): SourceMetadata {
+        val value =
+            contentDisposition
+                ?.trim()
+                ?: error(
+                    "Content-Disposition missing"
+                )
+
+        val match =
+            sourceFileRegex.matchEntire(value)
+                ?: error(
+                    "unexpected Content-Disposition"
+                )
+
+        val date =
+            match.groupValues[1]
+
+        val timestampText =
+            match.groupValues[2]
+
+        val timestamp =
+            timestampText.toLongOrNull()
+                ?: error(
+                    "invalid NAR source timestamp"
+                )
+
+        val timestampDate =
+            Instant.ofEpochSecond(timestamp)
+                .atZone(japanZone)
+                .toLocalDate()
+                .format(
+                    DateTimeFormatter.BASIC_ISO_DATE
+                )
+
+        require(timestampDate == date) {
+            "NAR source timestamp/date mismatch"
+        }
+
+        return SourceMetadata(
+            date = date,
+            fileName =
+                "${date}_${timestampText}_race.zip",
+            timestampEpochSecond = timestamp
+        )
     }
 
     private fun parseZip(
@@ -188,7 +292,8 @@ object NarDailyRaceDownloader {
                 val result =
                     readCurrentEntry(
                         zip = zip,
-                        totalUncompressedBefore = totalUncompressedBytes
+                        totalUncompressedBefore =
+                            totalUncompressedBytes
                     )
 
                 totalUncompressedBytes += result.byteCount
@@ -246,7 +351,11 @@ object NarDailyRaceDownloader {
             date = race.first,
             racelistCsv = race.second,
             horselistCsv = horse.second,
-            paybackCsv = payback?.second
+            paybackCsv = payback?.second,
+            sourceFileName = null,
+            sourceTimestampEpochSecond = null,
+            downloadedAtEpochMillis = null,
+            serverDateEpochMillis = null
         )
     }
 
