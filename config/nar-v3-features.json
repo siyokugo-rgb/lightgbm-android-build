@@ -1,6 +1,12 @@
 {
-  "version": 3,
-  "prediction_point": "scheduled_start_minus_60m",
+  "version": 4,
+  "prediction_point_policy": "runtime_prediction_as_of",
+  "snapshot_selection_rule": "pit_evidence_at_epoch_millis <= prediction_as_of_epoch_millis",
+  "production_model_feature_rule": "feature_must_be_allowed_in_training_and_serving_contexts",
+  "data_contexts": [
+    "HISTORICAL_MONTHLY",
+    "LIVE_PIT_SNAPSHOT"
+  ],
   "keys": {
     "race": [
       "競馬場",
@@ -14,10 +20,28 @@
       "馬番"
     ]
   },
-  "allowed_raw_feature_sources": {
+  "historical_monthly_allowed_features": {
     "racelist": [
       "競馬場",
-      "競走年月日",
+      "競走年月日"
+    ],
+    "horselist": [
+      "毛色",
+      "生年月日",
+      "父馬名",
+      "母馬名",
+      "母父馬名"
+    ]
+  },
+  "historical_monthly_semantic_pending_live_allowed": {
+    "racelist": [],
+    "horselist": [
+      "性",
+      "齢"
+    ]
+  },
+  "live_pit_snapshot_only_features": {
+    "racelist": [
       "競走種類名称",
       "芝ダート区分",
       "回り",
@@ -33,13 +57,6 @@
     "horselist": [
       "枠番",
       "馬番",
-      "性",
-      "齢",
-      "毛色",
-      "生年月日",
-      "父馬名",
-      "母馬名",
-      "母父馬名",
       "騎手名",
       "騎手所属",
       "負担重量",
