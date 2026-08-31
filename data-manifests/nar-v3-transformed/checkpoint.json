@@ -1,0 +1,41 @@
+{
+  "format_version": 1,
+  "dataset": "nar-v3-model-input",
+  "period": {
+    "start_ym": "202101",
+    "end_ym": "202607",
+    "months": 67
+  },
+  "splits": {
+    "train_rows": 454102,
+    "validation_rows": 157120,
+    "test_rows": 155137,
+    "out_of_time_rows": 89516
+  },
+  "counts": {
+    "rows": 855875,
+    "global_unique_entries": 855875,
+    "global_unique_races": 84321,
+    "category_known": 4190576,
+    "category_unknown": 88799,
+    "category_missing": 0
+  },
+  "artifacts": {
+    "category_dictionary_sha256": "b39a001d4e16a77f1497dac47e09eccced8f81d9ceab9ebad9769ef73136480b",
+    "feature_order_sha256": "2028a164232174c4e835828474132e7fecab45637b908ce55ec81318bb6c3f85"
+  },
+  "transform_root_hash": {
+    "algorithm": "sha256",
+    "value": "4fb7a0749b1cd571a3cea9751529ae560bab5c8d3ef5fac1077be7ff1b107cb5",
+    "definition": "sha256(UTF-8-no-BOM sorted lines '<relative_model_manifest_path>\t<manifest_sha256>\n')"
+  },
+  "source_dataset": {
+    "dataset_root_sha256": "0c4aa6dcc2dae5c1fdcb0173e4db3ba81008a90184018597f3979d3d86f2d774"
+  },
+  "transformer": {
+    "git_commit": "eff67f41a2b38ae81fc1a3580eb5e8925046674f"
+  },
+  "audit": {
+    "full_transform_audit": "PASS"
+  }
+}
