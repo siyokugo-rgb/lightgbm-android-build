@@ -1,0 +1,35 @@
+{
+  "format_version": 1,
+  "dataset": "nar-v3-pit-safe",
+  "period": {
+    "start_ym": "202101",
+    "end_ym": "202607",
+    "months": 67
+  },
+  "counts": {
+    "included_races": 84321,
+    "output_entries": 855875,
+    "excluded_entries": 7473,
+    "excluded_void_races": 731,
+    "dead_heat_races": 1012
+  },
+  "files": {
+    "manifest_count": 67,
+    "csv_count": 67
+  },
+  "dataset_root_hash": {
+    "algorithm": "sha256",
+    "value": "0c4aa6dcc2dae5c1fdcb0173e4db3ba81008a90184018597f3979d3d86f2d774",
+    "definition": "sha256(UTF-8-no-BOM sorted lines '<relative_manifest_path>\t<manifest_sha256>\n')"
+  },
+  "builder": {
+    "git_commit": "10a01877f694f57fa9cad181914f6ec6b081fb83",
+    "build_nar_v3_dataset_py_sha256": "2d21b39e83ffd718b4be844feda97288792b3c0c19e4853919ca7b9b99b14894",
+    "test_build_nar_v3_dataset_py_sha256": "f6bf7ec20a39ac944e8591e38e6981bfefd2e9051076263246b0c0a7e003cf5b"
+  },
+  "audit": {
+    "full_dataset_audit": "PASS",
+    "global_unique_races": 84321,
+    "global_unique_entries": 855875
+  }
+}
