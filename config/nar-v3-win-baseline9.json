@@ -1,0 +1,85 @@
+{
+  "version": 3,
+  "model_name": "nar-v3-win-baseline9",
+  "target": "label_win",
+  "input": {
+    "dataset": "nar-v3-model-input",
+    "transform_checkpoint": "data-manifests/nar-v3-transformed/checkpoint.json",
+    "transform_root_sha256": "4fb7a0749b1cd571a3cea9751529ae560bab5c8d3ef5fac1077be7ff1b107cb5",
+    "feature_count": 9,
+    "categorical_feature_indices": [4, 5, 6, 7, 8]
+  },
+  "splits": {
+    "train": "train",
+    "validation": "validation",
+    "test": "test",
+    "out_of_time": "out_of_time"
+  },
+  "selection_policy": {
+    "fit_on": ["train"],
+    "early_stopping_on": ["validation"],
+    "feature_selection_on": ["validation"],
+    "test_use": "final_evaluation_only",
+    "out_of_time_use": "post_final_evaluation_only"
+  },
+  "expected_rows": {
+    "train": {
+      "source": 454102,
+      "masked": 4556,
+      "supervised": 449546,
+      "positive": 45120,
+      "negative": 404426
+    },
+    "validation": {
+      "source": 157120,
+      "masked": 1618,
+      "supervised": 155502,
+      "positive": 15471,
+      "negative": 140031
+    },
+    "test": {
+      "source": 155137,
+      "masked": 1673,
+      "supervised": 153464,
+      "positive": 15098,
+      "negative": 138366
+    },
+    "out_of_time": {
+      "source": 89516,
+      "masked": 911,
+      "supervised": 88605,
+      "positive": 8729,
+      "negative": 79876
+    }
+  },
+  "training": {
+    "num_boost_round": 2000,
+    "early_stopping_rounds": 100,
+    "log_evaluation_period": 50
+  },
+  "lightgbm_params": {
+    "objective": "binary",
+    "metric": ["binary_logloss", "auc"],
+    "learning_rate": 0.05,
+    "num_leaves": 31,
+    "min_data_in_leaf": 100,
+    "feature_fraction": 0.9,
+    "bagging_fraction": 0.9,
+    "bagging_freq": 1,
+    "lambda_l1": 0.0,
+    "lambda_l2": 1.0,
+    "max_depth": -1,
+    "verbosity": -1,
+    "deterministic": true,
+    "force_col_wise": true,
+    "num_threads": 2,
+    "seed": 20260825,
+    "feature_fraction_seed": 20260825,
+    "bagging_seed": 20260825,
+    "data_random_seed": 20260825
+  },
+  "evaluation": {
+    "calibration_bins": 20,
+    "race_top_k": [1, 2, 3]
+  }
+}
