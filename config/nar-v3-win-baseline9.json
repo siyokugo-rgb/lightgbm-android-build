@@ -55,7 +55,8 @@
   "training": {
     "num_boost_round": 2000,
     "early_stopping_rounds": 100,
-    "log_evaluation_period": 50
+    "log_evaluation_period": 50,
+    "early_stopping_metric": "binary_logloss"
   },
   "lightgbm_params": {
     "objective": "binary",

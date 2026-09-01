@@ -7,7 +7,7 @@ import pandas as pd
 import sklearn
 from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score
 
-MODEL='nar-v3-win-baseline9'; TARGET='label_win'
+MODEL='nar-v3-win-baseline9'; TARGET='label_win'; PRIMARY_METRIC='binary_logloss'; REPORTED_METRICS=['binary_logloss','auc']
 FEATURES=['race_month','race_day_of_year','race_weekday_mon0','age_days','feature_race__競馬場','feature_entry__毛色','feature_entry__父馬名','feature_entry__母馬名','feature_entry__母父馬名']
 CATS=FEATURES[4:]
 LABELS=['label_result_status','label_numeric_finish_position','label_order_valid','label_started','label_finished','label_win','label_top2','label_top3']
@@ -45,8 +45,10 @@ def validate_config(c):
     if set(c.get('expected_rows',{}))!={'train','validation','test','out_of_time'}: raise ValueError('expected_rows mismatch')
     t=c.get('training',{})
     if any(not isinstance(t.get(k),int) or t[k]<=0 for k in ('num_boost_round','early_stopping_rounds','log_evaluation_period')): raise ValueError('training contract mismatch')
+    if t.get('early_stopping_metric')!=PRIMARY_METRIC: raise ValueError('early stopping metric mismatch')
     p=c.get('lightgbm_params',{})
     if p.get('objective')!='binary' or p.get('deterministic') is not True or p.get('force_col_wise') is not True: raise ValueError('LightGBM safety contract mismatch')
+    if p.get('metric')!=REPORTED_METRICS: raise ValueError('LightGBM metric order mismatch')
     if c.get('evaluation')!={'calibration_bins':20,'race_top_k':[1,2,3]}: raise ValueError('evaluation contract mismatch')
 
 def validate_checkpoint(c,cp):
@@ -135,14 +137,14 @@ def main():
     if a.preflight_only:return
     a.out.mkdir(parents=True,exist_ok=False)
     dtr=lgb.Dataset(tr[FEATURES],label=tr[TARGET],categorical_feature=CATS,free_raw_data=False); dva=lgb.Dataset(va[FEATURES],label=va[TARGET],reference=dtr,categorical_feature=CATS,free_raw_data=False)
-    tc=c['training']; model=lgb.train(c['lightgbm_params'],dtr,num_boost_round=tc['num_boost_round'],valid_sets=[dva],valid_names=['validation'],callbacks=[lgb.early_stopping(tc['early_stopping_rounds'],verbose=True),lgb.log_evaluation(tc['log_evaluation_period'])])
+    tc=c['training']; print('primary selection metric =',PRIMARY_METRIC); print('early stopping first metric only = YES'); model=lgb.train(c['lightgbm_params'],dtr,num_boost_round=tc['num_boost_round'],valid_sets=[dva],valid_names=['validation'],callbacks=[lgb.early_stopping(tc['early_stopping_rounds'],first_metric_only=True,verbose=True),lgb.log_evaluation(tc['log_evaluation_period'])])
     best=int(model.best_iteration)
     if best<=0: raise ValueError('invalid best_iteration')
     trm,trp=evaluate(tr,model,best); vam,vap=evaluate(va,model,best)
     mp=a.out/'model.txt'; model.save_model(str(mp),num_iteration=best)
     for name,frame,pred in [('train',tr,trp),('validation',va,vap)]: pd.DataFrame({'race_id':frame.race_id,'entry_id':frame.entry_id,'label_win':frame[TARGET],'prediction':pred}).to_csv(a.out/f'{name}-predictions.csv.gz',index=False,compression={'method':'gzip','mtime':0},lineterminator='\n')
-    result={'model_name':MODEL,'target':TARGET,'selection_state':'PROVISIONAL_VALIDATION_ONLY','best_iteration':best,'source_rows':{'train':ts['source'],'validation':vs['source']},'masked_target_rows':{'train':ts['masked'],'validation':vs['masked']},'supervised_rows':{'train':ts['supervised'],'validation':vs['supervised']},'train':trm,'validation':vam,'runtime':{'python':platform.python_version(),'lightgbm':lgb.__version__,'numpy':np.__version__,'pandas':pd.__version__,'scikit_learn':sklearn.__version__},'access_policy':{'train_months_opened':36,'validation_months_opened':12,'test_months_opened':0,'out_of_time_months_opened':0},'sha256':{'training_config':sha256(a.config),'transform_checkpoint':sha256(a.transform_checkpoint),'feature_order':sha256(fo),'category_dictionaries':sha256(cd),'trainer':sha256(Path(__file__).resolve()),'model':sha256(mp)}}
-    writej(a.out/'metrics.json',result); writej(a.out/'model-metadata.json',{'version':3,'model_name':MODEL,'target':TARGET,'selection_state':'PROVISIONAL_VALIDATION_ONLY','feature_count':9,'categorical_feature_count':5,'best_iteration':best,'model_file':'model.txt','model_sha256':sha256(mp)})
+    result={'model_name':MODEL,'target':TARGET,'selection_state':'PROVISIONAL_VALIDATION_ONLY','model_selection':{'primary_metric':PRIMARY_METRIC,'reported_metrics':REPORTED_METRICS,'selection_split':'validation','early_stopping_first_metric_only':True},'best_iteration':best,'source_rows':{'train':ts['source'],'validation':vs['source']},'masked_target_rows':{'train':ts['masked'],'validation':vs['masked']},'supervised_rows':{'train':ts['supervised'],'validation':vs['supervised']},'train':trm,'validation':vam,'runtime':{'python':platform.python_version(),'lightgbm':lgb.__version__,'numpy':np.__version__,'pandas':pd.__version__,'scikit_learn':sklearn.__version__},'access_policy':{'train_months_opened':36,'validation_months_opened':12,'test_months_opened':0,'out_of_time_months_opened':0},'sha256':{'training_config':sha256(a.config),'transform_checkpoint':sha256(a.transform_checkpoint),'feature_order':sha256(fo),'category_dictionaries':sha256(cd),'trainer':sha256(Path(__file__).resolve()),'model':sha256(mp)}}
+    writej(a.out/'metrics.json',result); writej(a.out/'model-metadata.json',{'version':3,'model_name':MODEL,'target':TARGET,'selection_state':'PROVISIONAL_VALIDATION_ONLY','model_selection':{'primary_metric':PRIMARY_METRIC,'reported_metrics':REPORTED_METRICS,'selection_split':'validation','early_stopping_first_metric_only':True},'feature_count':9,'categorical_feature_count':5,'best_iteration':best,'model_file':'model.txt','model_sha256':sha256(mp)})
     print('model_sha256 =',sha256(mp)); print('best_iteration =',best); print('test evaluated = NO'); print('out_of_time evaluated = NO'); print('NAR V3 BASELINE9 VALIDATION TRAINING OK')
 
 if __name__=='__main__': main()
