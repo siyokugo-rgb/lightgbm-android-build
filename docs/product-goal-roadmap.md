@@ -1,6 +1,6 @@
 # 競馬予想 Android アプリ Product Goal & Roadmap
 
-- 文書状態: 正本候補
+- 文書状態: 正本
 - 基準日: 2026-09-02
 - 対象: NAR地方競馬版 → JRA統合版
 - 本文書の目的:
@@ -594,7 +594,7 @@ NAR + JRA統合版の最終受入試験。
 
 現在のSource of Truth:
 
-- Git main: `f7ca123`
+- Product Goal初回固定commit: `90257a0`
 - PIT-safe Dataset構築済み
 - Dataset checkpoint監査済み
 - PIT-safe Transform構築済み
