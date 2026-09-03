@@ -1,0 +1,56 @@
+{
+    "format_version":  1,
+    "model_name":  "nar-v3-win-baseline9",
+    "target":  "label_win",
+    "state":  "FROZEN_DEVELOPMENT_BASELINE",
+    "git_source_commit":  "24a2a7ee9db62bc6f1d024436a4733a49e77e9f3",
+    "selection":  {
+                      "primary_metric":  "binary_logloss",
+                      "selection_split":  "validation",
+                      "early_stopping_first_metric_only":  true,
+                      "best_iteration":  55
+                  },
+    "development_period":  {
+                               "train":  "202101-202312",
+                               "validation":  "202401-202412"
+                           },
+    "access_policy":  {
+                          "train_months_opened":  36,
+                          "validation_months_opened":  12,
+                          "test_months_opened":  0,
+                          "out_of_time_months_opened":  0
+                      },
+    "runtime":  {
+                    "python":  "3.12.10",
+                    "lightgbm":  "4.7.0",
+                    "numpy":  "2.5.2",
+                    "pandas":  "3.0.5",
+                    "scikit_learn":  "1.9.0"
+                },
+    "input_sha256":  {
+                         "training_config":  "c340b011a6aa1fccc4a828a35b423da3140fd2f97615d49958cd94f53f3963fd",
+                         "transform_checkpoint":  "9c6aa73bf635debadc663c9c382a5dfaa5978665eb22eb3ceec0e4adc0a60001",
+                         "feature_order":  "2028a164232174c4e835828474132e7fecab45637b908ce55ec81318bb6c3f85",
+                         "category_dictionaries":  "b39a001d4e16a77f1497dac47e09eccced8f81d9ceab9ebad9769ef73136480b",
+                         "trainer":  "efeac6ddffdd80723e76450cd23320f97b7b7f706fe204adc79f4f5a0edb4ae8"
+                     },
+    "artifacts_sha256":  {
+                             "model.txt":  "92aa2f321289618bce3a4feff458df32052d3b67659ff35f83fa5bb8924014db",
+                             "metrics.json":  "f685fc52a144780008a5576751d8551f1fe71df298a216a235828b57f056c6a3",
+                             "model-metadata.json":  "dc8c48fce2bc9be70045812a960c9400bfcc0f72633d1f15689d4642b8a99dde",
+                             "train-predictions.csv.gz":  "f5361ecc928aed53490ec3bd5657ccf3216130eea01290f809e9331bd1c18034",
+                             "validation-predictions.csv.gz":  "7f908f598712e864787f7525971237270a001faa2f3bfdef43795e1836e687a8"
+                         },
+    "reproducibility":  {
+                            "independent_runs_compared":  2,
+                            "artifacts_compared":  5,
+                            "matching_artifacts":  5,
+                            "mismatching_artifacts":  0,
+                            "result":  "PASS"
+                        },
+    "audit":  {
+                  "primary_logloss_freeze":  "PASS",
+                  "locked_test_opened":  false,
+                  "out_of_time_opened":  false
+              }
+}

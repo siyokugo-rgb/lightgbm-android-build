@@ -610,22 +610,33 @@ NAR + JRA統合版の最終受入試験。
 - baseline model SHA-256:
   `92aa2f321289618bce3a4feff458df32052d3b67659ff35f83fa5bb8924014db`
 
-R3で残っている主要作業:
+R2 Evaluation Contract: PASS
 
-primary-logloss版を別出力へ再学習し、
-5成果物のSHA-256完全一致を確認してbaseline9をFreezeする。
+R3 baseline9 Freeze: PASS
+
+R3 freeze evidence:
+
+- checkpoint:
+  `data-manifests/nar-v3-baseline9/checkpoint.json`
+- primary metric: `binary_logloss`
+- best_iteration: `55`
+- independent runs compared: `2`
+- reproducible artifacts: `5 / 5`
+- mismatching artifacts: `0`
+- 2025 LOCKED TEST opened: `0`
+- OOT-1 opened: `0`
+- baseline model SHA-256:
+  `92aa2f321289618bce3a4feff458df32052d3b67659ff35f83fa5bb8924014db`
 
 ---
 
 # 19. 直近の作業順
 
-1. 本文書をGitで固定する。
-2. 既存契約との矛盾を監査する。
-3. R2 Evaluation Contractを固定する。
-4. primary-logloss版の5成果物再現性確認を完了する。
-5. R3 PASS判定を行う。
-6. R4 Live PIT Capture Foundationを開始する。
-7. R5 NAR Internal Feature Developmentへ進む。
+1. R4 Live PIT Capture Foundationを開始する。
+2. ForecastWeather snapshotの保存基盤を構築する。
+3. OddsSnapshotの保存基盤を構築する。
+4. 保存データのPIT evidence・SHA・schema・時刻境界を監査する。
+5. R4 PASS後、R5 NAR Internal Feature Developmentへ進む。
 
 ---
 
