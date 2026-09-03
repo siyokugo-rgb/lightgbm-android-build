@@ -27,6 +27,7 @@
 
 - `docs/nar-model-contract.md`
 - `docs/nar-pit-contract.md`
+- `docs/nar-evaluation-contract.md`
 - `docs/nar-v3-plan.md`
 - `config/nar-v3-features.json`
 - `config/nar-v3-transform.json`

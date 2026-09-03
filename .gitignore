@@ -13,3 +13,7 @@ app/.cxx/
 
 # Local Python virtual environment
 .venv/
+
+# Python generated cache
+__pycache__/
+*.py[cod]
