@@ -12,7 +12,7 @@ class NarForecastWeatherDownloaderTest {
     fun requestIsPinnedToExpectedContract() {
         val request =
             NarForecastWeatherDownloader
-                .buildRequestUrlForTest(
+                .buildRequestUrl(
                     latitude = 35.591339,
                     longitude = 139.742608
                 )
@@ -66,7 +66,7 @@ class NarForecastWeatherDownloaderTest {
             IllegalArgumentException::class.java
         ) {
             NarForecastWeatherDownloader
-                .buildRequestUrlForTest(
+                .buildRequestUrl(
                     latitude = 91.0,
                     longitude = 139.0
                 )
@@ -76,7 +76,7 @@ class NarForecastWeatherDownloaderTest {
             IllegalArgumentException::class.java
         ) {
             NarForecastWeatherDownloader
-                .buildRequestUrlForTest(
+                .buildRequestUrl(
                     latitude = 35.0,
                     longitude = 181.0
                 )
@@ -86,7 +86,7 @@ class NarForecastWeatherDownloaderTest {
             IllegalArgumentException::class.java
         ) {
             NarForecastWeatherDownloader
-                .buildRequestUrlForTest(
+                .buildRequestUrl(
                     latitude = Double.NaN,
                     longitude = 139.0
                 )
@@ -116,7 +116,7 @@ class NarForecastWeatherDownloaderTest {
     @Test
     fun expectedForecastBodyIsAccepted() {
         NarForecastWeatherDownloader
-            .validateResponseBytesForTest(
+            .validateResponseBytes(
                 sampleResponse()
                     .toByteArray(
                         Charsets.UTF_8
@@ -137,7 +137,7 @@ class NarForecastWeatherDownloaderTest {
             IllegalArgumentException::class.java
         ) {
             NarForecastWeatherDownloader
-                .validateResponseBytesForTest(
+                .validateResponseBytes(
                     body.toByteArray(
                         Charsets.UTF_8
                     )
@@ -151,7 +151,7 @@ class NarForecastWeatherDownloaderTest {
             IllegalArgumentException::class.java
         ) {
             NarForecastWeatherDownloader
-                .validateResponseBytesForTest(
+                .validateResponseBytes(
                     """{"hourly":{}}"""
                         .toByteArray(
                             Charsets.UTF_8

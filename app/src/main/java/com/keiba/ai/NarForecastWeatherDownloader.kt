@@ -173,39 +173,7 @@ object NarForecastWeatherDownloader {
         }
     }
 
-    internal fun buildRequestUrlForTest(
-        latitude: Double,
-        longitude: Double
-    ): String =
-        buildRequestUrl(
-            latitude,
-            longitude
-        )
-
-    internal fun validateContentTypeForTest(
-        contentType: String?
-    ) {
-        validateContentType(contentType)
-    }
-
-    internal fun validateResponseBytesForTest(
-        bytes: ByteArray
-    ) {
-        validateResponseBytes(bytes)
-    }
-
-    internal fun readLimitedForTest(
-        bytes: ByteArray
-    ): ByteArray =
-        SizeLimitedInputStream(
-            ByteArrayInputStream(bytes),
-            MAX_RESPONSE_BYTES,
-            "test weather response"
-        ).use {
-            it.readBytes()
-        }
-
-    private fun buildRequestUrl(
+    internal fun buildRequestUrl(
         latitude: Double,
         longitude: Double
     ): String {
@@ -239,6 +207,25 @@ object NarForecastWeatherDownloader {
             "&cell_selection=land"
     }
 
+    internal fun validateContentTypeForTest(
+        contentType: String?
+    ) {
+        validateContentType(contentType)
+    }
+
+
+    internal fun readLimitedForTest(
+        bytes: ByteArray
+    ): ByteArray =
+        SizeLimitedInputStream(
+            ByteArrayInputStream(bytes),
+            MAX_RESPONSE_BYTES,
+            "test weather response"
+        ).use {
+            it.readBytes()
+        }
+
+
     private fun validateContentType(
         contentType: String?
     ) {
@@ -257,7 +244,7 @@ object NarForecastWeatherDownloader {
         }
     }
 
-    private fun validateResponseBytes(
+    internal fun validateResponseBytes(
         bytes: ByteArray
     ) {
         require(bytes.isNotEmpty()) {
