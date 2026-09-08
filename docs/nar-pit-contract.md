@@ -535,12 +535,222 @@ daily CSVが発走前状態のまま維持されるケースが確認された�
 履歴系情報が09:58:36 JSTより前の
 どの時刻から取得可能かは別途監査する。
 
+## OddsSnapshot PIT contract
+
+OddsSnapshotはPredictionSnapshot、RaceOutcome、Payoutとは
+別Domainとして保存する。
+
+NAR Product v1の標準予測時点は、
+上位仕様に従い、
+
+`prediction_as_of = scheduled_start - 60 minutes`
+
+とする。
+
+ここで `scheduled_start` は、
+当該Predictionで使用するPIT-safe InputSnapshotにおいて、
+その時点までに取得済みだった予定発走時刻を使用する。
+
+後から変更・確定した発走時刻を使用して、
+過去の `prediction_as_of` やT-60境界を
+遡及的に再計算しない。
+
+予定発走時刻についても、
+sourceとcaptured_atを追跡可能にする。
+
+取得可能時点を証明できない発走時刻を、
+T-60境界の決定に使用しない。
+
+Prediction / EV / Bet Strategyで使用できるOddsSnapshotは、
+
+`odds.observed_at <= prediction_as_of`
+
+を満たし、
+対象券種を含む同一レースの
+発走前Snapshotのうち、
+observed_atが最も新しいものだけとする。
+
+1つのSource responseが
+単勝・複勝等の複数券種を含む場合があるため、
+raw Snapshotを券種ごとに不必要に複製しない。
+
+Snapshotは、
+Source responseが含む券種集合を
+covered_bet_typesとして追跡可能にする。
+
+券種単位のOdds選択時は、
+対象券種をcovered_bet_typesに含むSnapshotだけを候補とする。
+
+### observed_at
+
+`observed_at` は、
+外部サイトが画面上に表示する
+「HH:mm 現在」等の時刻そのものではない。
+
+自システムがそのOddsを利用可能だったことを
+証明できる時刻とする。
+
+最低限、
+
+- download_started_at
+- download_completed_at
+- HTTP Dateが存在しUTC時刻としてパース可能ならserver_date
+- source上の表示時刻が取得できる場合はsource_displayed_at
+
+を意味の異なる時刻として分離して記録する。
+
+PIT判定に使用するobserved_atは原則として、
+
+`max(download_completed_at, parseable server_date)`
+
+とする。
+
+HTTP Dateが存在しない、
+またはUTC時刻としてパースできない場合は、
+download_completed_atを使用する。
+
+HTTP Dateが未来側の時刻を示す場合も、
+observed_atを都合よく過去へ補正しない。
+
+その結果T-60条件を満たさなくなる場合は、
+そのSnapshotをT-60 Oddsとして使用しない。
+
+source_displayed_atは、
+SourceがそのOddsを何時点値として表示したかを示す
+補助metadataとして保存してよいが、
+自システムでの取得可能時刻の証拠として
+observed_atを過去へ遡らせるために使用しない。
+
+したがって、
+Sourceが「14:31 現在」と表示していても、
+自システムでの取得完了が14:32であれば、
+14:31時点で利用可能だったとは扱わない。
+
+### T-60 selection
+
+T-60 Oddsとして採用可能なのは、
+
+`observed_at <= prediction_as_of`
+
+を満たすSnapshotだけとする。
+
+条件を満たすSnapshotが複数ある場合は、
+observed_atが最も新しいものを選択する。
+
+OddsSnapshotの取得は、
+特定の時刻にユーザーが
+アプリを起動・操作することを
+運用上の前提としない。
+
+取得できた各時点のSnapshotを、
+それぞれのobserved_atとともに
+時系列で保存する。
+
+Prediction / EV / Bet Strategyでは、
+任意のprediction_as_ofに対して、
+
+`observed_at <= prediction_as_of`
+
+を満たすSnapshotのうち、
+observed_atが最も新しいものを使用する。
+
+したがって、
+T-60を含む特定時刻ちょうどに
+OddsSnapshotを取得できなかったこと自体を
+異常とは扱わない。
+
+ただし、
+prediction_as_ofより後に取得したSnapshotを
+過去時点へ遡及して使用してはならない。
+
+T-60後に取得したSnapshotを、
+「T-60に最も近い」という理由で
+T-60 Oddsへ遡及採用しない。
+
+条件を満たすSnapshotが存在しない場合は、
+当該prediction_as_ofにおける
+OddsSnapshot unavailableとして扱う。
+
+Odds PASSを成立させず、
+Oddsを必要とするBetting / EV処理はSKIPする。
+
+0、固定値、後時点Odds、
+最終確定Odds、Payoutから補完しない。
+
+### Raw capture
+
+R4 Live PIT Capture Foundationでは、
+取得したOdds Sourceのraw response body bytesを
+原本として保存する。
+
+HTTP response header全体は
+raw Snapshotの原本には含めない。
+
+headerから保存する場合は、
+PIT・provenanceに必要な
+事前定義済みの非秘密項目だけをmetadataとして保存する。
+
+raw response bodyを
+Parser結果だけに置き換えない。
+
+response body自体にcredential、
+session token等の秘密情報が含まれることを検出した場合は、
+そのまま永続化せずfail-closedとし、
+Source仕様を再監査する。
+
+最低限、
+
+- source identifier
+- secret-free canonical request URL
+- race identifier
+- covered_bet_types
+- download_started_at
+- download_completed_at
+- server_date
+- observed_at
+- raw response SHA-256
+
+を追跡可能にする。
+
+HTTP Cookie、session token、
+Set-Cookie等の認証・セッション情報は
+Snapshotへ保存しない。
+
+request URLにcredential、token、
+session identifier等が含まれる場合は、
+それらを除去したsecret-free canonical URLだけを
+Snapshot metadataとして保存する。
+
+秘密情報をraw headerやmetadataへ
+複製・永続化しない。
+
+### Odds value semantics
+
+出走取消・競走除外等により
+Oddsが空欄になる場合がある。
+
+またSource上で `0.0` 等の特殊値が存在しても、
+意味を監査せず通常Odds、欠損、取消のいずれかへ
+推測変換しない。
+
+券種ごとのOdds形式、
+取消・発売停止・未発売等の状態は、
+Parser実装前に別途監査する。
+
+複勝・ワイド等のレンジOddsは、
+上位仕様に従い、
+評価時に原則として下限側を使用する。
+
+最終確定OddsやPayoutを、
+過去時点OddsSnapshotの代替に使用しない。
+
+---
 ## Audit required
 
 以下は意味・取得可能時点を追加監査するまで
 特徴量として無条件に採用しない。
 
-- 発走時刻の意味（予定時刻か変更後の最終時刻か）
+- 予定発走時刻の変更履歴・source/captured_atをliveでどの時点から取得・保存できるか
 - 履歴系情報が09:58:36 JSTより前のどの時刻から取得可能か
 
 ## Future JRA support
