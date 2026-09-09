@@ -158,7 +158,19 @@ production featureはtraining/serving双方で利用許可されていること�
 
 Weather Data Layerは完成必須要件とする。
 
-ただし個々の気象特徴量の採否は評価結果で決定する。
+天候、気温、湿度、気圧、降水、風速、風向、突風等の
+主要Weather情報は、
+PIT-safeに取得・保存可能な基盤を必須とし、
+評価結果を理由に収集対象から除外しない。
+
+評価で決定するのは、
+Weather Domainを使用するか否かではなく、
+raw値、時間集計、派生値、
+競馬場・コース・距離・馬場等とのinteractionのうち、
+どの表現をproduction modelへ採用するかである。
+
+特定の特徴量表現が不採用となっても、
+元のPIT-safe Weather Snapshotの収集・保存は継続する。
 
 Weatherは以下に分離する。
 
@@ -176,8 +188,11 @@ T-60予測に発走時刻の未来実測を混入させない。
 Historical Forecastを使用する場合は、
 当時発行されたforecast vintageを復元可能なSourceのみ使用する。
 
-最低限の特徴候補:
+最低限のWeather情報として、
+以下を取得・保存、
+またはPIT-safeに導出可能な形で保持する:
 
+- weather_code / weather_condition
 - temperature
 - humidity
 - pressure
