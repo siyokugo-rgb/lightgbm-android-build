@@ -234,6 +234,99 @@ T-60 PIT条件を満たす場合に限り利用可能とする。
 ForecastWeatherはlive取得時から保存を開始して将来学習用に蓄積し、
 現時点のhistorical trainingではPIT証拠のあるWeatherだけを使用する。
 
+## ForecastWeather live archive contract
+
+R4で収集するForecastWeatherの
+長期保存用Archiveは、
+Git working treeと分離する。
+
+開発環境のArchive rootは、
+外部設定で明示的に指定する。
+PC固有の絶対パスをproduction codeへ固定しない。
+
+`test-data/` 等のGit ignore対象ディレクトリは、
+一時検証用途には使用できるが、
+ForecastWeatherの唯一の長期Archiveとはしない。
+
+1回のForecastWeather captureは最低限、
+
+- raw forecast response body
+- manifest
+- requested coordinates
+- canonical request URL
+- downloaded_at
+- server_date
+- PIT evidence
+- raw forecast SHA-256
+- snapshot SHA-256
+
+を追跡可能にする。
+
+Archiveはappend-onlyとする。
+
+既存Snapshotを後から更新・置換して
+過去のforecast vintageやcapture状態を変更しない。
+
+同一Snapshotが既に完全一致で存在する場合は
+ALREADY_PRESENTとして扱ってよい。
+
+既存Snapshotとの内容不一致、
+SHA不一致、
+manifest不整合、
+不正なpath、
+不完全保存を検出した場合は
+fail-closedとする。
+
+保存完了後は必ずSnapshot整合性検証を行う。
+
+明示的なretention契約を定めるまでは、
+正常保存済みForecastWeather Snapshotを
+自動削除・自動pruneしない。
+
+HTTP response header全体、
+Cookie、
+session token、
+credential等の秘密情報は
+ForecastWeather Archiveへ保存しない。
+
+Androidの `noBackupFilesDir` は
+端末内のoperational storageとして使用できるが、
+将来学習用ForecastWeatherの
+唯一の長期Archiveとはしない。
+
+一次Archiveへのlive収集開始は、
+二次Backup完成前でも開始してよい。
+
+ただしR4 WeatherをCOMPLETEとするには、
+一次Archive障害時に復旧可能な
+独立した二次保存またはBackup経路を
+検証済みにする。
+
+Backup検証では最低限、
+
+- raw forecast response body
+- manifest
+- forecast SHA-256
+- snapshot SHA-256
+
+が一次Archiveと一致することを確認する。
+
+Backupを作成できたことだけで
+復旧可能とは判定しない。
+
+一次Archiveとは別の検証用rootへ復元し、
+復元後Snapshotが
+integrity verificationをPASSすることを
+確認して初めてBackup経路をPASSとする。
+
+一次ArchiveとBackupは、
+単一障害で同時消失する同一保存先だけに依存しない。
+
+将来のtrainingでは、
+PIT provenanceを追跡でき、
+Snapshot integrity verificationをPASSした
+ForecastWeatherだけを使用する。
+
 ---
 
 # 7. Prediction Architecture
