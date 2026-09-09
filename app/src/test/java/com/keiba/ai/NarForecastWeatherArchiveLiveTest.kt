@@ -177,4 +177,90 @@ class NarForecastWeatherArchiveLiveTest {
                 downloaded.responseBytes.size
         )
     }
+
+    @Test
+    fun verifyRestoredArchive() {
+
+        assumeTrue(
+            "Weather restore verification is opt-in only",
+            System.getenv(
+                "KEIBA_WEATHER_RESTORE_VERIFY_TEST"
+            ) == "1"
+        )
+
+        val rootText =
+            System.getenv(
+                "KEIBA_NAR_WEATHER_RESTORE_ROOT"
+            )
+                ?.trim()
+                .orEmpty()
+
+        require(
+            rootText.isNotEmpty()
+        ) {
+            "KEIBA_NAR_WEATHER_RESTORE_ROOT is required"
+        }
+
+        val root =
+            File(rootText)
+                .canonicalFile
+
+        require(
+            root.isAbsolute
+        ) {
+            "Weather restore root must be absolute"
+        }
+
+        require(
+            root.isDirectory
+        ) {
+            "Weather restore root is not a directory"
+        }
+
+        val snapshots =
+            root.walkTopDown()
+                .filter {
+                    it.isDirectory &&
+                        it.resolve("forecast.json").isFile &&
+                        it.resolve("manifest.txt").isFile
+                }
+                .toList()
+
+        assertTrue(
+            "No restored Weather snapshots found",
+            snapshots.isNotEmpty()
+        )
+
+        snapshots.forEach { snapshot ->
+            assertTrue(
+                "Restored Weather snapshot failed verification: " +
+                    snapshot.canonicalPath,
+                NarForecastWeatherSnapshotStore
+                    .verifySnapshot(
+                        snapshot
+                    )
+            )
+        }
+
+        println(
+            "RESTORED WEATHER ARCHIVE VERIFY PASS"
+        )
+
+        println(
+            "restore_root   = " +
+                root.canonicalPath
+        )
+
+        println(
+            "snapshot_count = " +
+                snapshots.size
+        )
+
+        snapshots.forEach { snapshot ->
+            println(
+                "verified       = " +
+                    snapshot.canonicalPath
+            )
+        }
+    }
 }
