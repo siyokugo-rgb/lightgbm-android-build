@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
+import java.nio.file.Files
 import java.security.MessageDigest
 import java.time.LocalDate
 
@@ -169,5 +170,102 @@ class NarOddsLiveE2ETest {
             "sha256         = " +
                 sha256
         )
+
+        val snapshotRoot =
+            Files.createTempDirectory(
+                "nar-odds-live-snapshot"
+            ).toFile()
+
+        try {
+            val captured =
+                NarOddsSnapshotCoordinator
+                    .captureDownloadedToRoot(
+                        root = snapshotRoot,
+                        data = response
+                    )
+
+            assertEquals(
+                NarOddsSnapshotStore
+                    .SaveStatus.CREATED,
+                captured.status
+            )
+
+            assertEquals(
+                response.babaCode,
+                captured.babaCode
+            )
+
+            assertEquals(
+                response.raceDate,
+                captured.raceDate
+            )
+
+            assertEquals(
+                response.raceNo,
+                captured.raceNo
+            )
+
+            assertEquals(
+                response.observedAtEpochMillis,
+                captured.observedAtEpochMillis
+            )
+
+            assertEquals(
+                sha256,
+                captured.rawResponseSha256
+            )
+
+            assertTrue(
+                captured.snapshotSha256
+                    .matches(
+                        Regex(
+                            """^[0-9a-f]{64}$"""
+                        )
+                    )
+            )
+
+            assertTrue(
+                NarOddsSnapshotStore
+                    .verifySnapshot(
+                        captured.snapshotDirectory
+                    )
+            )
+
+            assertTrue(
+                response.responseBytes
+                    .contentEquals(
+                        captured.snapshotDirectory
+                            .resolve("odds.html")
+                            .readBytes()
+                    )
+            )
+
+            println(
+                "NAR ODDS SNAPSHOT LIVE E2E PASS"
+            )
+
+            println(
+                "snapshot_status = " +
+                    captured.status
+            )
+
+            println(
+                "snapshot_dir    = " +
+                    captured.snapshotDirectory
+                        .canonicalPath
+            )
+
+            println(
+                "raw_sha256      = " +
+                    captured.rawResponseSha256
+            )
+
+            println(
+                "snapshot_sha256 = " +
+                    captured.snapshotSha256
+            )
+        } finally {
+            snapshotRoot.deleteRecursively()
+        }
     }
 }
