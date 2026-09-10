@@ -1,0 +1,6 @@
+# Python dependencies for the NAR data/training tooling under tools/.
+# Versions validated in the Cloud Agent development environment.
+lightgbm==4.7.0
+numpy==2.5.3
+pandas==3.0.5
+scikit-learn==1.9.0
