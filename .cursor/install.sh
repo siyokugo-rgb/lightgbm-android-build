@@ -119,31 +119,43 @@ fi
 export PIP_DISABLE_PIP_VERSION_CHECK=1
 export PIP_NO_INPUT=1
 
-if [ -f "$LOCKFILE" ] && [ -d "$WHEELHOUSE" ]; then
-  echo "==> Installing Python deps from authoritative offline wheelhouse"
-  if [ -f "$WHEELHOUSE_SHA" ]; then
-    echo "    verifying wheelhouse SHA-256 manifest (fail-closed)"
-    # CSV format: <sha256>,<filename>  (one wheel per line)
-    while IFS=, read -r want name; do
-      [ -z "${want:-}" ] && continue
-      case "$want" in \#*) continue;; esac
-      got="$(sha256sum "$WHEELHOUSE/$name" | awk '{print $1}')"
-      if [ "$got" != "$want" ]; then
-        echo "FATAL: wheelhouse checksum mismatch for $name (fail-closed)" >&2
-        echo "  expected: $want" >&2
-        echo "  actual:   $got" >&2
-        exit 1
-      fi
-    done < "$WHEELHOUSE_SHA"
-    echo "    wheelhouse checksums OK"
-  fi
-  python -m pip install --no-index --find-links "$WHEELHOUSE" -r "$LOCKFILE"
-else
+# Authoritative offline dependency path.
+#
+# It requires ALL THREE assets to be present together:
+#   - nar-v3-training-requirements.lock
+#   - wheelhouse-v3/
+#   - wheelhouse-v3-sha256.csv
+# If any one of them is missing, the authoritative path must NOT be used.
+#
+# NOTE: the real schema of wheelhouse-v3-sha256.csv has not been confirmed yet.
+# We intentionally do NOT guess a CSV schema or implement its verification here.
+# Until the real file is available and its schema is confirmed, the authoritative
+# path is fail-closed and this script refuses to install from it.
+present=0
+[ -f "$LOCKFILE" ]      && present=$((present + 1))
+[ -d "$WHEELHOUSE" ]    && present=$((present + 1))
+[ -f "$WHEELHOUSE_SHA" ] && present=$((present + 1))
+
+if [ "$present" -eq 0 ]; then
   echo "==> NOTE: authoritative offline assets not present" \
-       "(nar-v3-training-requirements.lock / wheelhouse-v3)."
+       "(nar-v3-training-requirements.lock / wheelhouse-v3 / wheelhouse-v3-sha256.csv)."
   echo "          Installing PROVISIONAL, UNVERIFIED versions from requirements.txt."
   echo "          These are NOT confirmed as the official training environment."
   python -m pip install -r requirements.txt
+elif [ "$present" -eq 3 ]; then
+  echo "FATAL: authoritative offline assets are present, but the" >&2
+  echo "       wheelhouse-v3-sha256.csv schema has not been confirmed." >&2
+  echo "       Refusing to install unverified dependencies (fail-closed)." >&2
+  echo "       Confirm the CSV schema and implement verified offline" >&2
+  echo "       installation before enabling this path." >&2
+  exit 1
+else
+  echo "FATAL: incomplete authoritative offline dependency assets (fail-closed)." >&2
+  echo "       The authoritative path requires ALL of:" >&2
+  echo "         - nar-v3-training-requirements.lock  ($([ -f "$LOCKFILE" ] && echo present || echo MISSING))" >&2
+  echo "         - wheelhouse-v3/                      ($([ -d "$WHEELHOUSE" ] && echo present || echo MISSING))" >&2
+  echo "         - wheelhouse-v3-sha256.csv            ($([ -f "$WHEELHOUSE_SHA" ] && echo present || echo MISSING))" >&2
+  exit 1
 fi
 
 echo "==> Development environment setup complete"

@@ -6,9 +6,12 @@
 # confirmed as the project's authoritative training environment.
 #
 # The authoritative, reproducible training environment is expected to be pinned
-# by nar-v3-training-requirements.lock + wheelhouse-v3 (+ wheelhouse-v3-sha256.csv).
-# When those assets are present, .cursor/install.sh installs from the wheelhouse
-# offline (with SHA-256 verification) and ignores this file.
+# by ALL THREE of: nar-v3-training-requirements.lock, wheelhouse-v3/, and
+# wheelhouse-v3-sha256.csv. The authoritative offline path requires all three
+# together (any missing asset is fail-closed). The real schema of
+# wheelhouse-v3-sha256.csv has not been confirmed, so its verification is not yet
+# implemented; until then .cursor/install.sh keeps the authoritative path
+# fail-closed and uses this provisional file instead.
 lightgbm==4.7.0
 numpy==2.5.3
 pandas==3.0.5
