@@ -208,6 +208,68 @@ class NarOddsDownloaderTest {
     }
 
     @Test
+    fun leadingHtmlCommentBeforeDoctypeIsAccepted() {
+        val body =
+            """
+            <!-- resources/views/layouts/app.blade.php -->
+            <!DOCTYPE html>
+            <html lang="ja">
+            <head>
+              <meta charset="UTF-8">
+              <title>オッズ｜地方競馬情報サイト</title>
+            </head>
+            <body>
+              <h1>オッズ</h1>
+              <div>単勝・複勝</div>
+            </body>
+            </html>
+            """.trimIndent()
+
+        NarOddsDownloader
+            .validateResponseBytes(
+                body.toByteArray(
+                    Charsets.UTF_8
+                )
+            )
+    }
+
+    @Test
+    fun arbitraryPreambleBeforeDoctypeIsRejected() {
+        val body =
+            "unexpected preamble\n" +
+                sampleHtml()
+
+        assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            NarOddsDownloader
+                .validateResponseBytes(
+                    body.toByteArray(
+                        Charsets.UTF_8
+                    )
+                )
+        }
+    }
+
+    @Test
+    fun unterminatedLeadingHtmlCommentIsRejected() {
+        val body =
+            "<!-- unterminated comment\n" +
+                sampleHtml()
+
+        assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            NarOddsDownloader
+                .validateResponseBytes(
+                    body.toByteArray(
+                        Charsets.UTF_8
+                    )
+                )
+        }
+    }
+
+    @Test
     fun malformedUtf8IsRejected() {
         val malformed =
             byteArrayOf(

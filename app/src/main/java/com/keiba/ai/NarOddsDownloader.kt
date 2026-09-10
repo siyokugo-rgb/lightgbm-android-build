@@ -424,12 +424,9 @@ object NarOddsDownloader {
             normalized.lowercase()
 
         require(
-            lower.startsWith(
-                "<!doctype html"
-            ) ||
-                lower.startsWith(
-                    "<html"
-                )
+            startsWithHtmlDocument(
+                normalized
+            )
         ) {
             "odds response is not HTML"
         }
@@ -480,6 +477,59 @@ object NarOddsDownloader {
             ) {
                 "odds response contains possible secret material"
             }
+        }
+    }
+
+    private fun startsWithHtmlDocument(
+        text: String
+    ): Boolean {
+        var index =
+            0
+
+        while (true) {
+            while (
+                index < text.length &&
+                text[index].isWhitespace()
+            ) {
+                index++
+            }
+
+            if (
+                text.startsWith(
+                    "<!--",
+                    startIndex = index
+                )
+            ) {
+                val commentEnd =
+                    text.indexOf(
+                        "-->",
+                        startIndex = index + 4
+                    )
+
+                if (commentEnd < 0) {
+                    return false
+                }
+
+                index =
+                    commentEnd + 3
+
+                continue
+            }
+
+            return text.regionMatches(
+                thisOffset = index,
+                other = "<!doctype html",
+                otherOffset = 0,
+                length = "<!doctype html".length,
+                ignoreCase = true
+            ) ||
+                text.regionMatches(
+                    thisOffset = index,
+                    other = "<html",
+                    otherOffset = 0,
+                    length = "<html".length,
+                    ignoreCase = true
+                )
         }
     }
 
