@@ -1,0 +1,4 @@
+{
+  "name": "lightgbm-android-build",
+  "install": "bash .cursor/install.sh"
+}
