@@ -51,12 +51,24 @@ CURL=(curl --proto '=https' --tlsv1.2 -fsSL)
 
 # Strict, fail-closed verification of a wheelhouse against its SHA-256 manifest.
 # Manifest schema (confirmed): header "Name","Length","SHA256"; one wheel per row.
-# Fails closed on: unknown schema, missing file, size mismatch, or SHA mismatch.
+# SHA-256 hex may use either case; comparison is done in canonical lowercase.
+#
+# Fails closed on: unknown schema, malformed row, duplicate Name, duplicate row,
+# a Name that is not a bare basename (path separators / traversal), any path that
+# resolves outside the wheelhouse, symbolic links, a wheel listed but missing,
+# size mismatch, SHA-256 mismatch, and any extra file present in the wheelhouse
+# directory that is not listed in the manifest (the on-disk wheel set and the
+# manifest Name set must match exactly).
 verify_wheelhouse_manifest() {
   local wheelhouse="$1" manifest="$2"
   python - "$wheelhouse" "$manifest" <<'PY'
 import csv, hashlib, os, sys
 wheelhouse, manifest = sys.argv[1], sys.argv[2]
+
+if not os.path.isdir(wheelhouse):
+    sys.exit(f"FATAL: wheelhouse directory not found: {wheelhouse} (fail-closed)")
+wh_real = os.path.realpath(wheelhouse)
+
 with open(manifest, newline="", encoding="utf-8-sig") as fh:
     rows = list(csv.reader(fh))
 if not rows:
@@ -64,6 +76,9 @@ if not rows:
 header = [c.strip() for c in rows[0]]
 if header != ["Name", "Length", "SHA256"]:
     sys.exit(f"FATAL: unknown manifest schema {header!r} (fail-closed)")
+
+seen_rows = set()
+manifest_names = set()
 count = 0
 for row in rows[1:]:
     if not row or all(not c.strip() for c in row):
@@ -71,9 +86,34 @@ for row in rows[1:]:
     if len(row) != 3:
         sys.exit(f"FATAL: malformed manifest row {row!r} (fail-closed)")
     name, length, sha = row[0].strip(), row[1].strip(), row[2].strip().lower()
+
+    key = (name, length, sha)
+    if key in seen_rows:
+        sys.exit(f"FATAL: duplicate manifest row for {name} (fail-closed)")
+    seen_rows.add(key)
+    if name in manifest_names:
+        sys.exit(f"FATAL: duplicate manifest Name {name} (fail-closed)")
+    manifest_names.add(name)
+
+    # Name must be a bare basename (no directory components, no traversal).
+    if (not name or name in (".", "..")
+            or "/" in name or "\\" in name
+            or os.path.basename(name) != name):
+        sys.exit(f"FATAL: illegal wheel name {name!r} (fail-closed)")
+    if not (length.isdigit()):
+        sys.exit(f"FATAL: non-numeric size for {name}: {length!r} (fail-closed)")
+    if len(sha) != 64 or any(c not in "0123456789abcdef" for c in sha):
+        sys.exit(f"FATAL: malformed SHA-256 for {name}: {sha!r} (fail-closed)")
+
     path = os.path.join(wheelhouse, name)
+    # Reject symlinks anywhere on the entry and paths escaping the wheelhouse.
+    if os.path.islink(path):
+        sys.exit(f"FATAL: symbolic link not allowed: {name} (fail-closed)")
+    if os.path.realpath(path) != os.path.join(wh_real, name):
+        sys.exit(f"FATAL: path escapes wheelhouse: {name} (fail-closed)")
     if not os.path.isfile(path):
         sys.exit(f"FATAL: missing wheel {name} (fail-closed)")
+
     actual_size = os.path.getsize(path)
     if str(actual_size) != length:
         sys.exit(f"FATAL: size mismatch for {name}: manifest={length} actual={actual_size} (fail-closed)")
@@ -84,6 +124,13 @@ for row in rows[1:]:
     if h.hexdigest().lower() != sha:
         sys.exit(f"FATAL: SHA-256 mismatch for {name} (fail-closed)")
     count += 1
+
+# The on-disk wheel set must match the manifest Name set exactly: reject any
+# extra file (including stray *.whl) present in the wheelhouse but not listed.
+on_disk = set(os.listdir(wheelhouse))
+extra = sorted(on_disk - manifest_names)
+if extra:
+    sys.exit(f"FATAL: extra file(s) in wheelhouse not listed in manifest: {extra} (fail-closed)")
 if count == 0:
     sys.exit("FATAL: manifest lists no wheels (fail-closed)")
 print(f"    wheelhouse manifest OK: {count} wheels verified")
