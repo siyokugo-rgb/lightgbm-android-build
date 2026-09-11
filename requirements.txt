@@ -1,18 +1,25 @@
-# PROVISIONAL Python dependencies for the NAR data/training tooling under tools/.
+# Linux dependency version contract for the NAR data/training tooling (tools/).
 #
-# These versions were resolved and functionally validated in the Cloud Agent
-# development environment (all tools/test_*.py pass; model.txt output verified
-# loadable+predict-parity on the Android arm64 native LightGBM). They are NOT
-# confirmed as the project's authoritative training environment.
+# These pins mirror the authoritative training lock nar-v3-training-requirements.lock
+# (confirmed by the maintainer). This file is the complete dependency closure
+# (11 packages), so it can be installed with `pip install --no-deps` for an exact,
+# reproducible environment.
 #
-# The authoritative, reproducible training environment is expected to be pinned
-# by ALL THREE of: nar-v3-training-requirements.lock, wheelhouse-v3/, and
-# wheelhouse-v3-sha256.csv. The authoritative offline path requires all three
-# together (any missing asset is fail-closed). The real schema of
-# wheelhouse-v3-sha256.csv has not been confirmed, so its verification is not yet
-# implemented; until then .cursor/install.sh keeps the authoritative path
-# fail-closed and uses this provisional file instead.
+# Platform note: the existing wheelhouse-v3 asset contains Windows (win_amd64)
+# wheels and MUST NOT be used on Linux. On Linux (Cursor Cloud) the SAME versions
+# are installed from Linux-compatible wheels. A future Linux offline wheelhouse
+# (wheelhouse-v3-linux/ + wheelhouse-v3-linux-sha256.csv) can be dropped in and
+# .cursor/install.sh will use it offline with strict SHA-256 manifest verification.
+#
+# Any version change here must stay consistent with nar-v3-training-requirements.lock.
+joblib==1.5.3
 lightgbm==4.7.0
-numpy==2.5.3
+narwhals==2.25.0
+numpy==2.5.2
 pandas==3.0.5
+python-dateutil==2.9.0.post0
 scikit-learn==1.9.0
+scipy==1.18.1
+six==1.17.0
+threadpoolctl==3.6.0
+tzdata==2026.3

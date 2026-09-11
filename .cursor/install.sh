@@ -32,12 +32,63 @@ CMDLINE_TOOLS_SHA256="2d2d50857e4eb553af5a6dc3ad507a17adf43d115264b1afc116f95c92
 
 EXPECTED_PYTHON="python3.12"
 
-# Optional authoritative offline training assets (used when present).
-LOCKFILE="$REPO_ROOT/nar-v3-training-requirements.lock"
-WHEELHOUSE="$REPO_ROOT/wheelhouse-v3"
-WHEELHOUSE_SHA="$REPO_ROOT/wheelhouse-v3-sha256.csv"
+# Python dependency version contract (complete closure, mirrors the official
+# nar-v3-training-requirements.lock). Installed the same on every platform.
+REQUIREMENTS="$REPO_ROOT/requirements.txt"
+
+# Offline wheelhouse assets. Each wheelhouse pairs a directory of wheels with a
+# SHA-256 manifest CSV whose confirmed schema is: "Name","Length","SHA256".
+#
+# wheelhouse-v3 is a WINDOWS (win_amd64) wheelhouse and must never be installed
+# on Linux. A separate Linux wheelhouse can be added later as an independent
+# asset and will be used automatically on Linux when present.
+WIN_WHEELHOUSE="$REPO_ROOT/wheelhouse-v3"
+WIN_WHEELHOUSE_SHA="$REPO_ROOT/wheelhouse-v3-sha256.csv"
+LINUX_WHEELHOUSE="$REPO_ROOT/wheelhouse-v3-linux"
+LINUX_WHEELHOUSE_SHA="$REPO_ROOT/wheelhouse-v3-linux-sha256.csv"
 
 CURL=(curl --proto '=https' --tlsv1.2 -fsSL)
+
+# Strict, fail-closed verification of a wheelhouse against its SHA-256 manifest.
+# Manifest schema (confirmed): header "Name","Length","SHA256"; one wheel per row.
+# Fails closed on: unknown schema, missing file, size mismatch, or SHA mismatch.
+verify_wheelhouse_manifest() {
+  local wheelhouse="$1" manifest="$2"
+  python - "$wheelhouse" "$manifest" <<'PY'
+import csv, hashlib, os, sys
+wheelhouse, manifest = sys.argv[1], sys.argv[2]
+with open(manifest, newline="", encoding="utf-8-sig") as fh:
+    rows = list(csv.reader(fh))
+if not rows:
+    sys.exit("FATAL: empty manifest (fail-closed)")
+header = [c.strip() for c in rows[0]]
+if header != ["Name", "Length", "SHA256"]:
+    sys.exit(f"FATAL: unknown manifest schema {header!r} (fail-closed)")
+count = 0
+for row in rows[1:]:
+    if not row or all(not c.strip() for c in row):
+        continue
+    if len(row) != 3:
+        sys.exit(f"FATAL: malformed manifest row {row!r} (fail-closed)")
+    name, length, sha = row[0].strip(), row[1].strip(), row[2].strip().lower()
+    path = os.path.join(wheelhouse, name)
+    if not os.path.isfile(path):
+        sys.exit(f"FATAL: missing wheel {name} (fail-closed)")
+    actual_size = os.path.getsize(path)
+    if str(actual_size) != length:
+        sys.exit(f"FATAL: size mismatch for {name}: manifest={length} actual={actual_size} (fail-closed)")
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    if h.hexdigest().lower() != sha:
+        sys.exit(f"FATAL: SHA-256 mismatch for {name} (fail-closed)")
+    count += 1
+if count == 0:
+    sys.exit("FATAL: manifest lists no wheels (fail-closed)")
+print(f"    wheelhouse manifest OK: {count} wheels verified")
+PY
+}
 
 # --- System packages -------------------------------------------------------
 
@@ -119,43 +170,90 @@ fi
 export PIP_DISABLE_PIP_VERSION_CHECK=1
 export PIP_NO_INPUT=1
 
-# Authoritative offline dependency path.
+# --- Dependency installation (platform-aware, exact version contract) -------
 #
-# It requires ALL THREE assets to be present together:
-#   - nar-v3-training-requirements.lock
-#   - wheelhouse-v3/
-#   - wheelhouse-v3-sha256.csv
-# If any one of them is missing, the authoritative path must NOT be used.
-#
-# NOTE: the real schema of wheelhouse-v3-sha256.csv has not been confirmed yet.
-# We intentionally do NOT guess a CSV schema or implement its verification here.
-# Until the real file is available and its schema is confirmed, the authoritative
-# path is fail-closed and this script refuses to install from it.
-present=0
-[ -f "$LOCKFILE" ]      && present=$((present + 1))
-[ -d "$WHEELHOUSE" ]    && present=$((present + 1))
-[ -f "$WHEELHOUSE_SHA" ] && present=$((present + 1))
+# The version contract (requirements.txt) is the complete dependency closure and
+# is installed identically on every platform via `--no-deps`. Only the *source*
+# of the wheels differs by platform:
+#   - Linux:      a Linux offline wheelhouse if present (verified), else the
+#                 index (same pinned versions, Linux-compatible wheels).
+#                 The Windows wheelhouse-v3 is never used on Linux.
+#   - non-Linux:  the Windows wheelhouse-v3 if present (verified), else the index.
 
-if [ "$present" -eq 0 ]; then
-  echo "==> NOTE: authoritative offline assets not present" \
-       "(nar-v3-training-requirements.lock / wheelhouse-v3 / wheelhouse-v3-sha256.csv)."
-  echo "          Installing PROVISIONAL, UNVERIFIED versions from requirements.txt."
-  echo "          These are NOT confirmed as the official training environment."
-  python -m pip install -r requirements.txt
-elif [ "$present" -eq 3 ]; then
-  echo "FATAL: authoritative offline assets are present, but the" >&2
-  echo "       wheelhouse-v3-sha256.csv schema has not been confirmed." >&2
-  echo "       Refusing to install unverified dependencies (fail-closed)." >&2
-  echo "       Confirm the CSV schema and implement verified offline" >&2
-  echo "       installation before enabling this path." >&2
-  exit 1
+PLATFORM="$(uname -s)"
+echo "==> Installing Python dependencies (platform: $PLATFORM)"
+
+wheelhouse_pair_state() {  # echoes: both | none | partial
+  local dir="$1" csv="$2" n=0
+  [ -d "$dir" ] && n=$((n + 1))
+  [ -f "$csv" ] && n=$((n + 1))
+  case "$n" in 2) echo both;; 0) echo none;; *) echo partial;; esac
+}
+
+install_from_wheelhouse() {  # <dir> <csv>
+  verify_wheelhouse_manifest "$1" "$2"
+  python -m pip install --no-index --no-deps --find-links "$1" -r "$REQUIREMENTS"
+}
+
+install_from_index() {
+  python -m pip install --no-deps -r "$REQUIREMENTS"
+}
+
+if [ "$PLATFORM" = "Linux" ]; then
+  if [ -d "$WIN_WHEELHOUSE" ]; then
+    echo "    note: wheelhouse-v3 is a Windows (win_amd64) wheelhouse; ignored on Linux."
+  fi
+  case "$(wheelhouse_pair_state "$LINUX_WHEELHOUSE" "$LINUX_WHEELHOUSE_SHA")" in
+    both)
+      echo "    source: Linux offline wheelhouse (verified)"
+      install_from_wheelhouse "$LINUX_WHEELHOUSE" "$LINUX_WHEELHOUSE_SHA" ;;
+    partial)
+      echo "FATAL: incomplete Linux wheelhouse assets (fail-closed)." >&2
+      echo "       Requires both wheelhouse-v3-linux/ and wheelhouse-v3-linux-sha256.csv." >&2
+      echo "         - wheelhouse-v3-linux/            ($([ -d "$LINUX_WHEELHOUSE" ] && echo present || echo MISSING))" >&2
+      echo "         - wheelhouse-v3-linux-sha256.csv  ($([ -f "$LINUX_WHEELHOUSE_SHA" ] && echo present || echo MISSING))" >&2
+      exit 1 ;;
+    none)
+      echo "    source: package index (pinned versions, Linux-compatible wheels)"
+      install_from_index ;;
+  esac
 else
-  echo "FATAL: incomplete authoritative offline dependency assets (fail-closed)." >&2
-  echo "       The authoritative path requires ALL of:" >&2
-  echo "         - nar-v3-training-requirements.lock  ($([ -f "$LOCKFILE" ] && echo present || echo MISSING))" >&2
-  echo "         - wheelhouse-v3/                      ($([ -d "$WHEELHOUSE" ] && echo present || echo MISSING))" >&2
-  echo "         - wheelhouse-v3-sha256.csv            ($([ -f "$WHEELHOUSE_SHA" ] && echo present || echo MISSING))" >&2
-  exit 1
+  case "$(wheelhouse_pair_state "$WIN_WHEELHOUSE" "$WIN_WHEELHOUSE_SHA")" in
+    both)
+      echo "    source: Windows offline wheelhouse (verified)"
+      install_from_wheelhouse "$WIN_WHEELHOUSE" "$WIN_WHEELHOUSE_SHA" ;;
+    partial)
+      echo "FATAL: incomplete Windows wheelhouse assets (fail-closed)." >&2
+      echo "       Requires both wheelhouse-v3/ and wheelhouse-v3-sha256.csv." >&2
+      exit 1 ;;
+    none)
+      echo "    source: package index (pinned versions)"
+      install_from_index ;;
+  esac
 fi
+
+echo "==> Verifying installed versions match the contract exactly (fail-closed)"
+python - "$REQUIREMENTS" <<'PY'
+import sys
+from importlib.metadata import version, PackageNotFoundError
+req = sys.argv[1]
+mismatch = []
+with open(req) as fh:
+    for line in fh:
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        name, _, want = line.partition("==")
+        name, want = name.strip(), want.strip()
+        try:
+            got = version(name)
+        except PackageNotFoundError:
+            mismatch.append(f"{name}: MISSING (want {want})"); continue
+        if got != want:
+            mismatch.append(f"{name}: got {got}, want {want}")
+if mismatch:
+    sys.exit("FATAL: dependency version mismatch (fail-closed):\n  " + "\n  ".join(mismatch))
+print("    all pinned versions match the contract")
+PY
 
 echo "==> Development environment setup complete"
