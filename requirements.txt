@@ -1,0 +1,25 @@
+# Linux dependency version contract for the NAR data/training tooling (tools/).
+#
+# These pins mirror the authoritative training lock nar-v3-training-requirements.lock
+# (confirmed by the maintainer). This file is the complete dependency closure
+# (11 packages), so it can be installed with `pip install --no-deps` for an exact,
+# reproducible environment.
+#
+# Platform note: the existing wheelhouse-v3 asset contains Windows (win_amd64)
+# wheels and MUST NOT be used on Linux. On Linux (Cursor Cloud) the SAME versions
+# are installed from Linux-compatible wheels. A future Linux offline wheelhouse
+# (wheelhouse-v3-linux/ + wheelhouse-v3-linux-sha256.csv) can be dropped in and
+# .cursor/install.sh will use it offline with strict SHA-256 manifest verification.
+#
+# Any version change here must stay consistent with nar-v3-training-requirements.lock.
+joblib==1.5.3
+lightgbm==4.7.0
+narwhals==2.25.0
+numpy==2.5.2
+pandas==3.0.5
+python-dateutil==2.9.0.post0
+scikit-learn==1.9.0
+scipy==1.18.1
+six==1.17.0
+threadpoolctl==3.6.0
+tzdata==2026.3

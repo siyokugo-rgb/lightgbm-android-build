@@ -17,3 +17,12 @@ app/.cxx/
 # Python generated cache
 __pycache__/
 *.py[cod]
+
+# Offline dependency assets (authoritative copies live in Google Drive; never
+# commit their bodies or manifests to the repo). install.sh consumes these when
+# present and verifies them against their SHA-256 manifests.
+/wheelhouse-v3/
+/wheelhouse-v3-sha256.csv
+/wheelhouse-v3-linux/
+/wheelhouse-v3-linux-sha256.csv
+/nar-v3-training-requirements.lock
