@@ -11,6 +11,7 @@ import java.nio.charset.CharacterCodingException
 import java.nio.charset.CodingErrorAction
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import javax.net.ssl.HttpsURLConnection
 
@@ -821,13 +822,27 @@ object NarOddsDownloader {
                     "race header raceNo is not parseable"
                 )
 
-        val startTime =
+        val startTimeText =
             match.groupValues[6]
 
         require(
-            startTime.isNotBlank()
+            startTimeText.isNotBlank()
         ) {
             "race header start time is blank"
+        }
+
+        try {
+            LocalTime.parse(
+                startTimeText,
+                RACE_START_TIME_FORMAT
+            )
+        } catch (
+            e: Exception
+        ) {
+            throw IllegalArgumentException(
+                "race header start time is not parseable",
+                e
+            )
         }
 
         val headerDate =
@@ -959,7 +974,7 @@ object NarOddsDownloader {
     ): String? {
         val regex =
             Regex(
-                """(?i)\b${Regex.escape(name)}\s*=\s*(?:["']([^"']*)["']|([^\s>]+))"""
+                """(?i)(?<![A-Za-z0-9_-])${Regex.escape(name)}\s*=\s*(?:["']([^"']*)["']|([^\s>]+))"""
             )
 
         val match =
@@ -1143,6 +1158,9 @@ object NarOddsDownloader {
                     !Character.isWhitespace(
                         ch
                     ) &&
+                    !Character.isSpaceChar(
+                        ch
+                    ) &&
                     ch !=
                         '\uFEFF'
                 ) {
@@ -1165,12 +1183,17 @@ object NarOddsDownloader {
 
     private val RACE_HEADER_REGEX =
         Regex(
-            """(\d{4})年(\d{1,2})月(\d{1,2})日(?:（[^）]*）)?[\s\u00A0\u3000]*(.*?)[\s\u00A0\u3000]*第(\d+)競走[\s\u00A0\u3000]*(\d{1,2}:\d{2})発走"""
+            """(\d{4})年(\d{1,2})月(\d{1,2})日(?:（[^）]*）)?[\s\u00A0\u3000\u202F]*(.*?)[\s\u00A0\u3000\u202F]*第(\d+)競走[\s\u00A0\u3000\u202F]*(\d{1,2}:\d{2})発走"""
         )
 
     private val RACE_DATE_QUERY_FORMAT =
         DateTimeFormatter.ofPattern(
             "uuuu/MM/dd"
+        )
+
+    private val RACE_START_TIME_FORMAT =
+        DateTimeFormatter.ofPattern(
+            "H:mm"
         )
 
 

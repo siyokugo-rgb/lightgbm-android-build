@@ -503,11 +503,11 @@ class NarOddsDownloaderTest {
 
 
     @Test
-    fun raceIdentityAcceptsRealDownloadedHtmlSample() {
+    fun raceIdentityAcceptsSyntheticFixtureHtml() {
         val html =
             javaClass
                 .getResourceAsStream(
-                    "/odds/monbetsu-20260908-3r.html"
+                    "/odds/race-identity-synthetic.html"
                 )!!
                 .bufferedReader(
                     Charsets.UTF_8
@@ -861,6 +861,199 @@ class NarOddsDownloaderTest {
     }
 
 
+
+    @Test
+    fun dataIdSpoofIsRejected() {
+        assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            NarOddsDownloader
+                .validateRaceIdentity(
+                    html =
+                        identityHtml(
+                            raceListExtraAttrs =
+                                """data-id="RaceList"""",
+                            omitRaceListId =
+                                true
+                        ),
+                    babaCode = "36",
+                    raceDate =
+                        LocalDate.of(
+                            2026,
+                            9,
+                            8
+                        ),
+                    raceNo = 3
+                )
+        }
+    }
+
+    @Test
+    fun dataClassSpoofIsRejected() {
+        assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            NarOddsDownloader
+                .validateRaceIdentity(
+                    html =
+                        identityHtml(
+                            activeRaceExtraAttrs =
+                                """data-class="raceNum active"""",
+                            omitActiveRaceClass =
+                                true
+                        ),
+                    babaCode = "36",
+                    raceDate =
+                        LocalDate.of(
+                            2026,
+                            9,
+                            8
+                        ),
+                    raceNo = 3
+                )
+        }
+    }
+
+    @Test
+    fun dataHrefSpoofIsRejected() {
+        assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            NarOddsDownloader
+                .validateRaceIdentity(
+                    html =
+                        identityHtml(
+                            raceListExtraAttrs =
+                                """data-href="../TodayRaceInfo/RaceList?k_babaCode=36&amp;k_raceDate=2026%2F09%2F08&amp;k_raceNo=3"""",
+                            omitRaceListHref =
+                                true
+                        ),
+                    babaCode = "36",
+                    raceDate =
+                        LocalDate.of(
+                            2026,
+                            9,
+                            8
+                        ),
+                    raceNo = 3
+                )
+        }
+    }
+
+    @Test
+    fun venueWithIdeographicSpaceIsAccepted() {
+        NarOddsDownloader
+            .validateRaceIdentity(
+                html =
+                    identityHtml(
+                        headerVenue =
+                            "門　別",
+                        courseVenue =
+                            "門別"
+                    ),
+                babaCode = "36",
+                raceDate =
+                    LocalDate.of(
+                        2026,
+                        9,
+                        8
+                    ),
+                raceNo = 3
+            )
+    }
+
+    @Test
+    fun venueWithNbspIsAccepted() {
+        NarOddsDownloader
+            .validateRaceIdentity(
+                html =
+                    identityHtml(
+                        headerVenue =
+                            "門 別",
+                        courseVenue =
+                            "門別"
+                    ),
+                babaCode = "36",
+                raceDate =
+                    LocalDate.of(
+                        2026,
+                        9,
+                        8
+                    ),
+                raceNo = 3
+            )
+    }
+
+    @Test
+    fun venueWithNarrowNbspIsAccepted() {
+        NarOddsDownloader
+            .validateRaceIdentity(
+                html =
+                    identityHtml(
+                        headerVenue =
+                            "門 別",
+                        courseVenue =
+                            "門別"
+                    ),
+                babaCode = "36",
+                raceDate =
+                    LocalDate.of(
+                        2026,
+                        9,
+                        8
+                    ),
+                raceNo = 3
+            )
+    }
+
+    @Test
+    fun headerStartTime2500IsRejected() {
+        assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            NarOddsDownloader
+                .validateRaceIdentity(
+                    html =
+                        identityHtml(
+                            headerStartTime =
+                                "25:00"
+                        ),
+                    babaCode = "36",
+                    raceDate =
+                        LocalDate.of(
+                            2026,
+                            9,
+                            8
+                        ),
+                    raceNo = 3
+                )
+        }
+    }
+
+    @Test
+    fun headerStartTime1299IsRejected() {
+        assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            NarOddsDownloader
+                .validateRaceIdentity(
+                    html =
+                        identityHtml(
+                            headerStartTime =
+                                "12:99"
+                        ),
+                    babaCode = "36",
+                    raceDate =
+                        LocalDate.of(
+                            2026,
+                            9,
+                            8
+                        ),
+                    raceNo = 3
+                )
+        }
+    }
+
     private fun identityHtml(
         raceListHref: String =
             "../TodayRaceInfo/RaceList?k_babaCode=36&amp;k_raceDate=2026%2F09%2F08&amp;k_raceNo=3&amp;odds_flg=5",
@@ -874,8 +1067,14 @@ class NarOddsDownloaderTest {
             "門\u3000別",
         headerRaceNo: Int =
             3,
+        headerStartTime: String =
+            "15:30",
         courseVenue: String =
             "門別",
+        raceListExtraAttrs: String =
+            "",
+        activeRaceExtraAttrs: String =
+            "",
         includeActiveRace: Boolean =
             true,
         includeActiveCourse: Boolean =
@@ -883,14 +1082,47 @@ class NarOddsDownloaderTest {
         duplicateActiveRace: Boolean =
             false,
         duplicateActiveCourse: Boolean =
+            false,
+        omitRaceListId: Boolean =
+            false,
+        omitActiveRaceClass: Boolean =
+            false,
+        omitRaceListHref: Boolean =
             false
     ): String {
+        val raceListIdAttr =
+            if (
+                omitRaceListId
+            ) {
+                ""
+            } else {
+                """id="RaceList""""
+            }
+
+        val raceListHrefAttr =
+            if (
+                omitRaceListHref
+            ) {
+                ""
+            } else {
+                """href="$raceListHref""""
+            }
+
+        val activeRaceClassAttr =
+            if (
+                omitActiveRaceClass
+            ) {
+                ""
+            } else {
+                """class="$raceClass""""
+            }
+
         val activeRace =
             if (
                 includeActiveRace
             ) {
                 """
-                <a class="$raceClass">3R</a>
+                <a $activeRaceClassAttr $activeRaceExtraAttrs>3R</a>
                 """ +
                     if (
                         duplicateActiveRace
@@ -939,10 +1171,10 @@ class NarOddsDownloaderTest {
         <body>
           <h1>オッズ</h1>
           <div>単勝・複勝</div>
-          <a id="RaceList" href="$raceListHref">当日メニュー</a>
+          <a $raceListIdAttr $raceListHrefAttr $raceListExtraAttrs>当日メニュー</a>
           $activeCourse
           $activeRace
-          <h4>${headerDateText}　${headerVenue}　第${headerRaceNo}競走　15:30発走</h4>
+          <h4>${headerDateText}　${headerVenue}　第${headerRaceNo}競走　${headerStartTime}発走</h4>
         </body>
         </html>
         """.trimIndent()
