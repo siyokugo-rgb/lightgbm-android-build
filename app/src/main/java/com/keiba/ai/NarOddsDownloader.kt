@@ -4,13 +4,16 @@ import java.io.ByteArrayInputStream
 import java.io.FilterInputStream
 import java.io.InputStream
 import java.net.URL
+import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.ByteBuffer
 import java.nio.charset.CharacterCodingException
 import java.nio.charset.CodingErrorAction
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.time.format.ResolverStyle
 import javax.net.ssl.HttpsURLConnection
 
 object NarOddsDownloader {
@@ -186,6 +189,15 @@ object NarOddsDownloader {
 
             validateResponseBytes(
                 bytes
+            )
+
+            validateRaceIdentity(
+                html = decodeUtf8Html(
+                    bytes
+                ),
+                babaCode = babaCode,
+                raceDate = raceDate,
+                raceNo = raceNo
             )
 
             require(
@@ -479,6 +491,728 @@ object NarOddsDownloader {
             }
         }
     }
+
+
+    internal fun validateRaceIdentity(
+        html: String,
+        babaCode: String,
+        raceDate: LocalDate,
+        raceNo: Int
+    ) {
+        require(
+            html.isNotBlank()
+        ) {
+            "odds html is blank"
+        }
+
+        validateRaceListAnchor(
+            html = html,
+            babaCode = babaCode,
+            raceDate = raceDate,
+            raceNo = raceNo
+        )
+
+        val activeCourseVenue =
+            validateActiveCourse(
+                html
+            )
+
+        validateActiveRace(
+            html = html,
+            raceNo = raceNo
+        )
+
+        validateRaceHeader(
+            html = html,
+            raceDate = raceDate,
+            raceNo = raceNo,
+            activeCourseVenue =
+                activeCourseVenue
+        )
+    }
+
+    private fun decodeUtf8Html(
+        bytes: ByteArray
+    ): String {
+        val decoder =
+            StandardCharsets.UTF_8
+                .newDecoder()
+                .onMalformedInput(
+                    CodingErrorAction.REPORT
+                )
+                .onUnmappableCharacter(
+                    CodingErrorAction.REPORT
+                )
+
+        return try {
+            decoder.decode(
+                ByteBuffer.wrap(
+                    bytes
+                )
+            ).toString()
+        } catch (
+            e: CharacterCodingException
+        ) {
+            throw IllegalArgumentException(
+                "odds response is not valid UTF-8",
+                e
+            )
+        }
+    }
+
+    private fun validateRaceListAnchor(
+        html: String,
+        babaCode: String,
+        raceDate: LocalDate,
+        raceNo: Int
+    ) {
+        val anchors =
+            ANCHOR_REGEX
+                .findAll(
+                    html
+                )
+                .map {
+                    it.groupValues[1] to
+                        it.groupValues[2]
+                }
+                .filter {
+                    (attrs, _) ->
+                    elementId(
+                        attrs
+                    ) == "RaceList"
+                }
+                .toList()
+
+        require(
+            anchors.size == 1
+        ) {
+            "RaceList anchor must be unique"
+        }
+
+        val attrs =
+            anchors.single().first
+
+        val hrefRaw =
+            attributeValue(
+                attrs,
+                "href"
+            )
+
+        require(
+            !hrefRaw.isNullOrBlank()
+        ) {
+            "RaceList href is missing"
+        }
+
+        val href =
+            decodeHtmlEntities(
+                hrefRaw
+            )
+
+        val params =
+            parseQueryParameters(
+                href
+            )
+
+        val htmlBabaCode =
+            params["k_babaCode"]
+
+        val htmlRaceDate =
+            params["k_raceDate"]
+
+        val htmlRaceNo =
+            params["k_raceNo"]
+
+        require(
+            htmlBabaCode != null &&
+                htmlRaceDate != null &&
+                htmlRaceNo != null
+        ) {
+            "RaceList query identity is incomplete"
+        }
+
+        require(
+            htmlBabaCode ==
+                babaCode
+        ) {
+            "RaceList babaCode mismatch"
+        }
+
+        val parsedDate =
+            try {
+                LocalDate.parse(
+                    htmlRaceDate,
+                    RACE_DATE_QUERY_FORMAT
+                )
+            } catch (
+                e: Exception
+            ) {
+                throw IllegalArgumentException(
+                    "RaceList raceDate is not parseable",
+                    e
+                )
+            }
+
+        require(
+            parsedDate ==
+                raceDate
+        ) {
+            "RaceList raceDate mismatch"
+        }
+
+        val parsedRaceNo =
+            htmlRaceNo.toIntOrNull()
+                ?: throw IllegalArgumentException(
+                    "RaceList raceNo is not parseable"
+                )
+
+        require(
+            parsedRaceNo ==
+                raceNo
+        ) {
+            "RaceList raceNo mismatch"
+        }
+    }
+
+    private fun validateActiveRace(
+        html: String,
+        raceNo: Int
+    ) {
+        val activeRaces =
+            ANCHOR_REGEX
+                .findAll(
+                    html
+                )
+                .map {
+                    it.groupValues[1] to
+                        it.groupValues[2]
+                }
+                .filter {
+                    (attrs, _) ->
+                    val tokens =
+                        classTokens(
+                            attrs
+                        )
+
+                    "raceNum" in tokens &&
+                        "active" in tokens
+                }
+                .toList()
+
+        require(
+            activeRaces.size == 1
+        ) {
+            "active race navigation must be unique"
+        }
+
+        val label =
+            stripHtmlTags(
+                activeRaces.single().second
+            ).trim()
+
+        val match =
+            ACTIVE_RACE_LABEL_REGEX
+                .matchEntire(
+                    label
+                )
+                ?: throw IllegalArgumentException(
+                    "active race label is not parseable"
+                )
+
+        val parsedRaceNo =
+            match.groupValues[1]
+                .toIntOrNull()
+                ?: throw IllegalArgumentException(
+                    "active race number is not parseable"
+                )
+
+        require(
+            parsedRaceNo ==
+                raceNo
+        ) {
+            "active race number mismatch"
+        }
+    }
+
+    private fun validateActiveCourse(
+        html: String
+    ): String {
+        val activeCourses =
+            ANCHOR_REGEX
+                .findAll(
+                    html
+                )
+                .map {
+                    it.groupValues[1] to
+                        it.groupValues[2]
+                }
+                .filter {
+                    (attrs, _) ->
+                    val tokens =
+                        classTokens(
+                            attrs
+                        )
+
+                    "courseBtn" in tokens &&
+                        "active" in tokens
+                }
+                .toList()
+
+        require(
+            activeCourses.size == 1
+        ) {
+            "active course navigation must be unique"
+        }
+
+        val venue =
+            stripHtmlTags(
+                activeCourses.single().second
+            ).trim()
+
+        require(
+            venue.isNotEmpty()
+        ) {
+            "active course venue is blank"
+        }
+
+        return venue
+    }
+
+    private fun validateRaceHeader(
+        html: String,
+        raceDate: LocalDate,
+        raceNo: Int,
+        activeCourseVenue: String
+    ) {
+        val matches =
+            RACE_HEADER_REGEX
+                .findAll(
+                    html
+                )
+                .toList()
+
+        require(
+            matches.size == 1
+        ) {
+            "race header must be unique"
+        }
+
+        val match =
+            matches.single()
+
+        val year =
+            match.groupValues[1]
+                .toInt()
+
+        val month =
+            match.groupValues[2]
+                .toInt()
+
+        val day =
+            match.groupValues[3]
+                .toInt()
+
+        val venue =
+            match.groupValues[4]
+                .trim()
+
+        val headerRaceNo =
+            match.groupValues[5]
+                .toIntOrNull()
+                ?: throw IllegalArgumentException(
+                    "race header raceNo is not parseable"
+                )
+
+        val startTimeText =
+            match.groupValues[6]
+
+        require(
+            startTimeText.isNotBlank()
+        ) {
+            "race header start time is blank"
+        }
+
+        try {
+            LocalTime.parse(
+                startTimeText,
+                RACE_START_TIME_FORMAT
+            )
+        } catch (
+            e: Exception
+        ) {
+            throw IllegalArgumentException(
+                "race header start time is not parseable",
+                e
+            )
+        }
+
+        val headerDate =
+            try {
+                LocalDate.of(
+                    year,
+                    month,
+                    day
+                )
+            } catch (
+                e: Exception
+            ) {
+                throw IllegalArgumentException(
+                    "race header date is not parseable",
+                    e
+                )
+            }
+
+        require(
+            headerDate ==
+                raceDate
+        ) {
+            "race header date mismatch"
+        }
+
+        require(
+            headerRaceNo ==
+                raceNo
+        ) {
+            "race header raceNo mismatch"
+        }
+
+        require(
+            stripAllUnicodeWhitespace(
+                venue
+            ) ==
+                stripAllUnicodeWhitespace(
+                    activeCourseVenue
+                )
+        ) {
+            "race header venue mismatch"
+        }
+    }
+
+    private fun parseQueryParameters(
+        rawHref: String
+    ): Map<String, String> {
+        val queryIndex =
+            rawHref.indexOf(
+                '?'
+            )
+
+        require(
+            queryIndex >= 0 &&
+                queryIndex <
+                    rawHref.length - 1
+        ) {
+            "RaceList href query is missing"
+        }
+
+        val query =
+            rawHref.substring(
+                queryIndex + 1
+            )
+
+        val params =
+            linkedMapOf<String, String>()
+
+        for (
+            part in query.split(
+                '&'
+            )
+        ) {
+            if (part.isEmpty()) {
+                continue
+            }
+
+            val eq =
+                part.indexOf(
+                    '='
+                )
+
+            require(
+                eq > 0
+            ) {
+                "RaceList query parameter is malformed"
+            }
+
+            val key =
+                URLDecoder.decode(
+                    part.substring(
+                        0,
+                        eq
+                    ),
+                    StandardCharsets.UTF_8
+                        .name()
+                )
+
+            val value =
+                URLDecoder.decode(
+                    part.substring(
+                        eq + 1
+                    ),
+                    StandardCharsets.UTF_8
+                        .name()
+                )
+
+            val previous =
+                params.put(
+                    key,
+                    value
+                )
+
+            require(
+                previous == null ||
+                    previous ==
+                        value
+            ) {
+                "RaceList query parameter is duplicated with conflict"
+            }
+        }
+
+        return params
+    }
+
+    private fun attributeValue(
+        attrs: String,
+        name: String
+    ): String? {
+        val regex =
+            Regex(
+                """(?i)(?:^|\s+)${Regex.escape(name)}\s*=\s*(?:["']([^"']*)["']|([^\s>]+))"""
+            )
+
+        val matches =
+            regex.findAll(
+                attrs
+            ).toList()
+
+        require(
+            matches.size <= 1
+        ) {
+            "duplicate HTML attribute: $name"
+        }
+
+        if (
+            matches.isEmpty()
+        ) {
+            return null
+        }
+
+        val match =
+            matches.single()
+
+        return match.groupValues[1]
+            .ifEmpty {
+                match.groupValues[2]
+            }
+    }
+
+    private fun elementId(
+        attrs: String
+    ): String? =
+        attributeValue(
+            attrs,
+            "id"
+        )
+
+    private fun classTokens(
+        attrs: String
+    ): Set<String> {
+        val raw =
+            attributeValue(
+                attrs,
+                "class"
+            )
+                ?: return emptySet()
+
+        return raw
+            .split(
+                Regex(
+                    """\s+"""
+                )
+            )
+            .filter {
+                it.isNotEmpty()
+            }
+            .toSet()
+    }
+
+    private fun decodeHtmlEntities(
+        input: String
+    ): String {
+        val output =
+            StringBuilder(
+                input.length
+            )
+
+        var index =
+            0
+
+        while (
+            index < input.length
+        ) {
+            val ch =
+                input[index]
+
+            if (ch != '&') {
+                output.append(
+                    ch
+                )
+                index++
+                continue
+            }
+
+            val semi =
+                input.indexOf(
+                    ';',
+                    startIndex = index + 1
+                )
+
+            if (
+                semi < 0 ||
+                semi >
+                    index + 10
+            ) {
+                output.append(
+                    '&'
+                )
+                index++
+                continue
+            }
+
+            val entity =
+                input.substring(
+                    index + 1,
+                    semi
+                )
+
+            val decoded: String? =
+                when {
+                    entity == "amp" ->
+                        "&"
+
+                    entity == "lt" ->
+                        "<"
+
+                    entity == "gt" ->
+                        ">"
+
+                    entity == "quot" ->
+                        "\""
+
+                    entity == "apos" ->
+                        "'"
+
+                    entity.startsWith(
+                        "#x"
+                    ) ||
+                        entity.startsWith(
+                            "#X"
+                        ) ->
+                        entity
+                            .substring(
+                                2
+                            )
+                            .toIntOrNull(
+                                16
+                            )
+                            ?.toChar()
+                            ?.toString()
+
+                    entity.startsWith(
+                        "#"
+                    ) ->
+                        entity
+                            .substring(
+                                1
+                            )
+                            .toIntOrNull()
+                            ?.toChar()
+                            ?.toString()
+
+                    else ->
+                        null
+                }
+
+            if (
+                decoded != null
+            ) {
+                output.append(
+                    decoded
+                )
+                index =
+                    semi + 1
+            } else {
+                output.append(
+                    '&'
+                )
+                index++
+            }
+        }
+
+        return output.toString()
+    }
+
+    private fun stripHtmlTags(
+        input: String
+    ): String =
+        input.replace(
+            Regex(
+                """(?is)<[^>]*>"""
+            ),
+            ""
+        )
+
+    private fun stripAllUnicodeWhitespace(
+        input: String
+    ): String =
+        buildString(
+            input.length
+        ) {
+            for (
+                ch in input
+            ) {
+                if (
+                    !Character.isWhitespace(
+                        ch
+                    ) &&
+                    !Character.isSpaceChar(
+                        ch
+                    ) &&
+                    ch !=
+                        '\uFEFF'
+                ) {
+                    append(
+                        ch
+                    )
+                }
+            }
+        }
+
+    private val ANCHOR_REGEX =
+        Regex(
+            """(?is)<a\b([^>]*)>(.*?)</a>"""
+        )
+
+    private val ACTIVE_RACE_LABEL_REGEX =
+        Regex(
+            """^\s*(\d+)\s*R\s*$"""
+        )
+
+    private val RACE_HEADER_REGEX =
+        Regex(
+            """(\d{4})年(\d{1,2})月(\d{1,2})日(?:（[^）]*）)?[\s\u00A0\u3000\u202F]*(.*?)[\s\u00A0\u3000\u202F]*第(\d+)競走[\s\u00A0\u3000\u202F]*(\d{1,2}:\d{2})発走"""
+        )
+
+    private val RACE_DATE_QUERY_FORMAT =
+        DateTimeFormatter.ofPattern(
+            "uuuu/MM/dd"
+        )
+
+    private val RACE_START_TIME_FORMAT =
+        DateTimeFormatter.ofPattern(
+            "H:mm"
+        ).withResolverStyle(
+            ResolverStyle.STRICT
+        )
+
 
     private fun startsWithHtmlDocument(
         text: String
