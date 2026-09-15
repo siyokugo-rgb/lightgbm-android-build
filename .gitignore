@@ -14,6 +14,13 @@ app/.cxx/
 # Local Python virtual environment
 .venv/
 
+# rclone / Google Drive credentials (never commit)
+rclone.conf
+**/rclone.conf
+.rclone.conf
+**/.rclone.conf
+*.rclone.conf
+
 # Python generated cache
 __pycache__/
 *.py[cod]
