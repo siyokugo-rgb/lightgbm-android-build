@@ -84,6 +84,47 @@ drive_root_folder_id_flag() {
   printf -- '--drive-root-folder-id\n%s\n' "${EXPECTED_DRIVE_ROOT_FOLDER_ID}"
 }
 
+assert_rclone_remote_is_drive() {
+  # Fail-closed: remote backend must be Google Drive (type=drive).
+  # Uses `rclone config redacted` so secrets are not printed in plaintext by rclone.
+  # Never echo the redacted config body to stdout/stderr/logs.
+  local rclone_bin="$1"
+  local remote_name="${KEIBA_WEATHER_RCLONE_REMOTE-}"
+  [[ -n "${remote_name}" ]] || die "KEIBA_WEATHER_RCLONE_REMOTE is required"
+  case "${remote_name}" in
+    *:*)
+      die "KEIBA_WEATHER_RCLONE_REMOTE must be the remote name only (no colon/path): ${remote_name}"
+      ;;
+  esac
+
+  local redacted_out=""
+  local rc=0
+  set +e
+  redacted_out="$("${rclone_bin}" config redacted "${remote_name}" 2>&1)"
+  rc=$?
+  set -euo pipefail
+
+  if [[ "${rc}" -ne 0 ]]; then
+    redacted_out=""
+    die "rclone remote config lookup failed for '${remote_name}' (exit ${rc}); refusing to proceed"
+  fi
+
+  local type_value=""
+  local line
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    # Match exact key `type` only; ignore unrelated keys.
+    if [[ "${line}" =~ ^[[:space:]]*type[[:space:]]*=[[:space:]]*([^[:space:]]+)[[:space:]]*$ ]]; then
+      type_value="${BASH_REMATCH[1]}"
+    fi
+  done <<< "${redacted_out}"
+
+  # Drop config body immediately so it cannot be accidentally printed later.
+  redacted_out=""
+
+  [[ -n "${type_value}" ]] || die "rclone remote '${remote_name}' has no type field; refusing to proceed"
+  [[ "${type_value}" == "drive" ]] || die "rclone remote '${remote_name}' type must be exactly 'drive' (non-drive backend refused)"
+}
+
 remote_rel_path() {
   local rel="${KEIBA_WEATHER_DRIVE_REMOTE_REL_PATH-${DEFAULT_REMOTE_REL_PATH}}"
   rel="${rel#/}"

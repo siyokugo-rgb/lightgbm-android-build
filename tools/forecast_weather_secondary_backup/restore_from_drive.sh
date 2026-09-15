@@ -27,6 +27,7 @@ assert_restore_root_empty "${RESTORE}"
 
 REMOTE="$(remote_spec)"
 RCLONE="$(resolve_rclone_bin)"
+assert_rclone_remote_is_drive "${RCLONE}"
 
 mkdir -p -- "${RESTORE}"
 RESTORE="$(abs_canonical "${RESTORE}")"

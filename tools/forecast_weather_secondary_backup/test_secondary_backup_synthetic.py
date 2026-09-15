@@ -174,6 +174,41 @@ case "${cmd}" in
       fi
     done < <(find "${left_dir}" -type f -print0)
     ;;
+  config)
+    sub="${1:-}"
+    shift || true
+    {
+      printf 'ARG=%s\n' "${sub}"
+      for a in "$@"; do
+        printf 'ARG=%s\n' "${a}"
+      done
+    } >> "${log_file}"
+    if [[ "${sub}" != "redacted" ]]; then
+      echo "unsupported config subcommand: ${sub}" >&2
+      exit 101
+    fi
+    remote_name="${1:-}"
+    [[ -n "${remote_name}" ]] || { echo 'config redacted needs remote name' >&2; exit 102; }
+    if [[ "${FAKE_RCLONE_CONFIG_FAIL:-0}" == "1" ]]; then
+      echo 'fake rclone config redacted failed' >&2
+      exit 103
+    fi
+    expected_remote="${FAKE_RCLONE_REMOTE_NAME:-gdrive}"
+    if [[ "${remote_name}" != "${expected_remote}" ]]; then
+      echo "remote not found: ${remote_name}" >&2
+      exit 104
+    fi
+    remote_type="${FAKE_RCLONE_REMOTE_TYPE:-drive}"
+    # Emit redacted-style config including dummy secrets; scripts must never print this body.
+    cat <<EOF
+[${remote_name}]
+type = ${remote_type}
+client_id = XXX
+client_secret = dummy-client-secret-must-not-leak
+token = {"access_token":"dummy-access-token-must-not-leak","refresh_token":"dummy-refresh-token-must-not-leak","expiry":"XXXX"}
+team_drive =
+EOF
+    ;;
   *)
     echo "unsupported rclone command: ${cmd}" >&2
     exit 100
@@ -301,17 +336,25 @@ class SecondaryBackupSyntheticTest(unittest.TestCase):
         self.assertIn("--one-way", log_text)
         self.assertIn("gdrive:weather/forecast", log_text)
         self.assertNotIn("delete", log_text.lower().split("cmd=")[0])
-
         invocations = parse_rclone_invocations(log_text)
-        # backup copy, backup check, independent check, restore copy, restore check
-        self.assertEqual(len(invocations), 5, invocations)
+        # Each script validates remote type via `config redacted` before copy/check.
+        # backup: config + copy + check
+        # check:  config + check
+        # restore: config + copy + check
         self.assertEqual(
             [cmd for cmd, _ in invocations],
-            ["copy", "check", "check", "copy", "check"],
+            ["config", "copy", "check", "config", "check", "config", "copy", "check"],
+            invocations,
         )
-        for cmd, args in invocations:
+        transfer_invocations = [(cmd, args) for cmd, args in invocations if cmd in ("copy", "check")]
+        self.assertEqual(len(transfer_invocations), 5, transfer_invocations)
+        for cmd, args in transfer_invocations:
             assert_drive_root_bound(self, args)
             self.assertNotIn("delete", cmd)
+        for cmd, args in invocations:
+            if cmd == "config":
+                self.assertEqual(args[:2], ["redacted", "gdrive"], args)
+                self.assertNotIn("--drive-root-folder-id", args)
 
     def test_wrong_folder_id_fails(self) -> None:
         env = dict(self.base_env)
@@ -421,6 +464,60 @@ class SecondaryBackupSyntheticTest(unittest.TestCase):
             original,
         )
         self.assertTrue((self.mirror / "snap2" / "forecast.json").is_file())
+
+
+    def test_remote_type_drive_passes(self) -> None:
+        env = dict(self.base_env)
+        env["FAKE_RCLONE_REMOTE_TYPE"] = "drive"
+        r = self.run_script("backup_to_drive.sh", env=env)
+        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        log_text = self.log.read_text(encoding="utf-8")
+        self.assertIn("CMD=config", log_text)
+        self.assertIn("ARG=redacted", log_text)
+
+    def test_remote_type_local_fails(self) -> None:
+        env = dict(self.base_env)
+        env["FAKE_RCLONE_REMOTE_TYPE"] = "local"
+        r = self.run_script("backup_to_drive.sh", env=env)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("type must be exactly 'drive'", r.stderr)
+        self.assertNotIn("dummy-client-secret-must-not-leak", r.stdout + r.stderr)
+
+    def test_remote_type_s3_fails(self) -> None:
+        env = dict(self.base_env)
+        env["FAKE_RCLONE_REMOTE_TYPE"] = "s3"
+        r = self.run_script("check_primary_vs_remote.sh", env=env)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("type must be exactly 'drive'", r.stderr)
+
+    def test_remote_config_lookup_fails(self) -> None:
+        env = dict(self.base_env)
+        env["FAKE_RCLONE_CONFIG_FAIL"] = "1"
+        r = self.run_script("backup_to_drive.sh", env=env)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("config lookup failed", r.stderr)
+
+    def test_remote_missing_fails(self) -> None:
+        env = dict(self.base_env)
+        env["FAKE_RCLONE_REMOTE_NAME"] = "otherremote"
+        r = self.run_script("restore_from_drive.sh", env=env)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("config lookup failed", r.stderr)
+
+    def test_redacted_config_secrets_not_leaked(self) -> None:
+        env = dict(self.base_env)
+        env["FAKE_RCLONE_REMOTE_TYPE"] = "drive"
+        r = self.run_script("backup_to_drive.sh", env=env)
+        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        combined = r.stdout + r.stderr
+        for secret in (
+            "dummy-client-secret-must-not-leak",
+            "dummy-access-token-must-not-leak",
+            "dummy-refresh-token-must-not-leak",
+            "client_secret =",
+            "access_token",
+        ):
+            self.assertNotIn(secret, combined)
 
 
 if __name__ == "__main__":

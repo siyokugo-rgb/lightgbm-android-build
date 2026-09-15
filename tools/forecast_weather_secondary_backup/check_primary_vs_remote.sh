@@ -16,6 +16,7 @@ assert_drive_root_folder_id
 PRIMARY="$(require_primary_archive_root)"
 REMOTE="$(remote_spec)"
 RCLONE="$(resolve_rclone_bin)"
+assert_rclone_remote_is_drive "${RCLONE}"
 
 snapshot_count="$(count_snapshots "${PRIMARY}")"
 [[ "${snapshot_count}" -gt 0 ]] || die "primary archive has no forecast.json snapshots: ${PRIMARY}"

@@ -23,6 +23,13 @@ rclone remote 名そのものは環境ごとに決めてよい（例: `gdrive`�
 `--drive-root-folder-id 1Qz1QAX58jrekp80kyH5jrRmHaggH2iJb`
 
 を明示付与し、固定 ROOT_FOLDER_ID を script 側で強制する。
+
+さらに script は backup/check/restore 開始前に
+`rclone config redacted <remote>` で remote backend を確認し、
+`type = drive` の完全一致だけを fail-closed で要求する。
+remote 不存在・config 取得失敗・type 欠損・type!=drive はすべて拒否する。
+redacted config 本文（CLIENT_SECRET / token 等）は stdout/stderr/log に出さない。
+
 env の `KEIBA_WEATHER_DRIVE_ROOT_FOLDER_ID` は期待値との一致確認に使い、
 実際の rclone 引数には script 内の固定定数を渡す。
 
