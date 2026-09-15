@@ -520,5 +520,61 @@ class SecondaryBackupSyntheticTest(unittest.TestCase):
             self.assertNotIn(secret, combined)
 
 
+    def test_env_only_type_drive_passes_without_config(self) -> None:
+        env = dict(self.base_env)
+        env["RCLONE_CONFIG_GDRIVE_TYPE"] = "drive"
+        # If env-only validation works, config redacted must not be required.
+        env["FAKE_RCLONE_CONFIG_FAIL"] = "1"
+        env["RCLONE_CONFIG_GDRIVE_CLIENT_SECRET"] = "env-only-dummy-client-secret-must-not-leak"
+        env["RCLONE_CONFIG_GDRIVE_TOKEN"] = '{"access_token":"env-only-dummy-token-must-not-leak"}'
+        r = self.run_script("backup_to_drive.sh", env=env)
+        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        self.assertIn("RCLONE_CONFIG_GDRIVE_TYPE (env-only)", r.stdout + r.stderr)
+        log_text = self.log.read_text(encoding="utf-8")
+        self.assertNotIn("CMD=config", log_text)
+        combined = r.stdout + r.stderr
+        self.assertNotIn("env-only-dummy-client-secret-must-not-leak", combined)
+        self.assertNotIn("env-only-dummy-token-must-not-leak", combined)
+
+    def test_env_only_type_local_fails(self) -> None:
+        env = dict(self.base_env)
+        env["RCLONE_CONFIG_GDRIVE_TYPE"] = "local"
+        r = self.run_script("backup_to_drive.sh", env=env)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("RCLONE_CONFIG_GDRIVE_TYPE must be exactly 'drive'", r.stderr)
+
+    def test_env_only_type_s3_fails(self) -> None:
+        env = dict(self.base_env)
+        env["RCLONE_CONFIG_GDRIVE_TYPE"] = "s3"
+        r = self.run_script("check_primary_vs_remote.sh", env=env)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("RCLONE_CONFIG_GDRIVE_TYPE must be exactly 'drive'", r.stderr)
+
+    def test_env_only_type_empty_falls_back_to_config(self) -> None:
+        env = dict(self.base_env)
+        env["RCLONE_CONFIG_GDRIVE_TYPE"] = ""
+        env["FAKE_RCLONE_REMOTE_TYPE"] = "drive"
+        r = self.run_script("backup_to_drive.sh", env=env)
+        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        log_text = self.log.read_text(encoding="utf-8")
+        self.assertIn("CMD=config", log_text)
+        self.assertIn("ARG=redacted", log_text)
+
+    def test_env_only_secrets_marked_not_printed(self) -> None:
+        env = dict(self.base_env)
+        env["RCLONE_CONFIG_GDRIVE_TYPE"] = "drive"
+        env["RCLONE_CONFIG_GDRIVE_CLIENT_ID"] = "env-dummy-client-id-must-not-leak"
+        env["RCLONE_CONFIG_GDRIVE_CLIENT_SECRET"] = "env-dummy-client-secret-must-not-leak"
+        env["RCLONE_CONFIG_GDRIVE_TOKEN"] = "env-dummy-token-must-not-leak"
+        r = self.run_script("backup_to_drive.sh", env=env)
+        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        combined = r.stdout + r.stderr
+        self.assertIn("RCLONE_CONFIG_GDRIVE_CLIENT_SECRET is set (value intentionally not printed)", combined)
+        self.assertIn("RCLONE_CONFIG_GDRIVE_TOKEN is set (value intentionally not printed)", combined)
+        self.assertNotIn("env-dummy-client-id-must-not-leak", combined)
+        self.assertNotIn("env-dummy-client-secret-must-not-leak", combined)
+        self.assertNotIn("env-dummy-token-must-not-leak", combined)
+
+
 if __name__ == "__main__":
     unittest.main()

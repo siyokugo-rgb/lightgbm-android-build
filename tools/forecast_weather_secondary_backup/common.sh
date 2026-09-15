@@ -86,8 +86,10 @@ drive_root_folder_id_flag() {
 
 assert_rclone_remote_is_drive() {
   # Fail-closed: remote backend must be Google Drive (type=drive).
-  # Uses `rclone config redacted` so secrets are not printed in plaintext by rclone.
-  # Never echo the redacted config body to stdout/stderr/logs.
+  # Prefer env-only Cloud Agent remotes for the fixed remote name `gdrive`
+  # via RCLONE_CONFIG_GDRIVE_TYPE (no rclone.conf required).
+  # Other remote names do not invent env mappings; they use config-file fallback.
+  # Never echo token / client_secret / redacted config bodies.
   local rclone_bin="$1"
   local remote_name="${KEIBA_WEATHER_RCLONE_REMOTE-}"
   [[ -n "${remote_name}" ]] || die "KEIBA_WEATHER_RCLONE_REMOTE is required"
@@ -97,6 +99,18 @@ assert_rclone_remote_is_drive() {
       ;;
   esac
 
+  # Fixed Cloud Agent remote name -> fixed env var (no fuzzy conversion).
+  if [[ "${remote_name}" == "gdrive" ]]; then
+    local env_type="${RCLONE_CONFIG_GDRIVE_TYPE-}"
+    if [[ -n "${env_type}" ]]; then
+      [[ "${env_type}" == "drive" ]] || \
+        die "RCLONE_CONFIG_GDRIVE_TYPE must be exactly 'drive' (non-drive env backend refused)"
+      printf 'INFO: rclone remote gdrive validated via RCLONE_CONFIG_GDRIVE_TYPE (env-only)\n'
+      return 0
+    fi
+  fi
+
+  # Fallback: config-file remote via `rclone config redacted` (secrets stay redacted).
   local redacted_out=""
   local rc=0
   set +e
@@ -124,6 +138,7 @@ assert_rclone_remote_is_drive() {
   [[ -n "${type_value}" ]] || die "rclone remote '${remote_name}' has no type field; refusing to proceed"
   [[ "${type_value}" == "drive" ]] || die "rclone remote '${remote_name}' type must be exactly 'drive' (non-drive backend refused)"
 }
+
 
 remote_rel_path() {
   local rel="${KEIBA_WEATHER_DRIVE_REMOTE_REL_PATH-${DEFAULT_REMOTE_REL_PATH}}"
@@ -188,6 +203,9 @@ refuse_secret_env_echo() {
   for name in \
     RCLONE_CONFIG \
     RCLONE_CONFIG_PASS \
+    RCLONE_CONFIG_GDRIVE_CLIENT_ID \
+    RCLONE_CONFIG_GDRIVE_CLIENT_SECRET \
+    RCLONE_CONFIG_GDRIVE_TOKEN \
     GOOGLE_CLIENT_SECRET \
     GOOGLE_REFRESH_TOKEN \
     CLIENT_SECRET \

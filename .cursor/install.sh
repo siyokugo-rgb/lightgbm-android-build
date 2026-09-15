@@ -303,4 +303,62 @@ if mismatch:
 print("    all pinned versions match the contract")
 PY
 
+
+# --- rclone (pinned Linux amd64, checksum-verified, fail-closed) ------------
+#
+# Official release assets: https://downloads.rclone.org/v1.75.1/
+# SHA-256 taken from the official SHA256SUMS for
+#   rclone-v1.75.1-linux-amd64.zip
+# (https://downloads.rclone.org/v1.75.1/SHA256SUMS).
+# Do not invent or approximate this digest.
+
+RCLONE_VERSION="1.75.1"
+RCLONE_ARCHIVE="rclone-v${RCLONE_VERSION}-linux-amd64.zip"
+RCLONE_URL="https://downloads.rclone.org/v${RCLONE_VERSION}/${RCLONE_ARCHIVE}"
+RCLONE_SHA256="982b5aa772841168f8e380f139e9e787b2a105403e32b94da8676a0e1c0a13ab"
+RCLONE_INSTALL_DIR="${HOME}/.local/bin"
+RCLONE_BIN_PATH="${RCLONE_INSTALL_DIR}/rclone"
+
+echo "==> Installing rclone v${RCLONE_VERSION} (linux-amd64, checksum-verified)"
+need_rclone_install=1
+if [ -x "$RCLONE_BIN_PATH" ]; then
+  installed_line="$("$RCLONE_BIN_PATH" version 2>/dev/null | head -n1 || true)"
+  case "$installed_line" in
+    *"rclone v${RCLONE_VERSION}"*)
+      echo "    rclone v${RCLONE_VERSION} already present at $RCLONE_BIN_PATH"
+      need_rclone_install=0
+      ;;
+  esac
+fi
+
+if [ "$need_rclone_install" -eq 1 ]; then
+  tmp="$(mktemp -d)"
+  "${CURL[@]}" -o "$tmp/${RCLONE_ARCHIVE}" "$RCLONE_URL"
+  actual_sha="$(sha256sum "$tmp/${RCLONE_ARCHIVE}" | awk '{print $1}')"
+  if [ "$actual_sha" != "$RCLONE_SHA256" ]; then
+    echo "FATAL: rclone checksum mismatch (fail-closed)" >&2
+    echo "  expected: $RCLONE_SHA256" >&2
+    echo "  actual:   $actual_sha" >&2
+    rm -rf "$tmp"
+    exit 1
+  fi
+  echo "    checksum OK ($actual_sha)"
+  unzip -q -o "$tmp/${RCLONE_ARCHIVE}" -d "$tmp"
+  mkdir -p "$RCLONE_INSTALL_DIR"
+  # Official zip layout: rclone-vVERSION-linux-amd64/rclone
+  install -m 0755 "$tmp/rclone-v${RCLONE_VERSION}-linux-amd64/rclone" "$RCLONE_BIN_PATH"
+  rm -rf "$tmp"
+fi
+
+# Keep ~/.local/bin on PATH for interactive shells (idempotent; no sudo).
+if [ -f "$HOME/.bashrc" ] && ! grep -qF '.local/bin' "$HOME/.bashrc" 2>/dev/null; then
+  {
+    echo ""
+    echo "# User-local binaries (rclone; added by lightgbm-android-build install)"
+    echo 'export PATH="$HOME/.local/bin:$PATH"'
+  } >> "$HOME/.bashrc"
+fi
+export PATH="${HOME}/.local/bin:${PATH}"
+"$RCLONE_BIN_PATH" version | head -n1
+
 echo "==> Development environment setup complete"
