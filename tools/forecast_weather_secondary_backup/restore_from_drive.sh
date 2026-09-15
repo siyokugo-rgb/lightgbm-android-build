@@ -40,20 +40,24 @@ printf 'INFO: remote_spec=%s\n' "${REMOTE}"
 
 # Pull remote -> restore root. Never touch primary.
 # Restore root was required empty, so --ignore-existing is a safety belt only.
+# Force fixed Drive ROOT_FOLDER_ID on every invocation (do not trust remote config alone).
+mapfile -t _DRIVE_ROOT_ARGS < <(drive_root_folder_id_flag)
 "${RCLONE}" copy \
   "${REMOTE}/" \
   "${RESTORE}/" \
   --ignore-existing \
   --create-empty-src-dirs=false \
   --checksum \
-  --error-on-no-transfer=false
+  --error-on-no-transfer=false \
+  "${_DRIVE_ROOT_ARGS[@]}"
 
 # Fail-closed: every remote file must exist in restore with matching checksum.
 "${RCLONE}" check \
   "${REMOTE}/" \
   "${RESTORE}/" \
   --one-way \
-  --checksum
+  --checksum \
+  "${_DRIVE_ROOT_ARGS[@]}"
 
 snapshot_count="$(count_snapshots "${RESTORE}")"
 [[ "${snapshot_count}" -gt 0 ]] || die "restore root has no forecast.json snapshots: ${RESTORE}"

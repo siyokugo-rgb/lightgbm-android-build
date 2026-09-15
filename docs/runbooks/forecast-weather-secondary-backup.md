@@ -14,8 +14,17 @@ R4 Weather を COMPLETE にするには、本手順の backup → check → rest
 - remote 相対パス（固定）: `weather/forecast/`
 - 「競馬」等の名前検索は禁止。ROOT_FOLDER_ID 以外で folder を解決しない。
 
-rclone remote は、上記 ROOT_FOLDER_ID を root とする Google Drive remote を使う。
-remote 名そのものは環境ごとに決めてよい（例: `gdrive`）。パスは付けない。
+rclone remote 名そのものは環境ごとに決めてよい（例: `gdrive`）。パスは付けない。
+
+重要: remote 設定に正しい root が入っていることだけには依存しない。
+`backup_to_drive.sh` / `check_primary_vs_remote.sh` / `restore_from_drive.sh` は
+すべての rclone `copy` / `check` 呼び出しに
+
+`--drive-root-folder-id 1Qz1QAX58jrekp80kyH5jrRmHaggH2iJb`
+
+を明示付与し、固定 ROOT_FOLDER_ID を script 側で強制する。
+env の `KEIBA_WEATHER_DRIVE_ROOT_FOLDER_ID` は期待値との一致確認に使い、
+実際の rclone 引数には script 内の固定定数を渡す。
 
 ## 環境変数一覧（値は書かない）
 
@@ -128,6 +137,8 @@ rm -rf -- "${KEIBA_NAR_WEATHER_RESTORE_ROOT}"
 
 - 必須 env 欠落 / 空
 - `KEIBA_WEATHER_DRIVE_ROOT_FOLDER_ID` が固定 ID と不一致
+- rclone 呼び出しに `--drive-root-folder-id` が無い / 値が固定 ID と異なる
+  （script は常に固定定数を渡す。fake rclone / 実運用でも欠落は fail-closed）
 - Archive / restore が相対パス、または Git working tree 内
 - primary と restore が同一または入れ子
 - primary に `forecast.json` が無い
@@ -139,6 +150,7 @@ rm -rf -- "${KEIBA_NAR_WEATHER_RESTORE_ROOT}"
 
 - remote 既存ファイルの上書き・削除（`--ignore-existing`、delete 系フラグ不使用）
 - Drive folder の名前検索
+- remote 設定だけに root を依存（script が `--drive-root-folder-id` を強制）
 - secret 値のログ出力
 - production Kotlin への rclone 依存追加
 

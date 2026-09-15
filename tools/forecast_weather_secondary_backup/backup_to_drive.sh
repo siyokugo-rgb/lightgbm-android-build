@@ -32,13 +32,16 @@ printf 'INFO: snapshot_count=%s\n' "${snapshot_count}"
 printf 'INFO: drive_root_folder_id=%s\n' "${EXPECTED_DRIVE_ROOT_FOLDER_ID}"
 
 # Copy only missing destinations. Existing remote paths are never overwritten.
+# Force fixed Drive ROOT_FOLDER_ID on every invocation (do not trust remote config alone).
+mapfile -t _DRIVE_ROOT_ARGS < <(drive_root_folder_id_flag)
 "${RCLONE}" copy \
   "${PRIMARY}/" \
   "${REMOTE}/" \
   --ignore-existing \
   --create-empty-src-dirs=false \
   --checksum \
-  --error-on-no-transfer=false
+  --error-on-no-transfer=false \
+  "${_DRIVE_ROOT_ARGS[@]}"
 
 # Fail-closed: every primary file must exist remotely with matching checksum.
 # If a remote path already existed with different content, this check fails.
@@ -46,6 +49,7 @@ printf 'INFO: drive_root_folder_id=%s\n' "${EXPECTED_DRIVE_ROOT_FOLDER_ID}"
   "${PRIMARY}/" \
   "${REMOTE}/" \
   --one-way \
-  --checksum
+  --checksum \
+  "${_DRIVE_ROOT_ARGS[@]}"
 
 printf 'OK: secondary backup copy+check passed (append-only, no overwrite)\n'

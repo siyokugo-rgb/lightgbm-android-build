@@ -24,10 +24,12 @@ printf 'INFO: primary_archive=%s\n' "${PRIMARY}"
 printf 'INFO: remote_spec=%s\n' "${REMOTE}"
 printf 'INFO: snapshot_count=%s\n' "${snapshot_count}"
 
+mapfile -t _DRIVE_ROOT_ARGS < <(drive_root_folder_id_flag)
 "${RCLONE}" check \
   "${PRIMARY}/" \
   "${REMOTE}/" \
   --one-way \
-  --checksum
+  --checksum \
+  "${_DRIVE_ROOT_ARGS[@]}"
 
 printf 'OK: primary matches secondary backup (one-way checksum check)\n'

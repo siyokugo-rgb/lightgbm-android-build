@@ -26,6 +26,7 @@ set -euo pipefail
 cmd="${1:-}"
 shift || true
 log_file="${FAKE_RCLONE_LOG:?}"
+expected_root="${FAKE_EXPECTED_DRIVE_ROOT_FOLDER_ID:?}"
 {
   printf 'CMD=%s\n' "${cmd}"
   for a in "$@"; do
@@ -33,8 +34,38 @@ log_file="${FAKE_RCLONE_LOG:?}"
   done
 } >> "${log_file}"
 
+require_drive_root_folder_id() {
+  local seen=0
+  local value=""
+  local -a rest=()
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --drive-root-folder-id)
+        shift
+        [[ $# -gt 0 ]] || { echo 'missing value for --drive-root-folder-id' >&2; exit 88; }
+        value="$1"
+        seen=1
+        shift
+        ;;
+      *)
+        rest+=("$1")
+        shift
+        ;;
+    esac
+  done
+  [[ "${seen}" -eq 1 ]] || { echo 'missing --drive-root-folder-id' >&2; exit 87; }
+  [[ "${value}" == "${expected_root}" ]] || {
+    echo "wrong --drive-root-folder-id: ${value}" >&2
+    exit 86
+  }
+  # shellcheck disable=SC2034
+  PARSED_ARGS=("${rest[@]}")
+}
+
 case "${cmd}" in
   copy)
+    require_drive_root_folder_id "$@"
+    set -- "${PARSED_ARGS[@]}"
     src=""; dst=""; ignore=0
     while [[ $# -gt 0 ]]; do
       case "$1" in
@@ -91,6 +122,8 @@ case "${cmd}" in
     fi
     ;;
   check)
+    require_drive_root_folder_id "$@"
+    set -- "${PARSED_ARGS[@]}"
     left=""; right=""; oneway=0
     while [[ $# -gt 0 ]]; do
       case "$1" in
@@ -162,6 +195,32 @@ def make_snapshot(root: Path, name: str = "snap1") -> Path:
     return snap
 
 
+def parse_rclone_invocations(log_text: str) -> list[tuple[str, list[str]]]:
+    invocations: list[tuple[str, list[str]]] = []
+    cmd: str | None = None
+    args: list[str] = []
+    for line in log_text.splitlines():
+        if line.startswith("CMD="):
+            if cmd is not None:
+                invocations.append((cmd, args))
+            cmd = line[len("CMD=") :]
+            args = []
+        elif line.startswith("ARG="):
+            args.append(line[len("ARG=") :])
+    if cmd is not None:
+        invocations.append((cmd, args))
+    return invocations
+
+
+def assert_drive_root_bound(test: unittest.TestCase, args: list[str]) -> None:
+    try:
+        idx = args.index("--drive-root-folder-id")
+    except ValueError as exc:
+        raise AssertionError(f"missing --drive-root-folder-id in {args}") from exc
+    test.assertLess(idx + 1, len(args), f"missing value after --drive-root-folder-id in {args}")
+    test.assertEqual(args[idx + 1], FIXED_ROOT_ID)
+
+
 class SecondaryBackupSyntheticTest(unittest.TestCase):
     def setUp(self) -> None:
         self.tmpdir = Path(tempfile.mkdtemp(prefix="weather-backup-synth-"))
@@ -189,6 +248,7 @@ class SecondaryBackupSyntheticTest(unittest.TestCase):
             "RCLONE_BIN": str(self.fake_rclone),
             "FAKE_REMOTE_MIRROR": str(self.mirror),
             "FAKE_RCLONE_LOG": str(self.log),
+            "FAKE_EXPECTED_DRIVE_ROOT_FOLDER_ID": FIXED_ROOT_ID,
             # Ensure secret-looking values are set but must not appear in output.
             "GOOGLE_CLIENT_SECRET": "super-secret-client",
             "GOOGLE_REFRESH_TOKEN": "super-secret-refresh",
@@ -200,6 +260,15 @@ class SecondaryBackupSyntheticTest(unittest.TestCase):
         return subprocess.run(
             ["bash", str(script)],
             env=env if env is not None else self.base_env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    def run_fake_rclone(self, *args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [str(self.fake_rclone), *args],
+            env=self.base_env,
             text=True,
             capture_output=True,
             check=False,
@@ -233,12 +302,47 @@ class SecondaryBackupSyntheticTest(unittest.TestCase):
         self.assertIn("gdrive:weather/forecast", log_text)
         self.assertNotIn("delete", log_text.lower().split("cmd=")[0])
 
+        invocations = parse_rclone_invocations(log_text)
+        # backup copy, backup check, independent check, restore copy, restore check
+        self.assertEqual(len(invocations), 5, invocations)
+        self.assertEqual(
+            [cmd for cmd, _ in invocations],
+            ["copy", "check", "check", "copy", "check"],
+        )
+        for cmd, args in invocations:
+            assert_drive_root_bound(self, args)
+            self.assertNotIn("delete", cmd)
+
     def test_wrong_folder_id_fails(self) -> None:
         env = dict(self.base_env)
         env["KEIBA_WEATHER_DRIVE_ROOT_FOLDER_ID"] = "WRONG_ID"
         r = self.run_script("backup_to_drive.sh", env=env)
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("ROOT_FOLDER_ID", r.stderr)
+
+    def test_fake_rclone_rejects_missing_root_folder_id(self) -> None:
+        r = self.run_fake_rclone(
+            "check",
+            f"{self.primary}/",
+            "gdrive:weather/forecast/",
+            "--one-way",
+            "--checksum",
+        )
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("missing --drive-root-folder-id", r.stderr)
+
+    def test_fake_rclone_rejects_wrong_root_folder_id(self) -> None:
+        r = self.run_fake_rclone(
+            "check",
+            f"{self.primary}/",
+            "gdrive:weather/forecast/",
+            "--one-way",
+            "--checksum",
+            "--drive-root-folder-id",
+            "WRONG_FOLDER_ID",
+        )
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("wrong --drive-root-folder-id", r.stderr)
 
     def test_empty_primary_fails(self) -> None:
         empty = self.tmpdir / "empty-primary"

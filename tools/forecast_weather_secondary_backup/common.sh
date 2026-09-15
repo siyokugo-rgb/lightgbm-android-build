@@ -78,6 +78,12 @@ assert_drive_root_folder_id() {
     die "KEIBA_WEATHER_DRIVE_ROOT_FOLDER_ID mismatch (name-based folder search is forbidden; fixed ROOT_FOLDER_ID required)"
 }
 
+# Every Drive rclone invocation must pass this fixed id. Do not rely on remote
+# config alone; never resolve the folder by display name.
+drive_root_folder_id_flag() {
+  printf -- '--drive-root-folder-id\n%s\n' "${EXPECTED_DRIVE_ROOT_FOLDER_ID}"
+}
+
 remote_rel_path() {
   local rel="${KEIBA_WEATHER_DRIVE_REMOTE_REL_PATH-${DEFAULT_REMOTE_REL_PATH}}"
   rel="${rel#/}"
