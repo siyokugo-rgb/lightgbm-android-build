@@ -24,11 +24,12 @@ rclone remote 名そのものは環境ごとに決めてよい（例: `gdrive`�
 
 を明示付与し、固定 ROOT_FOLDER_ID を script 側で強制する。
 
-さらに script は backup/check/restore 開始前に
-`rclone config redacted <remote>` で remote backend を確認し、
-`type = drive` の完全一致だけを fail-closed で要求する。
+さらに script は backup/check/restore 開始前に remote backend を fail-closed 確認する。
+Cloud Agent では remote 名 `gdrive` + `RCLONE_CONFIG_GDRIVE_TYPE=drive` の env-only 検証を優先し、
+それ以外は `rclone config redacted <remote>` へ fallback する。
+`type = drive` の完全一致だけを許可する。
 remote 不存在・config 取得失敗・type 欠損・type!=drive はすべて拒否する。
-redacted config 本文（CLIENT_SECRET / token 等）は stdout/stderr/log に出さない。
+redacted config 本文や Runtime Secrets の値は stdout/stderr/log に出さない。
 
 env の `KEIBA_WEATHER_DRIVE_ROOT_FOLDER_ID` は期待値との一致確認に使い、
 実際の rclone 引数には script 内の固定定数を渡す。
@@ -169,6 +170,66 @@ python3 tools/forecast_weather_secondary_backup/test_secondary_backup_synthetic.
 
 fake `RCLONE_BIN` で copy/check の引数契約・fail-closed・secret 非表示を検証する。
 実 Google Drive / OAuth は使わない。
+
+
+
+## Cursor Cloud Agent（rclone + Runtime Secrets）
+
+会社PCに Google OAuth credential を置かず、Cloud Agent 経由で Drive へアクセスする。
+**実OAuth認証・実Drive接続・実credential投入は本prepの範囲外**（後続の自宅/Secrets登録工程）。
+
+### 方式
+
+- `rclone.conf` を Git / VM へ恒久保存しない（既存方針維持）
+- Cloud Agent 用 remote 名は固定: `gdrive`
+- 非secret設定は環境変数で与える
+- 秘密値は Cursor **Runtime Secrets** から注入する（値は本runbookに書かない）
+
+### 非secret環境変数
+
+| 変数 | 値 |
+| --- | --- |
+| `RCLONE_CONFIG_GDRIVE_TYPE` | `drive` |
+| `KEIBA_WEATHER_RCLONE_REMOTE` | `gdrive` |
+| `KEIBA_WEATHER_DRIVE_ROOT_FOLDER_ID` | `1Qz1QAX58jrekp80kyH5jrRmHaggH2iJb`（固定） |
+| `KEIBA_WEATHER_DRIVE_REMOTE_REL_PATH` | `weather/forecast`（省略可） |
+
+### Cursor Runtime Secrets（後で登録・値は記載しない）
+
+| Secret名 | 用途 |
+| --- | --- |
+| `RCLONE_CONFIG_GDRIVE_CLIENT_ID` | Google OAuth client id |
+| `RCLONE_CONFIG_GDRIVE_CLIENT_SECRET` | Google OAuth client secret |
+| `RCLONE_CONFIG_GDRIVE_TOKEN` | rclone token JSON（access/refresh/expiry） |
+
+Runtime Secrets を追加・変更したあとは、**既存 Agent ではなく新しい Cloud Agent を起動**すること。
+既存セッションには新しい Secrets が自動では入らない。
+
+### type=drive 検証（script）
+
+`assert_rclone_remote_is_drive` は次の順で fail-closed 確認する:
+
+1. remote 名が `gdrive` かつ `RCLONE_CONFIG_GDRIVE_TYPE` が非空
+   → 値が exactly `drive` のときだけ PASS（local/s3/空以外は拒否）
+2. それ以外（env TYPE 無し、または remote 名が `gdrive` 以外）
+   → 既存どおり `rclone config redacted <remote>` で config-file remote を検証
+
+token / client_secret 等の値は stdout/stderr/log に出さない。
+
+### 固定 ROOT_FOLDER_ID
+
+全5 rclone invocation（backup copy/check、独立 check、restore copy/check）に
+`--drive-root-folder-id 1Qz1QAX58jrekp80kyH5jrRmHaggH2iJb` を明示する。
+「競馬」等の folder 名検索は禁止。
+
+### credential-free smoke（任意）
+
+Cloud Agent 上で rclone 導入後、API を叩かずに env-only remote 認識だけ確認できる:
+
+```bash
+./tools/forecast_weather_secondary_backup/smoke_env_only_remote.sh
+```
+
 
 ## R4 判定メモ
 
