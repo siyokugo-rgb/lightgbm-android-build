@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "candidate_profile": "nar-v3-sex1",
+  "input_dataset": "nar-v3-sex1-pit-safe",
+  "input_checkpoint": {
+    "start_ym": "202101",
+    "end_ym": "202412",
+    "months": 48,
+    "dataset_root_sha256": "e224c3cd74c42576c23941e61e4a8cac499d5622421bff6ed1ce4e71a9d4a6b9"
+  },
+  "categorical_dictionary": {
+    "fit_split": "train",
+    "normalization": "none",
+    "missing_id": 0,
+    "unknown_id": 1,
+    "known_id_start": 2,
+    "known_value_order": "unicode_lexicographic"
+  },
+  "input_features": {
+    "race": [
+      "feature_race__競馬場",
+      "feature_race__競走年月日"
+    ],
+    "entry": [
+      "feature_entry__毛色",
+      "feature_entry__生年月日",
+      "feature_entry__父馬名",
+      "feature_entry__母馬名",
+      "feature_entry__母父馬名",
+      "feature_entry__性"
+    ]
+  },
+  "categorical_passthrough": [
+    "feature_race__競馬場",
+    "feature_entry__毛色",
+    "feature_entry__父馬名",
+    "feature_entry__母馬名",
+    "feature_entry__母父馬名",
+    "feature_entry__性"
+  ],
+  "race_date": {
+    "source": "feature_race__競走年月日",
+    "format": "YYYYMMDD",
+    "outputs": [
+      "race_month",
+      "race_day_of_year",
+      "race_weekday_mon0"
+    ]
+  },
+  "birth_date": {
+    "source": "feature_entry__生年月日",
+    "format": "YYYYMMDD",
+    "race_date_source": "feature_race__競走年月日",
+    "outputs": [
+      "age_days"
+    ]
+  },
+  "drop_raw_after_transform": [
+    "feature_race__競走年月日",
+    "feature_entry__生年月日"
+  ],
+  "android_parity": {
+    "category_unknown_required": true,
+    "category_dictionary_must_be_exported": true,
+    "raw_string_unicode_normalization": "none",
+    "date_calculation": "proleptic_gregorian"
+  }
+}
