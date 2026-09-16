@@ -43,6 +43,15 @@ EXPECTED_ENTRY_RAW_FEATURES = [
     "feature_entry__母父馬名",
 ]
 
+EXPECTED_SEX1_ENTRY_RAW_FEATURES = [
+    "feature_entry__毛色",
+    "feature_entry__生年月日",
+    "feature_entry__父馬名",
+    "feature_entry__母馬名",
+    "feature_entry__母父馬名",
+    "feature_entry__性",
+]
+
 EXPECTED_CATEGORICAL = [
     "feature_race__競馬場",
     "feature_entry__毛色",
@@ -50,6 +59,37 @@ EXPECTED_CATEGORICAL = [
     "feature_entry__母馬名",
     "feature_entry__母父馬名",
 ]
+
+EXPECTED_SEX1_CATEGORICAL = [
+    "feature_race__競馬場",
+    "feature_entry__毛色",
+    "feature_entry__父馬名",
+    "feature_entry__母馬名",
+    "feature_entry__母父馬名",
+    "feature_entry__性",
+]
+
+CANDIDATE_PROFILE_SEX1 = "nar-v3-sex1"
+CANDIDATE_DEV_START_YM = "202101"
+CANDIDATE_DEV_END_YM = "202412"
+CANDIDATE_DEV_MONTHS = 48
+SEX1_INPUT_DATASET = "nar-v3-sex1-pit-safe"
+SEX1_OUTPUT_DATASET = "nar-v3-sex1-model-input"
+SEX1_DATASET_ROOT_SHA256 = (
+    "e224c3cd74c42576c23941e61e4a8cac499d5622421bff6ed1ce4e71a9d4a6b9"
+)
+
+FORBIDDEN_RAW_INPUT_FEATURES = (
+    "feature_entry__齢",
+    "feature_entry__着順",
+    "feature_entry__タイム",
+    "feature_entry__着差",
+    "feature_race__着順",
+    "齢",
+    "着順",
+    "タイム",
+    "着差",
+)
 
 EXPECTED_NUMERIC_OUTPUTS = [
     "race_month",
@@ -143,30 +183,104 @@ def load_json(path):
         return json.load(f)
 
 
-def validate_config(cfg):
-    if cfg.get("version") != 1:
-        raise ValueError("nar-v3 transform version must be 1")
-    if cfg.get("input_dataset") != "nar-v3-pit-safe":
-        raise ValueError("unexpected input dataset")
+def production_schema():
+    return {
+        "candidate_profile": None,
+        "input_dataset": "nar-v3-pit-safe",
+        "output_dataset": "nar-v3-model-input",
+        "race_raw": list(EXPECTED_RACE_RAW_FEATURES),
+        "entry_raw": list(EXPECTED_ENTRY_RAW_FEATURES),
+        "categorical": list(EXPECTED_CATEGORICAL),
+        "numeric": list(EXPECTED_NUMERIC_OUTPUTS),
+        "checkpoint_start_ym": "202101",
+        "checkpoint_end_ym": "202607",
+        "checkpoint_months": 67,
+    }
 
-    checkpoint = cfg.get("input_checkpoint")
-    if not isinstance(checkpoint, dict):
-        raise ValueError("input checkpoint missing")
-    if checkpoint.get("start_ym") != "202101":
-        raise ValueError("unexpected checkpoint start")
-    if checkpoint.get("end_ym") != "202607":
-        raise ValueError("unexpected checkpoint end")
-    if checkpoint.get("months") != 67:
-        raise ValueError("unexpected checkpoint month count")
-    root_hash = checkpoint.get("dataset_root_sha256")
-    if (
-        not isinstance(root_hash, str)
-        or len(root_hash) != 64
-        or any(c not in "0123456789abcdef" for c in root_hash)
-    ):
-        raise ValueError("invalid expected dataset root SHA-256")
 
-    dictionary = cfg.get("categorical_dictionary")
+def sex1_schema():
+    return {
+        "candidate_profile": CANDIDATE_PROFILE_SEX1,
+        "input_dataset": SEX1_INPUT_DATASET,
+        "output_dataset": SEX1_OUTPUT_DATASET,
+        "race_raw": list(EXPECTED_RACE_RAW_FEATURES),
+        "entry_raw": list(EXPECTED_SEX1_ENTRY_RAW_FEATURES),
+        "categorical": list(EXPECTED_SEX1_CATEGORICAL),
+        "numeric": list(EXPECTED_NUMERIC_OUTPUTS),
+        "checkpoint_start_ym": CANDIDATE_DEV_START_YM,
+        "checkpoint_end_ym": CANDIDATE_DEV_END_YM,
+        "checkpoint_months": CANDIDATE_DEV_MONTHS,
+    }
+
+
+def schema_for_profile(candidate_profile=None):
+    if candidate_profile is None:
+        return production_schema()
+    if candidate_profile == CANDIDATE_PROFILE_SEX1:
+        return sex1_schema()
+    raise ValueError(
+        "unknown candidate profile: "
+        f"{candidate_profile}"
+    )
+
+
+def resolve_schema(schema=None):
+    if schema is None:
+        return production_schema()
+    return schema
+
+
+def assert_candidate_development_period(months):
+    if not months:
+        raise ValueError("candidate period is empty")
+    for ym in months:
+        valid_ym(ym)
+        if (
+            ym < CANDIDATE_DEV_START_YM
+            or ym > CANDIDATE_DEV_END_YM
+        ):
+            raise ValueError(
+                "candidate period outside "
+                "DEVELOPMENT window "
+                f"{CANDIDATE_DEV_START_YM}-"
+                f"{CANDIDATE_DEV_END_YM}: {ym}"
+            )
+
+
+def forbidden_candidate_out_roots():
+    repo_root = Path(__file__).resolve().parent.parent
+    return [
+        repo_root / "data-manifests" / "nar-v3-dataset",
+        repo_root / "data-manifests" / "nar-v3-transformed",
+        repo_root / "data-manifests" / "nar-v3-baseline9",
+        Path("/workspaces/nar-v3-dataset"),
+        Path("/workspaces/nar-v3-transformed"),
+        Path("/workspaces/nar-v3-baseline9"),
+    ]
+
+
+def assert_candidate_out_root_allowed(out_root):
+    if out_root is None:
+        raise ValueError(
+            "candidate mode requires explicit --out"
+        )
+
+    resolved = out_root.resolve()
+    for forbidden in forbidden_candidate_out_roots():
+        forbidden_resolved = forbidden.resolve()
+        if (
+            resolved == forbidden_resolved
+            or forbidden_resolved in resolved.parents
+            or resolved in forbidden_resolved.parents
+        ):
+            raise ValueError(
+                "candidate output root collides "
+                "with production/baseline root: "
+                f"{resolved}"
+            )
+
+
+def validate_dictionary_contract(dictionary):
     if dictionary != {
         "fit_split": "train",
         "normalization": "none",
@@ -177,23 +291,18 @@ def validate_config(cfg):
     }:
         raise ValueError("unexpected categorical dictionary contract")
 
-    inputs = cfg.get("input_features")
-    if not isinstance(inputs, dict):
-        raise ValueError("input_features missing")
-    race = ensure_string_list(inputs.get("race"), "input_features.race")
-    entry = ensure_string_list(inputs.get("entry"), "input_features.entry")
-    if race != EXPECTED_RACE_RAW_FEATURES:
-        raise ValueError("unexpected V3 race raw feature schema")
-    if entry != EXPECTED_ENTRY_RAW_FEATURES:
-        raise ValueError("unexpected V3 entry raw feature schema")
 
-    categorical = ensure_string_list(
-        cfg.get("categorical_passthrough"),
-        "categorical_passthrough",
-    )
-    if categorical != EXPECTED_CATEGORICAL:
-        raise ValueError("unexpected V3 categorical schema")
+def validate_root_hash_hex(root_hash):
+    if (
+        not isinstance(root_hash, str)
+        or len(root_hash) != 64
+        or any(c not in "0123456789abcdef" for c in root_hash)
+    ):
+        raise ValueError("invalid expected dataset root SHA-256")
+    return root_hash
 
+
+def validate_shared_transform_contract(cfg):
     if cfg.get("race_date") != {
         "source": "feature_race__競走年月日",
         "format": "YYYYMMDD",
@@ -227,18 +336,81 @@ def validate_config(cfg):
     }:
         raise ValueError("unexpected Android parity contract")
 
-    return {
-        "categorical": categorical,
-        "numeric": list(EXPECTED_NUMERIC_OUTPUTS),
-        "expected_root_hash": root_hash,
-    }
+
+def validate_config(cfg, candidate_profile=None):
+    schema = schema_for_profile(candidate_profile)
+
+    if cfg.get("version") != 1:
+        raise ValueError("nar-v3 transform version must be 1")
+
+    if candidate_profile is None:
+        if cfg.get("candidate_profile") is not None:
+            raise ValueError(
+                "production transform config must not set candidate_profile"
+            )
+        if cfg.get("input_dataset") != "nar-v3-pit-safe":
+            raise ValueError("unexpected input dataset")
+    else:
+        if cfg.get("candidate_profile") != candidate_profile:
+            raise ValueError("candidate_profile mismatch")
+        if cfg.get("input_dataset") != schema["input_dataset"]:
+            raise ValueError("unexpected input dataset")
+
+    checkpoint = cfg.get("input_checkpoint")
+    if not isinstance(checkpoint, dict):
+        raise ValueError("input checkpoint missing")
+    if checkpoint.get("start_ym") != schema["checkpoint_start_ym"]:
+        raise ValueError("unexpected checkpoint start")
+    if checkpoint.get("end_ym") != schema["checkpoint_end_ym"]:
+        raise ValueError("unexpected checkpoint end")
+    if checkpoint.get("months") != schema["checkpoint_months"]:
+        raise ValueError("unexpected checkpoint month count")
+    root_hash = validate_root_hash_hex(
+        checkpoint.get("dataset_root_sha256")
+    )
+
+    validate_dictionary_contract(cfg.get("categorical_dictionary"))
+
+    inputs = cfg.get("input_features")
+    if not isinstance(inputs, dict):
+        raise ValueError("input_features missing")
+    race = ensure_string_list(inputs.get("race"), "input_features.race")
+    entry = ensure_string_list(inputs.get("entry"), "input_features.entry")
+    if race != schema["race_raw"]:
+        if candidate_profile is None:
+            raise ValueError("unexpected V3 race raw feature schema")
+        raise ValueError("unexpected candidate race raw feature schema")
+    if entry != schema["entry_raw"]:
+        if candidate_profile is None:
+            raise ValueError("unexpected V3 entry raw feature schema")
+        raise ValueError("unexpected candidate entry raw feature schema")
+
+    categorical = ensure_string_list(
+        cfg.get("categorical_passthrough"),
+        "categorical_passthrough",
+    )
+    if categorical != schema["categorical"]:
+        if candidate_profile is None:
+            raise ValueError("unexpected V3 categorical schema")
+        raise ValueError("unexpected candidate categorical schema")
+
+    validate_shared_transform_contract(cfg)
+
+    schema["expected_root_hash"] = root_hash
+    schema["categorical"] = categorical
+    schema["numeric"] = list(EXPECTED_NUMERIC_OUTPUTS)
+    return schema
 
 
-def checkpoint_months(checkpoint):
+def checkpoint_months(checkpoint, schema=None):
+    schema = resolve_schema(schema)
     if checkpoint.get("format_version") != 1:
         raise ValueError("checkpoint format version mismatch")
-    if checkpoint.get("dataset") != "nar-v3-pit-safe":
+    if checkpoint.get("dataset") != schema["input_dataset"]:
         raise ValueError("checkpoint dataset mismatch")
+    if schema["candidate_profile"] is not None:
+        if checkpoint.get("candidate_profile") != schema["candidate_profile"]:
+            raise ValueError("checkpoint candidate_profile mismatch")
 
     period = checkpoint.get("period")
     if not isinstance(period, dict):
@@ -249,6 +421,39 @@ def checkpoint_months(checkpoint):
     if period.get("months") != len(months):
         raise ValueError("checkpoint month count mismatch")
     return months
+
+
+def validate_candidate_checkpoint_identity(checkpoint, schema):
+    if checkpoint.get("dataset") != schema["input_dataset"]:
+        raise ValueError("checkpoint dataset mismatch")
+    if checkpoint.get("candidate_profile") != schema["candidate_profile"]:
+        raise ValueError("checkpoint candidate_profile mismatch")
+
+    period = checkpoint.get("period")
+    if not isinstance(period, dict):
+        raise ValueError("checkpoint period missing")
+    if period.get("start_ym") != schema["checkpoint_start_ym"]:
+        raise ValueError("checkpoint period start mismatch")
+    if period.get("end_ym") != schema["checkpoint_end_ym"]:
+        raise ValueError("checkpoint period end mismatch")
+    if period.get("months") != schema["checkpoint_months"]:
+        raise ValueError("checkpoint month count mismatch")
+
+    audit = checkpoint.get("audit")
+    if not isinstance(audit, dict):
+        raise ValueError("checkpoint audit missing")
+    if audit.get("full_dataset_audit") != "PASS":
+        raise ValueError("checkpoint audit is not PASS")
+    if audit.get("locked_oot_open") is not False:
+        raise ValueError("checkpoint locked/OOT open is not false")
+    source_ym_max = audit.get("source_ym_max")
+    if (
+        not isinstance(source_ym_max, str)
+        or source_ym_max > CANDIDATE_DEV_END_YM
+    ):
+        raise ValueError(
+            "checkpoint source_ym_max exceeds DEVELOPMENT window"
+        )
 
 
 def sidecar_path(dataset_root, ym):
@@ -269,16 +474,38 @@ def source_path(dataset_root, ym):
     )
 
 
-def expected_raw_header():
+def expected_raw_header(schema=None):
+    schema = resolve_schema(schema)
     return [
         *META_FIELDS,
-        *EXPECTED_RACE_RAW_FEATURES,
-        *EXPECTED_ENTRY_RAW_FEATURES,
+        *schema["race_raw"],
+        *schema["entry_raw"],
         *LABEL_FIELDS,
     ]
 
 
-def verify_sidecar(dataset_root, ym):
+def assert_sidecar_feature_contract(ym, feature_columns, schema):
+    expected = schema["race_raw"] + schema["entry_raw"]
+    if feature_columns != expected:
+        raise ValueError(f"{ym}: sidecar feature schema mismatch")
+    if schema["candidate_profile"] == CANDIDATE_PROFILE_SEX1:
+        if "feature_entry__性" not in feature_columns:
+            raise ValueError(f"{ym}: sex feature missing")
+        if "feature_entry__齢" in feature_columns:
+            raise ValueError(f"{ym}: deferred 齢 must not appear")
+    leaked = [
+        name
+        for name in feature_columns
+        if name in FORBIDDEN_RAW_INPUT_FEATURES or name in LABEL_FIELDS
+    ]
+    if leaked:
+        raise ValueError(
+            f"{ym}: result/deferred feature leaked into input features"
+        )
+
+
+def verify_sidecar(dataset_root, ym, schema=None):
+    schema = resolve_schema(schema)
     sc_path = sidecar_path(dataset_root, ym)
     data_path = source_path(dataset_root, ym)
 
@@ -294,17 +521,20 @@ def verify_sidecar(dataset_root, ym):
     sc = json.loads(text)
     if sc.get("format_version") != 1:
         raise ValueError(f"{ym}: sidecar format mismatch")
-    if sc.get("dataset") != "nar-v3-pit-safe":
+    if sc.get("dataset") != schema["input_dataset"]:
         raise ValueError(f"{ym}: sidecar dataset mismatch")
+    if schema["candidate_profile"] is not None:
+        if sc.get("candidate_profile") != schema["candidate_profile"]:
+            raise ValueError(f"{ym}: sidecar candidate_profile mismatch")
     if sc.get("source_ym") != ym:
         raise ValueError(f"{ym}: sidecar source_ym mismatch")
     if sc.get("output_file") != data_path.name:
         raise ValueError(f"{ym}: sidecar output file mismatch")
-    if sc.get("feature_columns") != (
-        EXPECTED_RACE_RAW_FEATURES
-        + EXPECTED_ENTRY_RAW_FEATURES
-    ):
-        raise ValueError(f"{ym}: sidecar feature schema mismatch")
+    assert_sidecar_feature_contract(
+        ym,
+        sc.get("feature_columns"),
+        schema,
+    )
     if sc.get("label_columns") != LABEL_FIELDS:
         raise ValueError(f"{ym}: sidecar label schema mismatch")
     if sc.get("output_bytes") != data_path.stat().st_size:
@@ -326,9 +556,17 @@ def compute_dataset_root_hash(dataset_root, months):
     return hashlib.sha256(canonical).hexdigest()
 
 
-def validate_checkpoint(dataset_root, checkpoint_path, expected_root_hash):
+def validate_checkpoint(
+    dataset_root,
+    checkpoint_path,
+    expected_root_hash,
+    schema=None,
+):
+    schema = resolve_schema(schema)
     checkpoint = load_json(checkpoint_path)
-    months = checkpoint_months(checkpoint)
+    if schema["candidate_profile"] is not None:
+        validate_candidate_checkpoint_identity(checkpoint, schema)
+    months = checkpoint_months(checkpoint, schema)
 
     dataset_hash = checkpoint.get("dataset_root_hash")
     if not isinstance(dataset_hash, dict):
@@ -348,14 +586,15 @@ def validate_checkpoint(dataset_root, checkpoint_path, expected_root_hash):
         )
 
     for ym in months:
-        verify_sidecar(dataset_root, ym)
+        verify_sidecar(dataset_root, ym, schema)
 
     return checkpoint, months
 
 
-def categorical_values(row):
+def categorical_values(row, schema=None):
+    schema = resolve_schema(schema)
     result = {}
-    for name in EXPECTED_CATEGORICAL:
+    for name in schema["categorical"]:
         result[name] = strict_text(
             row[name],
             name,
@@ -384,16 +623,17 @@ def numeric_values(row):
     }
 
 
-def validate_reader_header(reader, ym):
-    if reader.fieldnames != expected_raw_header():
+def validate_reader_header(reader, ym, schema=None):
+    if reader.fieldnames != expected_raw_header(schema):
         raise ValueError(f"{ym}: raw CSV header mismatch")
 
 
-def fit_category_dictionaries(dataset_root, all_months, cfg):
+def fit_category_dictionaries(dataset_root, all_months, cfg, schema=None):
+    schema = resolve_schema(schema)
     fit_split = cfg["categorical_dictionary"]["fit_split"]
     values = {
         name: set()
-        for name in EXPECTED_CATEGORICAL
+        for name in schema["categorical"]
     }
     fit_rows = 0
     fit_months = []
@@ -411,14 +651,14 @@ def fit_category_dictionaries(dataset_root, all_months, cfg):
             newline="",
         ) as f:
             reader = csv.DictReader(f)
-            validate_reader_header(reader, ym)
+            validate_reader_header(reader, ym, schema)
             for row in reader:
                 if row["source_ym"] != ym:
                     raise ValueError(f"{ym}: row source_ym mismatch")
                 if row["split"] != fit_split:
                     raise ValueError(f"{ym}: non-train row in dictionary fit")
                 fit_rows += 1
-                transformed = categorical_values(row)
+                transformed = categorical_values(row, schema)
                 for name, value in transformed.items():
                     if value != "":
                         values[name].add(value)
@@ -430,7 +670,7 @@ def fit_category_dictionaries(dataset_root, all_months, cfg):
     start = dictionary["known_id_start"]
     features = {}
 
-    for name in EXPECTED_CATEGORICAL:
+    for name in schema["categorical"]:
         ordered = sorted(values[name])
         features[name] = {
             "known_count": len(ordered),
@@ -440,7 +680,7 @@ def fit_category_dictionaries(dataset_root, all_months, cfg):
             },
         }
 
-    return {
+    result = {
         "version": cfg["version"],
         "fit_split": fit_split,
         "fit_months": fit_months,
@@ -452,6 +692,10 @@ def fit_category_dictionaries(dataset_root, all_months, cfg):
         "normalization": dictionary["normalization"],
         "features": features,
     }
+    if schema["candidate_profile"] is not None:
+        result["candidate_profile"] = schema["candidate_profile"]
+        result["input_dataset"] = schema["input_dataset"]
+    return result
 
 
 def encode_category(value, name, dictionaries):
@@ -516,23 +760,28 @@ def close_gzip_writer(part, final, raw, gz, text):
     os.replace(part, final)
 
 
-def build_feature_order(cfg):
+def build_feature_order(cfg, schema=None):
+    schema = resolve_schema(schema)
+    if cfg.get("categorical_passthrough") != schema["categorical"]:
+        raise ValueError("feature-order categorical schema mismatch")
+    numeric = list(schema["numeric"])
+    categorical = list(schema["categorical"])
     features = [
-        *EXPECTED_NUMERIC_OUTPUTS,
-        *EXPECTED_CATEGORICAL,
+        *numeric,
+        *categorical,
     ]
     return {
         "version": cfg["version"],
         "feature_count": len(features),
-        "numeric_feature_count": len(EXPECTED_NUMERIC_OUTPUTS),
-        "categorical_feature_count": len(EXPECTED_CATEGORICAL),
+        "numeric_feature_count": len(numeric),
+        "categorical_feature_count": len(categorical),
         "features": [
             {
                 "index": index,
                 "name": name,
                 "type": (
                     "numeric"
-                    if name in EXPECTED_NUMERIC_OUTPUTS
+                    if name in numeric
                     else "categorical"
                 ),
             }
@@ -541,9 +790,9 @@ def build_feature_order(cfg):
         "categorical_feature_indices": [
             index
             for index, name in enumerate(features)
-            if name in EXPECTED_CATEGORICAL
+            if name in categorical
         ],
-        "categorical_feature_names": list(EXPECTED_CATEGORICAL),
+        "categorical_feature_names": list(categorical),
     }
 
 
@@ -556,10 +805,15 @@ def transform_month(
     dictionary_path,
     feature_order,
     feature_order_path,
+    schema=None,
 ):
+    schema = resolve_schema(schema)
+    if schema["candidate_profile"] is not None:
+        assert_candidate_development_period([ym])
+
     source = source_path(dataset_root, ym)
     source_sidecar = sidecar_path(dataset_root, ym)
-    source_sc = verify_sidecar(dataset_root, ym)
+    source_sc = verify_sidecar(dataset_root, ym, schema)
 
     out_path = (
         out_root
@@ -574,10 +828,12 @@ def transform_month(
         / f"{ym}_model.manifest.json"
     )
 
+    numeric = list(schema["numeric"])
+    categorical = list(schema["categorical"])
     fields = [
         *META_FIELDS,
-        *EXPECTED_NUMERIC_OUTPUTS,
-        *EXPECTED_CATEGORICAL,
+        *numeric,
+        *categorical,
         *LABEL_FIELDS,
     ]
 
@@ -598,7 +854,7 @@ def transform_month(
             newline="",
         ) as f:
             reader = csv.DictReader(f)
-            validate_reader_header(reader, ym)
+            validate_reader_header(reader, ym, schema)
 
             for row in reader:
                 if row["source_ym"] != ym:
@@ -612,18 +868,18 @@ def transform_month(
                     raise ValueError(f"{ym}: duplicate entry_id")
                 seen_entries.add(entry_id)
 
-                numeric = numeric_values(row)
-                categorical_raw = categorical_values(row)
+                numeric_row = numeric_values(row)
+                categorical_raw = categorical_values(row, schema)
 
                 out = {
                     name: row[name]
                     for name in META_FIELDS
                 }
 
-                for name in EXPECTED_NUMERIC_OUTPUTS:
-                    out[name] = str(numeric[name])
+                for name in numeric:
+                    out[name] = str(numeric_row[name])
 
-                for name in EXPECTED_CATEGORICAL:
+                for name in categorical:
                     encoded, state = encode_category(
                         categorical_raw[name],
                         name,
@@ -668,7 +924,7 @@ def transform_month(
 
     sidecar = {
         "format_version": 1,
-        "dataset": "nar-v3-model-input",
+        "dataset": schema["output_dataset"],
         "source_ym": ym,
         "source_file": source.name,
         "source_sha256": sha256_file(source),
@@ -681,56 +937,119 @@ def transform_month(
         "feature_order_file": feature_order_path.name,
         "feature_order_sha256": sha256_file(feature_order_path),
         "output_file": out_path.name,
-        "output_sha256": sha256_file(out_path),
         "output_bytes": out_path.stat().st_size,
+        "output_sha256": sha256_file(out_path),
         "feature_columns": [
-            *EXPECTED_NUMERIC_OUTPUTS,
-            *EXPECTED_CATEGORICAL,
+            *numeric,
+            *categorical,
         ],
         "label_columns": list(LABEL_FIELDS),
         "counts": dict(sorted(counts.items())),
     }
+    if schema["candidate_profile"] is not None:
+        sidecar["candidate_profile"] = schema["candidate_profile"]
     write_json_atomic(out_sidecar, sidecar)
 
     return out_path, out_sidecar, counts
 
 
-def main():
+def parse_args(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--start", required=True)
     parser.add_argument("--end", required=True)
     parser.add_argument(
         "--dataset-root",
         type=Path,
-        default=Path("/workspaces/nar-v3-dataset"),
+        default=None,
     )
     parser.add_argument(
         "--out",
         type=Path,
-        default=Path("/workspaces/nar-v3-transformed"),
+        default=None,
     )
     parser.add_argument(
         "--config",
         type=Path,
-        default=Path("config/nar-v3-transform.json"),
+        default=None,
     )
     parser.add_argument(
         "--checkpoint",
         type=Path,
-        default=Path(
-            "data-manifests/nar-v3-dataset/checkpoint.json"
+        default=None,
+    )
+    parser.add_argument(
+        "--candidate-profile",
+        default=None,
+        help=(
+            "explicit candidate schema opt-in; "
+            "default keeps production schema"
         ),
     )
-    args = parser.parse_args()
+    return parser.parse_args(argv)
 
+
+def apply_runtime_defaults(args):
+    if args.candidate_profile is not None:
+        schema_for_profile(args.candidate_profile)
+        if args.candidate_profile == CANDIDATE_PROFILE_SEX1:
+            if args.config is None:
+                args.config = Path(
+                    "config/candidates/nar-v3-sex1/transform.json"
+                )
+            if args.checkpoint is None:
+                args.checkpoint = Path(
+                    "data-manifests/candidates/nar-v3-sex1/"
+                    "dataset/checkpoint.json"
+                )
+        if args.dataset_root is None:
+            raise ValueError(
+                "candidate mode requires explicit --dataset-root"
+            )
+        if args.out is None:
+            raise ValueError(
+                "candidate mode requires explicit --out"
+            )
+        return args
+
+    if args.config is None:
+        args.config = Path("config/nar-v3-transform.json")
+    if args.checkpoint is None:
+        args.checkpoint = Path(
+            "data-manifests/nar-v3-dataset/checkpoint.json"
+        )
+    if args.dataset_root is None:
+        args.dataset_root = Path("/workspaces/nar-v3-dataset")
+    if args.out is None:
+        args.out = Path("/workspaces/nar-v3-transformed")
+    return args
+
+
+def run_transform(args):
     months = list(month_range(args.start, args.end))
+
+    if args.candidate_profile is not None:
+        # Fail closed before any candidate dataset source is opened.
+        schema_for_profile(args.candidate_profile)
+        assert_candidate_development_period(months)
+        if args.out is None:
+            raise ValueError(
+                "candidate mode requires explicit --out"
+            )
+        assert_candidate_out_root_allowed(args.out)
+        if args.dataset_root is None:
+            raise ValueError(
+                "candidate mode requires explicit --dataset-root"
+            )
+
+    args = apply_runtime_defaults(args)
     cfg = load_json(args.config)
-    validated = validate_config(cfg)
+    schema = validate_config(cfg, args.candidate_profile)
 
     checkpoint, all_months = validate_checkpoint(
         args.dataset_root,
         args.checkpoint,
-        validated["expected_root_hash"],
+        schema["expected_root_hash"],
+        schema,
     )
 
     checkpoint_period = checkpoint["period"]
@@ -743,6 +1062,7 @@ def main():
         args.dataset_root,
         all_months,
         cfg,
+        schema,
     )
 
     artifact_dir = args.out / "artifacts"
@@ -753,21 +1073,24 @@ def main():
         dictionary_path,
         dictionaries,
     )
-    feature_order = build_feature_order(cfg)
+    feature_order = build_feature_order(cfg, schema)
     write_json_atomic(
         feature_order_path,
         feature_order,
     )
 
-    print("numeric features =", len(EXPECTED_NUMERIC_OUTPUTS))
-    print("categorical features =", len(EXPECTED_CATEGORICAL))
+    print("numeric features =", len(schema["numeric"]))
+    print("categorical features =", len(schema["categorical"]))
     print(
         "total model features =",
-        len(EXPECTED_NUMERIC_OUTPUTS) + len(EXPECTED_CATEGORICAL),
+        len(schema["numeric"]) + len(schema["categorical"]),
     )
+    print("category indices =", feature_order["categorical_feature_indices"])
     print("category fit split =", dictionaries["fit_split"])
     print("category fit months =", len(dictionaries["fit_months"]))
     print("category fit rows =", dictionaries["fit_rows"])
+    if args.candidate_profile is not None:
+        print("candidate profile =", args.candidate_profile)
     print()
     print("=== ARTIFACTS ===")
     print("category dictionaries =", dictionary_path)
@@ -787,6 +1110,7 @@ def main():
             dictionary_path=dictionary_path,
             feature_order=feature_order,
             feature_order_path=feature_order_path,
+            schema=schema,
         )
 
         print()
@@ -814,6 +1138,12 @@ def main():
         print(key, "=", totals[key])
     print()
     print("NAR V3 TRANSFORM OK")
+    return dictionaries, feature_order, totals
+
+
+def main(argv=None):
+    args = parse_args(argv)
+    run_transform(args)
 
 
 if __name__ == "__main__":
