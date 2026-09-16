@@ -1,0 +1,52 @@
+{
+  "format_version": 1,
+  "dataset": "nar-v3-sex1-pit-safe",
+  "candidate_profile": "nar-v3-sex1",
+  "period": {
+    "start_ym": "202101",
+    "end_ym": "202412",
+    "months": 48
+  },
+  "counts": {
+    "included_races": 60527,
+    "output_entries": 611222,
+    "excluded_entries": 5929,
+    "excluded_void_races": 583,
+    "dead_heat_races": 731
+  },
+  "files": {
+    "manifest_count": 48,
+    "csv_count": 48
+  },
+  "dataset_root_hash": {
+    "algorithm": "sha256",
+    "value": "e224c3cd74c42576c23941e61e4a8cac499d5622421bff6ed1ce4e71a9d4a6b9",
+    "definition": "sha256(UTF-8-no-BOM sorted lines '<relative_manifest_path>\t<manifest_sha256>\n')"
+  },
+  "builder": {
+    "git_commit": "081e2d62cde882eefb043e98a103cc98c87281e2",
+    "build_nar_v3_dataset_py_sha256": "f579657c05b807e94f1c81587277e5f473ec7bc6e4588323a156b604ed730049",
+    "test_build_nar_v3_dataset_py_sha256": "09f24ddb57da75ab48db59dbe536e3ae986b905e69909a3ea31582c4d6dd70a3",
+    "feature_contract_sha256": "228c548d91f47c0c71de0312fc066f224b4c314e99cb8c7b3713cf3c8db2fe17"
+  },
+  "audit": {
+    "full_dataset_audit": "PASS",
+    "global_unique_races": 60527,
+    "global_unique_entries": 611222,
+    "sex_distribution": {
+      "セン": 41359,
+      "牡": 294092,
+      "牝": 275771
+    },
+    "missing_sex": 0,
+    "unexpected_sex": {},
+    "pit_mismatch": 0,
+    "locked_oot_open": false,
+    "source_ym_max": "202412",
+    "pit_checked_entries": 611222,
+    "sex_transition_patterns_diagnostic": {
+      "牡->セン": 534,
+      "牡->セン->牡->セン": 1
+    }
+  }
+}
