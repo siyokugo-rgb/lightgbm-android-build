@@ -662,6 +662,597 @@ class BuildNarV3DatasetTest(unittest.TestCase):
                 )
             )
 
+    def sex1_feature_cfg(self):
+        cfg = self.feature_cfg()
+        cfg["candidate_profile"] = (
+            MOD.CANDIDATE_PROFILE_SEX1
+        )
+        cfg[
+            "historical_monthly_allowed_features"
+        ]["horselist"] = [
+            "毛色",
+            "生年月日",
+            "父馬名",
+            "母馬名",
+            "母父馬名",
+            "性",
+        ]
+        cfg[
+            "historical_monthly_semantic_pending_live_allowed"
+        ]["horselist"] = [
+            "齢",
+        ]
+        return cfg
+
+    def write_sex1_features(self):
+        self.features.write_text(
+            json.dumps(
+                self.sex1_feature_cfg(),
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+
+    def create_sex1_source(
+        self,
+        ym="202101",
+        horses=None,
+    ):
+        if horses is None:
+            horses = [
+                {
+                    "date": "20210115",
+                    "race": "1",
+                    "num": "1",
+                    "sex": "牡",
+                    "finish": "1",
+                    "status": "",
+                    "color": "鹿毛",
+                    "birth": "20180101",
+                    "sire": "父",
+                    "dam": "母",
+                    "damsire": "母父",
+                }
+            ]
+
+        year = ym[:4]
+        month_dir = (
+            self.history
+            / "monthly"
+            / year
+        )
+        month_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+        zip_path = (
+            month_dir
+            / f"{ym}_race.zip"
+        )
+
+        race_rows = [
+            "競馬場,競走年月日,レース番号,距離,上がり3F"
+        ]
+        horse_rows = [
+            "競馬場,競走年月日,レース番号,馬番,"
+            "毛色,生年月日,父馬名,母馬名,母父馬名,性,"
+            "着順,着差,齢"
+        ]
+        seen_races = set()
+
+        for horse in horses:
+            race_key = (
+                horse["date"],
+                horse["race"],
+            )
+            if race_key not in seen_races:
+                seen_races.add(race_key)
+                race_rows.append(
+                    f"大井,{horse['date']},"
+                    f"{horse['race']},1200,36.1"
+                )
+            horse_rows.append(
+                "大井,"
+                f"{horse['date']},"
+                f"{horse['race']},"
+                f"{horse['num']},"
+                f"{horse['color']},"
+                f"{horse['birth']},"
+                f"{horse['sire']},"
+                f"{horse['dam']},"
+                f"{horse['damsire']},"
+                f"{horse['sex']},"
+                f"{horse['finish']},"
+                f"{horse['status']},"
+                f"{horse.get('age', '3')}"
+            )
+
+        payback_rows = [
+            "競馬場,競走年月日,レース番号,払戻"
+        ]
+        for date_text, race_no in sorted(
+            seen_races
+        ):
+            payback_rows.append(
+                f"大井,{date_text},{race_no},100"
+            )
+
+        with zipfile.ZipFile(
+            zip_path,
+            "w",
+            compression=zipfile.ZIP_DEFLATED,
+        ) as zf:
+            zf.writestr(
+                f"{ym}_racelist.csv",
+                (
+                    "\n".join(race_rows)
+                    + "\n"
+                ).encode("utf-8-sig"),
+            )
+            zf.writestr(
+                f"{ym}_horselist.csv",
+                (
+                    "\n".join(horse_rows)
+                    + "\n"
+                ).encode("utf-8-sig"),
+            )
+            zf.writestr(
+                f"{ym}_payback.csv",
+                (
+                    "\n".join(payback_rows)
+                    + "\n"
+                ).encode("utf-8-sig"),
+            )
+
+        self.history_manifest_path.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+        with self.history_manifest_path.open(
+            "w",
+            encoding="utf-8",
+            newline="",
+        ) as f:
+            writer = csv.DictWriter(
+                f,
+                fieldnames=[
+                    "ym",
+                    "status",
+                    "bytes",
+                    "sha256",
+                    "racelist_rows",
+                    "horselist_rows",
+                    "payback_rows",
+                    "checked_at_utc",
+                    "error",
+                ],
+                lineterminator="\n",
+            )
+            writer.writeheader()
+            writer.writerow({
+                "ym": ym,
+                "status": "OK",
+                "bytes": str(
+                    zip_path.stat().st_size
+                ),
+                "sha256": sha256_file(
+                    zip_path
+                ),
+                "racelist_rows": str(
+                    len(seen_races)
+                ),
+                "horselist_rows": str(
+                    len(horses)
+                ),
+                "payback_rows": str(
+                    len(seen_races)
+                ),
+                "checked_at_utc":
+                    "2026-08-29T00:00:00Z",
+                "error": "",
+            })
+
+        return zip_path
+
+    def build_sex1(self, ym="202101"):
+        history_manifest = (
+            MOD.load_history_manifest(
+                self.history_manifest_path
+            )
+        )
+        return MOD.build_month(
+            ym=ym,
+            history_root=self.history,
+            out_root=self.out,
+            feature_cfg_path=self.features,
+            label_cfg_path=self.labels,
+            anomaly_path=self.anomalies,
+            history_manifest=
+                history_manifest,
+            candidate_profile=
+                MOD.CANDIDATE_PROFILE_SEX1,
+        )
+
+    def test_production_mode_rejects_sex1_schema(self):
+        self.write_sex1_features()
+
+        with self.assertRaises(
+            ValueError
+        ):
+            MOD.validate_feature_contract(
+                MOD.load_json(
+                    self.features
+                )
+            )
+
+    def test_sex1_mode_outputs_eight_raw_features(self):
+        self.write_sex1_features()
+        self.create_sex1_source(
+            horses=[
+                {
+                    "date": "20210115",
+                    "race": "1",
+                    "num": "1",
+                    "sex": "牡",
+                    "finish": "1",
+                    "status": "",
+                    "color": "鹿毛",
+                    "birth": "20180101",
+                    "sire": "父",
+                    "dam": "母",
+                    "damsire": "母父",
+                },
+                {
+                    "date": "20210115",
+                    "race": "1",
+                    "num": "2",
+                    "sex": "牝",
+                    "finish": "2",
+                    "status": "",
+                    "color": "栗毛",
+                    "birth": "20180202",
+                    "sire": "父2",
+                    "dam": "母2",
+                    "damsire": "母父2",
+                },
+                {
+                    "date": "20210115",
+                    "race": "1",
+                    "num": "3",
+                    "sex": "セン",
+                    "finish": "3",
+                    "status": "",
+                    "color": "青毛",
+                    "birth": "20180303",
+                    "sire": "父3",
+                    "dam": "母3",
+                    "damsire": "母父3",
+                },
+            ]
+        )
+
+        out_path, sidecar_path, counts = (
+            self.build_sex1()
+        )
+
+        with gzip.open(
+            out_path,
+            "rt",
+            encoding="utf-8",
+            newline="",
+        ) as f:
+            rows = list(
+                csv.DictReader(f)
+            )
+
+        self.assertEqual(3, len(rows))
+        feature_names = {
+            name
+            for name in rows[0]
+            if name.startswith(
+                "feature_"
+            )
+        }
+        self.assertEqual(
+            {
+                "feature_race__競馬場",
+                "feature_race__競走年月日",
+                "feature_entry__毛色",
+                "feature_entry__生年月日",
+                "feature_entry__父馬名",
+                "feature_entry__母馬名",
+                "feature_entry__母父馬名",
+                "feature_entry__性",
+            },
+            feature_names,
+        )
+        self.assertEqual(
+            8,
+            len(feature_names),
+        )
+        self.assertNotIn(
+            "feature_entry__齢",
+            rows[0],
+        )
+        self.assertNotIn(
+            "feature_entry__着順",
+            rows[0],
+        )
+        self.assertNotIn(
+            "feature_entry__タイム",
+            rows[0],
+        )
+        self.assertNotIn(
+            "feature_entry__着差",
+            rows[0],
+        )
+
+        sexes = {
+            row["feature_entry__性"]
+            for row in rows
+        }
+        self.assertEqual(
+            {"牡", "牝", "セン"},
+            sexes,
+        )
+
+        sidecar = json.loads(
+            sidecar_path.read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(
+            "nar-v3-sex1-pit-safe",
+            sidecar["dataset"],
+        )
+        self.assertEqual(
+            MOD.CANDIDATE_PROFILE_SEX1,
+            sidecar["candidate_profile"],
+        )
+        self.assertEqual(
+            8,
+            len(
+                sidecar[
+                    "feature_columns"
+                ]
+            ),
+        )
+        self.assertEqual(
+            sha256_file(out_path),
+            sidecar["output_sha256"],
+        )
+        self.assertEqual(
+            3,
+            counts["output_entries"],
+        )
+
+    def test_sex1_keeps_missing_and_unexpected_sex_raw(self):
+        self.write_sex1_features()
+        self.create_sex1_source(
+            horses=[
+                {
+                    "date": "20210115",
+                    "race": "1",
+                    "num": "1",
+                    "sex": "",
+                    "finish": "1",
+                    "status": "",
+                    "color": "鹿毛",
+                    "birth": "20180101",
+                    "sire": "父",
+                    "dam": "母",
+                    "damsire": "母父",
+                },
+                {
+                    "date": "20210115",
+                    "race": "1",
+                    "num": "2",
+                    "sex": "不明",
+                    "finish": "2",
+                    "status": "",
+                    "color": "栗毛",
+                    "birth": "20180202",
+                    "sire": "父2",
+                    "dam": "母2",
+                    "damsire": "母父2",
+                },
+            ]
+        )
+
+        out_path, _, _ = self.build_sex1()
+        with gzip.open(
+            out_path,
+            "rt",
+            encoding="utf-8",
+            newline="",
+        ) as f:
+            rows = list(
+                csv.DictReader(f)
+            )
+
+        by_num = {
+            row["entry_id"].split("|")[-1]:
+                row["feature_entry__性"]
+            for row in rows
+        }
+        self.assertEqual("", by_num["1"])
+        self.assertEqual(
+            "不明",
+            by_num["2"],
+        )
+
+    def test_sex1_preserves_per_race_sex_without_backfill(self):
+        self.write_sex1_features()
+        self.create_sex1_source(
+            horses=[
+                {
+                    "date": "20210110",
+                    "race": "1",
+                    "num": "1",
+                    "sex": "牡",
+                    "finish": "1",
+                    "status": "",
+                    "color": "鹿毛",
+                    "birth": "20170101",
+                    "sire": "父A",
+                    "dam": "母A",
+                    "damsire": "母父A",
+                },
+                {
+                    "date": "20210120",
+                    "race": "2",
+                    "num": "1",
+                    "sex": "セン",
+                    "finish": "1",
+                    "status": "",
+                    "color": "鹿毛",
+                    "birth": "20170101",
+                    "sire": "父A",
+                    "dam": "母A",
+                    "damsire": "母父A",
+                },
+            ]
+        )
+
+        out_path, _, _ = self.build_sex1()
+        with gzip.open(
+            out_path,
+            "rt",
+            encoding="utf-8",
+            newline="",
+        ) as f:
+            rows = list(
+                csv.DictReader(f)
+            )
+
+        by_date = {
+            row["feature_race__競走年月日"]:
+                row["feature_entry__性"]
+            for row in rows
+        }
+        self.assertEqual(
+            "牡",
+            by_date["20210110"],
+        )
+        self.assertEqual(
+            "セン",
+            by_date["20210120"],
+        )
+
+    def test_sex1_period_guard_rejects_2025_before_source_open(self):
+        opened = {
+            "called": False,
+        }
+        original = MOD.validate_source_archive
+
+        def guard(*args, **kwargs):
+            opened["called"] = True
+            return original(*args, **kwargs)
+
+        MOD.validate_source_archive = guard
+        try:
+            with self.assertRaises(
+                ValueError
+            ) as ctx:
+                MOD.assert_candidate_development_period(
+                    ["202501"]
+                )
+            self.assertIn(
+                "DEVELOPMENT",
+                str(ctx.exception),
+            )
+            self.assertFalse(
+                opened["called"]
+            )
+
+            with self.assertRaises(
+                ValueError
+            ):
+                MOD.assert_candidate_development_period(
+                    ["202601"]
+                )
+
+            MOD.assert_candidate_development_period(
+                ["202101", "202412"]
+            )
+        finally:
+            MOD.validate_source_archive = (
+                original
+            )
+
+    def test_sex1_build_rejects_locked_month_before_zip_open(self):
+        self.write_sex1_features()
+        # Intentionally do not create 202501 zip.
+        history_manifest = {
+            "202501": {
+                "status": "OK",
+                "bytes": "1",
+                "sha256": "0" * 64,
+            }
+        }
+
+        with self.assertRaises(
+            ValueError
+        ) as ctx:
+            MOD.build_month(
+                ym="202501",
+                history_root=self.history,
+                out_root=self.out,
+                feature_cfg_path=
+                    self.features,
+                label_cfg_path=
+                    self.labels,
+                anomaly_path=
+                    self.anomalies,
+                history_manifest=
+                    history_manifest,
+                candidate_profile=
+                    MOD.CANDIDATE_PROFILE_SEX1,
+            )
+
+        self.assertIn(
+            "DEVELOPMENT",
+            str(ctx.exception),
+        )
+        self.assertFalse(
+            (
+                self.history
+                / "monthly"
+                / "2025"
+                / "202501_race.zip"
+            ).exists()
+        )
+
+    def test_sex1_output_collision_with_baseline_root_fails(self):
+        forbidden = (
+            MOD.forbidden_candidate_out_roots()[0]
+        )
+        with self.assertRaises(
+            ValueError
+        ):
+            MOD.assert_candidate_out_root_allowed(
+                forbidden
+            )
+
+        alias = (
+            self.root
+            / "alias-baseline"
+        )
+        alias.symlink_to(
+            forbidden,
+            target_is_directory=True,
+        )
+        with self.assertRaises(
+            ValueError
+        ):
+            MOD.assert_candidate_out_root_allowed(
+                alias
+            )
+
+        MOD.assert_candidate_out_root_allowed(
+            self.out
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

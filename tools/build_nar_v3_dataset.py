@@ -31,6 +31,20 @@ EXPECTED_PRODUCTION_HORSE_FEATURES = (
     "母父馬名",
 )
 
+EXPECTED_SEX1_HORSE_FEATURES = (
+    "毛色",
+    "生年月日",
+    "父馬名",
+    "母馬名",
+    "母父馬名",
+    "性",
+)
+
+CANDIDATE_PROFILE_SEX1 = "nar-v3-sex1"
+
+CANDIDATE_DEV_START_YM = "202101"
+CANDIDATE_DEV_END_YM = "202412"
+
 EXPECTED_LABEL_HORSE_SOURCES = (
     "着順",
     "タイム",
@@ -241,7 +255,113 @@ def load_json(path):
         return json.load(f)
 
 
-def validate_feature_contract(cfg):
+def expected_horse_features(candidate_profile):
+    if candidate_profile is None:
+        return list(
+            EXPECTED_PRODUCTION_HORSE_FEATURES
+        )
+
+    if candidate_profile == CANDIDATE_PROFILE_SEX1:
+        return list(
+            EXPECTED_SEX1_HORSE_FEATURES
+        )
+
+    raise ValueError(
+        "unknown candidate profile: "
+        f"{candidate_profile}"
+    )
+
+
+def assert_candidate_development_period(
+    months,
+):
+    if not months:
+        raise ValueError(
+            "candidate period is empty"
+        )
+
+    for ym in months:
+        valid_ym(ym)
+
+        if (
+            ym < CANDIDATE_DEV_START_YM
+            or ym > CANDIDATE_DEV_END_YM
+        ):
+            raise ValueError(
+                "candidate period outside "
+                "DEVELOPMENT window "
+                f"{CANDIDATE_DEV_START_YM}-"
+                f"{CANDIDATE_DEV_END_YM}: {ym}"
+            )
+
+
+def forbidden_candidate_out_roots():
+    repo_root = Path(
+        __file__
+    ).resolve().parent.parent
+
+    return [
+        (
+            repo_root
+            / "data-manifests"
+            / "nar-v3-dataset"
+        ),
+        (
+            repo_root
+            / "data-manifests"
+            / "nar-v3-transformed"
+        ),
+        (
+            repo_root
+            / "data-manifests"
+            / "nar-v3-baseline9"
+        ),
+        Path(
+            "/workspaces/nar-v3-dataset"
+        ),
+        Path(
+            "/workspaces/nar-v3-transformed"
+        ),
+        Path(
+            "/workspaces/nar-v3-baseline9"
+        ),
+    ]
+
+
+def assert_candidate_out_root_allowed(
+    out_root,
+):
+    if out_root is None:
+        raise ValueError(
+            "candidate mode requires explicit --out"
+        )
+
+    resolved = out_root.resolve()
+
+    for forbidden in forbidden_candidate_out_roots():
+        forbidden_resolved = (
+            forbidden.resolve()
+        )
+
+        if (
+            resolved
+            == forbidden_resolved
+            or forbidden_resolved
+            in resolved.parents
+            or resolved
+            in forbidden_resolved.parents
+        ):
+            raise ValueError(
+                "candidate output root collides "
+                "with production/baseline root: "
+                f"{resolved}"
+            )
+
+
+def validate_feature_contract(
+    cfg,
+    candidate_profile=None,
+):
     if cfg.get("version") != 4:
         raise ValueError(
             "nar-v3 feature contract version must be 4"
@@ -353,15 +473,29 @@ def validate_feature_contract(cfg):
             "unexpected production racelist feature schema"
         )
 
-    if (
-        allowed_horse
-        != list(
-            EXPECTED_PRODUCTION_HORSE_FEATURES
-        )
-    ):
+    expected_horse = expected_horse_features(
+        candidate_profile
+    )
+
+    if allowed_horse != expected_horse:
+        if candidate_profile is None:
+            raise ValueError(
+                "unexpected production horselist feature schema"
+            )
+
         raise ValueError(
-            "unexpected production horselist feature schema"
+            "unexpected candidate horselist feature schema"
         )
+
+    if candidate_profile == CANDIDATE_PROFILE_SEX1:
+        profile_name = cfg.get(
+            "candidate_profile"
+        )
+
+        if profile_name != CANDIDATE_PROFILE_SEX1:
+            raise ValueError(
+                "sex1 candidate profile marker missing"
+            )
 
     semantic = cfg.get(
         "historical_monthly_semantic_pending_live_allowed"
@@ -389,6 +523,17 @@ def validate_feature_contract(cfg):
         if not isinstance(section, dict):
             raise ValueError(
                 f"{name} section missing"
+            )
+
+    if candidate_profile == CANDIDATE_PROFILE_SEX1:
+        semantic_horse = ensure_unique_strings(
+            semantic.get("horselist"),
+            "semantic pending horselist",
+        )
+
+        if semantic_horse != ["齢"]:
+            raise ValueError(
+                "sex1 semantic pending must keep only 齢"
             )
 
     denied_race = set()
@@ -1263,17 +1408,25 @@ def build_month(
     label_cfg_path,
     anomaly_path,
     history_manifest,
+    candidate_profile=None,
 ):
     year, _ = valid_ym(
         ym
     )
+
+    if candidate_profile is not None:
+        assert_candidate_development_period(
+            [ym]
+        )
 
     feature_cfg = load_json(
         feature_cfg_path
     )
     feature_contract = (
         validate_feature_contract(
-            feature_cfg
+            feature_cfg,
+            candidate_profile=
+                candidate_profile,
         )
     )
 
@@ -1735,7 +1888,12 @@ def build_month(
 
     sidecar = {
         "format_version": 1,
-        "dataset": "nar-v3-pit-safe",
+        "dataset": (
+            "nar-v3-sex1-pit-safe"
+            if candidate_profile
+            == CANDIDATE_PROFILE_SEX1
+            else "nar-v3-pit-safe"
+        ),
         "source_ym": ym,
         "source_zip": str(
             zip_path.relative_to(
@@ -1784,6 +1942,11 @@ def build_month(
                 )
             ),
     }
+
+    if candidate_profile is not None:
+        sidecar[
+            "candidate_profile"
+        ] = candidate_profile
 
     write_json_atomic(
         sidecar_path,
@@ -1853,6 +2016,17 @@ def main():
         type=Path,
         default=None,
     )
+    parser.add_argument(
+        "--candidate-profile",
+        choices=[
+            CANDIDATE_PROFILE_SEX1,
+        ],
+        default=None,
+        help=(
+            "explicit candidate schema opt-in; "
+            "default keeps production schema"
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -1886,6 +2060,15 @@ def main():
                 args.start,
                 args.end,
             )
+        )
+
+    if args.candidate_profile is not None:
+        # Fail closed before any source archive is opened.
+        assert_candidate_development_period(
+            months
+        )
+        assert_candidate_out_root_allowed(
+            args.out
         )
 
     history_manifest_path = (
@@ -1930,6 +2113,8 @@ def main():
                 args.anomalies,
             history_manifest=
                 history_manifest,
+            candidate_profile=
+                args.candidate_profile,
         )
 
         print(
