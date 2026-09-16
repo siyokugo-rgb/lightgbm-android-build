@@ -1,0 +1,46 @@
+{
+  "format_version": 1,
+  "dataset": "nar-v3-sex1-model-input",
+  "candidate_profile": "nar-v3-sex1",
+  "period": {
+    "start_ym": "202101",
+    "end_ym": "202412",
+    "months": 48
+  },
+  "splits": {
+    "train_rows": 454102,
+    "validation_rows": 157120
+  },
+  "counts": {
+    "rows": 611222,
+    "global_unique_entries": 611222,
+    "global_unique_races": 60527,
+    "category_known": 3654032,
+    "category_unknown": 13300,
+    "category_missing": 0
+  },
+  "artifacts": {
+    "category_dictionary_sha256": "cadfef924cc0a57c8b266fc504167e54c4a2e3c2a2b822d37cf413253283a478",
+    "feature_order_sha256": "3f80e5ab723bdc779f38a9ff3fe8dc5460bea83835f758e359c0c8bf9ee195e3"
+  },
+  "transform_root_hash": {
+    "algorithm": "sha256",
+    "value": "757a04ac3a94601617b26060192a2b5611cc1588afab3ee0bc24df0f7f955efd",
+    "definition": "sha256(UTF-8-no-BOM sorted lines '<relative_model_manifest_path>\t<manifest_sha256>\n')"
+  },
+  "source_dataset": {
+    "dataset_root_sha256": "e224c3cd74c42576c23941e61e4a8cac499d5622421bff6ed1ce4e71a9d4a6b9",
+    "source_dataset_checkpoint_sha256": "4bfa96209cd0ac36c9dbdf12a9100d7626bbcdc1c4ffc34c062863872ee5571a"
+  },
+  "transformer": {
+    "git_commit": "823a146a025fc3e3c435e673a734619bbacbe92c",
+    "transform_script_sha256": "b6cf008d64664856082befabd1852b8985b9800af28cc764c15c36f2a9257a77",
+    "transform_config_sha256": "a8ef32743458495a95ba437beb439500b2a64f96214953834fe8c8a5bd1c933d"
+  },
+  "audit": {
+    "full_transform_audit": "PASS",
+    "locked_oot_open": false,
+    "source_ym_max": "202412",
+    "reproducibility": "PASS"
+  }
+}
