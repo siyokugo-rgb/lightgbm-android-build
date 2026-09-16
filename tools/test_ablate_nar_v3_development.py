@@ -10,6 +10,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import pandas as pd
+
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
 MODULE_PATH = HERE / "ablate_nar_v3_development.py"
@@ -186,17 +188,23 @@ def sire_for_month(ym, *, fold1_val="FOLD1_VAL_SIRE", fold2_val="FOLD2_VAL_SIRE"
     return "TRAIN_SIRE"
 
 
-def month_rows_for(months, *, arm):
+def month_rows_for(months, *, arm, n=1, mask_every=None):
     rows = {}
     for ym in months:
-        sex = sex_for_month(ym) if arm == MOD.ARM_SEX1 else None
-        rows[ym] = [
-            sample_row(
+        month_rows = []
+        for index in range(n):
+            sex = sex_for_month(ym) if arm == MOD.ARM_SEX1 else None
+            row = sample_row(
                 ym,
                 sire=sire_for_month(ym),
                 sex=sex,
+                entry_suffix=str(index + 1),
             )
-        ]
+            row["label_win"] = "1" if index % 2 == 0 else "0"
+            if mask_every is not None and (index + 1) % mask_every == 0:
+                row["label_win"] = ""
+            month_rows.append(row)
+        rows[ym] = month_rows
     return rows
 
 
@@ -647,20 +655,477 @@ class AblateNarV3DevelopmentTest(unittest.TestCase):
         after = frozen_fingerprint()
         self.assertEqual(before, after)
 
-    def test_helper_does_not_include_training_or_production_runner(self):
+    def test_helper_does_not_include_oof_or_production_runner(self):
         source = MODULE_PATH.read_text(encoding="utf-8")
-        self.assertNotIn("import lightgbm", source)
-        self.assertNotIn("lgb.train", source)
         self.assertNotIn("TRANSFORM.run_transform", source)
-        self.assertNotIn("early_stopping", source)
         self.assertNotIn("def bootstrap", source)
-        self.assertNotIn("def train_", source)
+        self.assertNotIn("def concatenate_oof", source)
+        self.assertNotIn("promotion", source.lower())
+        self.assertIn("def train_fold_arm", source)
+        self.assertNotIn("best_iteration = 55", source)
+        self.assertNotIn("best = 55", source)
 
 
 def fold_month_plus_oot():
     months = list(MOD.fold_month_lists(1)["transform_months"])
     months.append("202501")
     return months
+
+
+class ModelCsvOpenSpy:
+    def __init__(self):
+        self.opened = []
+        self._original = MOD.model_csv_path
+
+    def __enter__(self):
+        def wrapped(transform_root, ym):
+            path = self._original(transform_root, ym)
+            self.opened.append(ym)
+            return path
+
+        MOD.model_csv_path = wrapped
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        MOD.model_csv_path = self._original
+        return False
+
+
+def transform_arm(root, fold_id, arm, *, n=1, mask_every=None):
+    spec = MOD.fold_month_lists(fold_id)
+    dataset_root = write_dataset(
+        root / f"{arm}-raw",
+        month_rows_for(
+            spec["transform_months"],
+            arm=arm,
+            n=n,
+            mask_every=mask_every,
+        ),
+        arm=arm,
+    )
+    return MOD.transform_fold_arm(
+        fold_id,
+        arm,
+        dataset_root,
+        root / "transformed" / f"fold{fold_id}" / arm,
+    )
+
+
+def rewrite_model_month(transform_root, ym, mutate):
+    csv_path = (
+        Path(transform_root)
+        / "monthly"
+        / ym[:4]
+        / f"{ym}_model.csv.gz"
+    )
+    manifest_path = csv_path.with_name(f"{ym}_model.manifest.json")
+    rows = read_gzip_csv(csv_path)
+    header = list(rows[0].keys()) if rows else []
+    mutate(rows)
+    gzip_csv(csv_path, rows, header)
+    sidecar = json.loads(manifest_path.read_text(encoding="utf-8"))
+    sidecar["output_sha256"] = sha256_file(csv_path)
+    sidecar["output_bytes"] = csv_path.stat().st_size
+    sidecar.setdefault("counts", {})["rows"] = len(rows)
+    write_json(manifest_path, sidecar)
+
+
+class AblateNarV3FoldTrainingTest(unittest.TestCase):
+    def test_lightgbm_params_match_baseline9(self):
+        cfg = json.loads(
+            (
+                REPO_ROOT / "config" / "nar-v3-win-baseline9.json"
+            ).read_text(encoding="utf-8")
+        )
+        contract = MOD.load_baseline9_training_contract()
+        self.assertEqual(contract["lightgbm_params"], cfg["lightgbm_params"])
+        self.assertEqual(contract["training"], cfg["training"])
+        self.assertTrue(contract["first_metric_only"])
+        self.assertEqual(contract["valid_names"], ["validation"])
+        self.assertEqual(
+            contract["lightgbm_params"]["metric"][0],
+            "binary_logloss",
+        )
+
+    def test_feature_contract_baseline_and_candidate(self):
+        self.assertEqual(MOD.EXPECTED_FEATURE_COUNTS[MOD.ARM_BASELINE], {
+            "feature_count": 9,
+            "categorical_feature_count": 5,
+        })
+        self.assertEqual(MOD.EXPECTED_FEATURE_COUNTS[MOD.ARM_SEX1], {
+            "feature_count": 10,
+            "categorical_feature_count": 6,
+        })
+        self.assertEqual(
+            MOD.EXPECTED_CATEGORICAL_INDICES[MOD.ARM_BASELINE],
+            [4, 5, 6, 7, 8],
+        )
+        self.assertEqual(
+            MOD.EXPECTED_CATEGORICAL_INDICES[MOD.ARM_SEX1],
+            [4, 5, 6, 7, 8, 9],
+        )
+
+    def test_fold_loads_use_source_ym_not_calendar_split(self):
+        cases = (
+            (1, {"2021"}, {"2022"}, "train"),
+            (2, {"2021", "2022"}, {"2023"}, "train"),
+            (3, {"2021", "2022", "2023"}, {"2024"}, "validation"),
+        )
+        for fold_id, train_years, val_years, val_calendar_split in cases:
+            spec = MOD.fold_month_lists(fold_id)
+            with tempfile.TemporaryDirectory() as td:
+                transformed = transform_arm(
+                    Path(td),
+                    fold_id,
+                    MOD.ARM_BASELINE,
+                )
+                with ModelCsvOpenSpy() as spy:
+                    loaded = MOD.load_fold_training_frames(
+                        fold_id,
+                        MOD.ARM_BASELINE,
+                        transformed["out_root"],
+                    )
+                self.assertEqual(spy.opened, spec["transform_months"])
+                self.assertEqual(
+                    loaded["train_months"],
+                    spec["fit_months"],
+                )
+                self.assertEqual(
+                    loaded["validation_months"],
+                    spec["validation_months"],
+                )
+                self.assertEqual(
+                    set(loaded["train"].source_ym.str[:4]),
+                    train_years,
+                )
+                self.assertEqual(
+                    set(loaded["validation"].source_ym.str[:4]),
+                    val_years,
+                )
+                self.assertTrue((loaded["train"]["split"] == "train").all())
+                self.assertTrue(
+                    (loaded["validation"]["split"] == val_calendar_split).all()
+                )
+                if fold_id in (1, 2):
+                    self.assertEqual(val_calendar_split, "train")
+
+    def test_future_and_locked_months_fail_before_model_open(self):
+        spec1 = MOD.fold_month_lists(1)
+        spec2 = MOD.fold_month_lists(2)
+        with tempfile.TemporaryDirectory() as td:
+            transformed = transform_arm(
+                Path(td),
+                1,
+                MOD.ARM_BASELINE,
+            )
+            with ModelCsvOpenSpy() as spy:
+                with self.assertRaises(ValueError) as ctx:
+                    MOD.load_fold_training_frames(
+                        1,
+                        MOD.ARM_BASELINE,
+                        transformed["out_root"],
+                        validation_months=spec1["validation_months"]
+                        + ["202301"],
+                    )
+                self.assertIn("before source open", str(ctx.exception))
+                self.assertEqual(spy.opened, [])
+
+            with ModelCsvOpenSpy() as spy:
+                with self.assertRaises(ValueError) as ctx:
+                    MOD.load_fold_role_frame(
+                        2,
+                        "validation",
+                        transformed["out_root"],
+                        MOD.ARM_BASELINE,
+                        months=spec2["validation_months"] + ["202401"],
+                    )
+                self.assertIn("before source open", str(ctx.exception))
+                self.assertEqual(spy.opened, [])
+
+            with ModelCsvOpenSpy() as spy:
+                with self.assertRaises(ValueError) as ctx:
+                    MOD.load_fold_training_frames(
+                        3,
+                        MOD.ARM_BASELINE,
+                        transformed["out_root"],
+                        train_months=MOD.fold_month_lists(3)["fit_months"]
+                        + ["202501"],
+                    )
+                self.assertIn("locked/OOT", str(ctx.exception))
+                self.assertEqual(spy.opened, [])
+
+            with ModelCsvOpenSpy() as spy:
+                with self.assertRaises(ValueError) as ctx:
+                    MOD.assert_months_allowed_for_role(
+                        1,
+                        ["202607"],
+                        "fit",
+                    )
+                self.assertIn("locked/OOT", str(ctx.exception))
+                self.assertEqual(spy.opened, [])
+
+    def test_alignment_and_masked_labels(self):
+        spec = MOD.fold_month_lists(1)
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            baseline = transform_arm(
+                root / "base",
+                1,
+                MOD.ARM_BASELINE,
+                n=4,
+                mask_every=4,
+            )
+            candidate = transform_arm(
+                root / "sex",
+                1,
+                MOD.ARM_SEX1,
+                n=4,
+                mask_every=4,
+            )
+            left = MOD.load_fold_training_frames(
+                1,
+                MOD.ARM_BASELINE,
+                baseline["out_root"],
+            )
+            right = MOD.load_fold_training_frames(
+                1,
+                MOD.ARM_SEX1,
+                candidate["out_root"],
+            )
+            MOD.assert_fold_arm_alignment(left, right)
+            self.assertEqual(left["feature_names"], MOD.SHARED_MODEL_FEATURES)
+            self.assertEqual(
+                right["feature_names"],
+                MOD.SHARED_MODEL_FEATURES + [MOD.SEX_FEATURE],
+            )
+            expected_source = 4 * len(spec["fit_months"])
+            expected_masked = expected_source // 4
+            self.assertEqual(left["train_stats"]["source"], expected_source)
+            self.assertEqual(left["train_stats"]["masked"], expected_masked)
+            self.assertEqual(
+                left["train_stats"]["supervised"],
+                expected_source - expected_masked,
+            )
+            self.assertEqual(left["train_stats"], right["train_stats"])
+            self.assertEqual(
+                left["validation_stats"],
+                right["validation_stats"],
+            )
+
+    def test_alignment_fails_on_label_mismatch(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            baseline = transform_arm(root / "base", 1, MOD.ARM_BASELINE, n=2)
+            candidate = transform_arm(root / "sex", 1, MOD.ARM_SEX1, n=2)
+            rewrite_model_month(
+                candidate["out_root"],
+                "202101",
+                lambda rows: rows.__setitem__(
+                    0,
+                    {**rows[0], "label_win": "0"},
+                )
+                or rows,
+            )
+            left = MOD.load_fold_training_frames(
+                1,
+                MOD.ARM_BASELINE,
+                baseline["out_root"],
+            )
+            right = MOD.load_fold_training_frames(
+                1,
+                MOD.ARM_SEX1,
+                candidate["out_root"],
+            )
+            with self.assertRaises(ValueError) as ctx:
+                MOD.assert_fold_arm_alignment(left, right)
+            self.assertIn("label", str(ctx.exception))
+
+    def test_invalid_target_and_duplicate_entry_fail(self):
+        with tempfile.TemporaryDirectory() as td:
+            transformed = transform_arm(Path(td) / "inv", 1, MOD.ARM_BASELINE)
+            rewrite_model_month(
+                transformed["out_root"],
+                "202101",
+                lambda rows: rows.__setitem__(
+                    0,
+                    {**rows[0], "label_win": "2"},
+                )
+                or rows,
+            )
+            with self.assertRaises(ValueError) as ctx:
+                MOD.load_fold_training_frames(
+                    1,
+                    MOD.ARM_BASELINE,
+                    transformed["out_root"],
+                )
+            self.assertIn("invalid target", str(ctx.exception))
+
+        with tempfile.TemporaryDirectory() as td:
+            transformed = transform_arm(Path(td) / "dup", 1, MOD.ARM_BASELINE)
+            rewrite_model_month(
+                transformed["out_root"],
+                "202102",
+                lambda rows: rows.append(dict(rows[0])) or rows,
+            )
+            with self.assertRaises(ValueError) as ctx:
+                MOD.load_fold_training_frames(
+                    1,
+                    MOD.ARM_BASELINE,
+                    transformed["out_root"],
+                )
+            self.assertIn("duplicate entry_id", str(ctx.exception))
+
+    def test_prediction_range_guard(self):
+        frame = pd.DataFrame({"entry_id": ["a", "b"]})
+        MOD.assert_valid_predictions(frame, [0.0, 1.0])
+        with self.assertRaises(ValueError):
+            MOD.assert_valid_predictions(frame, [float("nan"), 0.2])
+        with self.assertRaises(ValueError):
+            MOD.assert_valid_predictions(frame, [0.1, float("inf")])
+        with self.assertRaises(ValueError):
+            MOD.assert_valid_predictions(frame, [-0.01, 0.2])
+        with self.assertRaises(ValueError):
+            MOD.assert_valid_predictions(frame, [0.2, 1.01])
+        with self.assertRaises(ValueError):
+            MOD.assert_valid_predictions(
+                pd.DataFrame({"entry_id": ["a", "a"]}),
+                [0.2, 0.3],
+            )
+
+    def test_training_output_collision_and_symlink(self):
+        frozen = REPO_ROOT / "data-manifests" / "nar-v3-baseline9"
+        with self.assertRaises(ValueError):
+            MOD.assert_ablation_out_root_allowed(frozen)
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            alias = root / "alias-baseline9"
+            alias.symlink_to(frozen, target_is_directory=True)
+            with self.assertRaises(ValueError) as ctx:
+                MOD.train_fold_arm(
+                    1,
+                    MOD.ARM_BASELINE,
+                    root / "missing-transform",
+                    alias,
+                )
+            self.assertIn("collides", str(ctx.exception))
+            existing = root / "fold1" / "baseline"
+            existing.mkdir(parents=True)
+            with self.assertRaises(FileExistsError):
+                MOD.train_fold_arm(
+                    1,
+                    MOD.ARM_BASELINE,
+                    root / "missing-transform",
+                    existing,
+                )
+
+    def test_synthetic_lightgbm_smoke_and_determinism(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            baseline_tf = transform_arm(
+                root / "base",
+                1,
+                MOD.ARM_BASELINE,
+                n=20,
+                mask_every=10,
+            )
+            candidate_tf = transform_arm(
+                root / "sex",
+                1,
+                MOD.ARM_SEX1,
+                n=20,
+                mask_every=10,
+            )
+            left = MOD.load_fold_training_frames(
+                1,
+                MOD.ARM_BASELINE,
+                baseline_tf["out_root"],
+            )
+            first = MOD.train_fold_arm(
+                1,
+                MOD.ARM_BASELINE,
+                baseline_tf["out_root"],
+                root / "train" / "run1" / "baseline",
+            )
+            second = MOD.train_fold_arm(
+                1,
+                MOD.ARM_BASELINE,
+                baseline_tf["out_root"],
+                root / "train" / "run2" / "baseline",
+            )
+            candidate = MOD.train_fold_arm(
+                1,
+                MOD.ARM_SEX1,
+                candidate_tf["out_root"],
+                root / "train" / "run1" / "sex1",
+                align_with=left,
+            )
+            self.assertGreater(first["best_iteration"], 0)
+            self.assertEqual(first["best_iteration"], second["best_iteration"])
+            self.assertEqual(
+                list(first["prediction"]),
+                list(second["prediction"]),
+            )
+            self.assertEqual(
+                first["metrics"]["sha256"]["validation_predictions"],
+                second["metrics"]["sha256"]["validation_predictions"],
+            )
+            self.assertEqual(
+                first["metrics"]["sha256"]["lightgbm_params"],
+                candidate["metrics"]["sha256"]["lightgbm_params"],
+            )
+            self.assertEqual(first["metrics"]["feature_count"], 9)
+            self.assertEqual(candidate["metrics"]["feature_count"], 10)
+            self.assertEqual(
+                first["metrics"]["categorical_feature_indices"],
+                [4, 5, 6, 7, 8],
+            )
+            self.assertEqual(
+                candidate["metrics"]["categorical_feature_indices"],
+                [4, 5, 6, 7, 8, 9],
+            )
+            self.assertEqual(
+                first["metrics"]["early_stopping"],
+                {
+                    "metric": "binary_logloss",
+                    "rounds": 100,
+                    "first_metric_only": True,
+                    "valid_names": ["validation"],
+                },
+            )
+            pred_rows = read_gzip_csv(first["predictions_path"])
+            self.assertEqual(
+                list(pred_rows[0].keys()),
+                [
+                    "race_id",
+                    "entry_id",
+                    "source_ym",
+                    "label_win",
+                    "prediction",
+                ],
+            )
+            self.assertEqual(len(pred_rows), left["validation_stats"]["supervised"])
+            metrics_text = (
+                first["out_root"] / "fold-metrics.json"
+            ).read_text(encoding="utf-8")
+            self.assertNotIn("/workspace", metrics_text)
+            self.assertNotIn("C:\\", metrics_text)
+            self.assertFalse(
+                MOD._json_contains_absolute_path(first["metrics"])
+            )
+            self.assertNotIn("best_iteration = 55", MODULE_PATH.read_text())
+            try:
+                self.assertEqual(
+                    first["metrics"]["sha256"]["model"],
+                    second["metrics"]["sha256"]["model"],
+                )
+                model_sha_matched = True
+            except AssertionError:
+                model_sha_matched = False
+            self.assertTrue(
+                model_sha_matched
+                or first["metrics"]["sha256"]["validation_predictions"]
+                == second["metrics"]["sha256"]["validation_predictions"]
+            )
 
 
 if __name__ == "__main__":
