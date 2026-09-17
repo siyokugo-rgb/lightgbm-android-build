@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Fold-local transform and training helpers for NAR V3 DEVELOPMENT ablation.
+"""Fold-local transform, training, and OOF helpers for NAR V3 DEVELOPMENT ablation.
 
 This module fits category dictionaries on each rolling-origin fold's
-training months, transforms that fold's train+validation months, and can
-train one fold/arm with the frozen baseline9 LightGBM contract.
+training months, transforms that fold's train+validation months, trains
+one fold/arm with the frozen baseline9 LightGBM contract, and concatenates
+Development OOF validation predictions for baseline vs sex1.
 
-It does not concatenate OOF predictions, run paired bootstrap, promote a
-champion, or invoke the production transform runner.
+It does not run paired bootstrap, promote a champion, or invoke the
+production transform runner.
 """
 
 import hashlib
@@ -18,6 +19,7 @@ from pathlib import Path
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
+from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score
 
 
 HERE = Path(__file__).resolve().parent
@@ -29,6 +31,14 @@ _SPEC = importlib.util.spec_from_file_location(
 )
 TRANSFORM = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(TRANSFORM)
+
+_BASELINE_TRAINER_PATH = HERE / "train_nar_v3_baseline.py"
+_BASELINE_SPEC = importlib.util.spec_from_file_location(
+    "train_nar_v3_baseline",
+    _BASELINE_TRAINER_PATH,
+)
+BASELINE_TRAINER = importlib.util.module_from_spec(_BASELINE_SPEC)
+_BASELINE_SPEC.loader.exec_module(BASELINE_TRAINER)
 
 ARM_BASELINE = "baseline"
 ARM_SEX1 = "sex1"
@@ -72,6 +82,25 @@ EXPECTED_CATEGORICAL_INDICES = {
 }
 IDENTITY_COLS = ["race_id", "entry_id", "source_ym", TARGET]
 LABEL_FIELDS = list(TRANSFORM.LABEL_FIELDS)
+VALIDATION_PRED_COLUMNS = [
+    "race_id",
+    "entry_id",
+    "source_ym",
+    TARGET,
+    "prediction",
+]
+OOF_COLUMNS = [
+    "race_id",
+    "entry_id",
+    "fold",
+    "source_ym",
+    TARGET,
+    "baseline_prediction",
+    "candidate_prediction",
+]
+EVALUATION_CONTRACT_PATH = REPO_ROOT / "docs" / "nar-evaluation-contract.md"
+OOF_PERIOD_START_YM = "202201"
+OOF_PERIOD_END_YM = "202412"
 
 # Exclusive start of months this fold must not open.
 FOLD_WINDOWS = {
@@ -1098,8 +1127,370 @@ def train_fold_arm(
     }
 
 
+def oof_metrics(y, p):
+    """Match tools/train_nar_v3_baseline.py metrics() semantics."""
+    y = np.asarray(y, dtype=np.int8)
+    p = np.asarray(p, dtype=np.float64)
+    if len(y) == 0:
+        raise ValueError("empty prediction set")
+    if not np.isin(y, [0, 1]).all():
+        raise ValueError("invalid target")
+    if not np.isfinite(p).all():
+        raise ValueError("prediction contains NaN/inf")
+    if np.any(p < 0) or np.any(p > 1):
+        raise ValueError("prediction out of range")
+    classes = set(int(v) for v in np.unique(y))
+    if classes != {0, 1}:
+        raise ValueError(
+            "ROC AUC requires both label classes; "
+            f"found {sorted(classes)}"
+        )
+    return {
+        "rows": len(y),
+        "positive": int(y.sum()),
+        "negative": int(len(y) - y.sum()),
+        "log_loss": float(log_loss(y, p, labels=[0, 1])),
+        "brier_score": float(brier_score_loss(y, p)),
+        "roc_auc": float(roc_auc_score(y, p)),
+        "prediction_min": float(p.min()),
+        "prediction_max": float(p.max()),
+        "prediction_mean": float(p.mean()),
+    }
+
+
+def oof_race_metrics(frame, p):
+    """Match tools/train_nar_v3_baseline.py race_metrics() semantics."""
+    return BASELINE_TRAINER.race_metrics(frame, p)
+
+
+def fold_id_for_validation_ym(ym):
+    TRANSFORM.valid_ym(ym)
+    assert_no_locked_oot_months([ym], label="oof source_ym")
+    for fold_id in FOLD_IDS:
+        months = set(fold_month_lists(fold_id)["validation_months"])
+        if ym in months:
+            return fold_id
+    raise ValueError(f"source_ym is not a DEVELOPMENT OOF validation month: {ym}")
+
+
+def assert_validation_months_for_fold(fold_id, months):
+    expected = fold_month_lists(fold_id)["validation_months"]
+    checked = assert_months_allowed_for_role(
+        fold_id,
+        months,
+        "validation",
+    )
+    if checked != expected:
+        raise ValueError(f"fold {fold_id} validation months mismatch")
+    return list(checked)
+
+
+def _canonical_prediction_frame(frame):
+    out = frame.copy()
+    out["race_id"] = out["race_id"].astype(str)
+    out["entry_id"] = out["entry_id"].astype(str)
+    out["source_ym"] = out["source_ym"].astype(str)
+    out[TARGET] = out[TARGET].astype("int8")
+    out["prediction"] = out["prediction"].astype(np.float64)
+    return out.sort_values(
+        ["source_ym", "entry_id"],
+        kind="mergesort",
+    ).reset_index(drop=True)
+
+
+def load_fold_arm_predictions(fold_id, arm, train_out_root):
+    root = Path(train_out_root)
+    pred_path = root / "validation-predictions.csv.gz"
+    metrics_path = root / "fold-metrics.json"
+    if not pred_path.is_file() or not metrics_path.is_file():
+        raise FileNotFoundError(
+            f"fold {fold_id}/{arm} prediction artifacts missing"
+        )
+    metrics = TRANSFORM.load_json(metrics_path)
+    if metrics.get("fold_id") != fold_id:
+        raise ValueError(f"fold_id mismatch for {arm}")
+    if metrics.get("arm") != arm:
+        raise ValueError(f"arm mismatch for fold {fold_id}")
+    expected_months = assert_validation_months_for_fold(
+        fold_id,
+        metrics.get("validation_months"),
+    )
+    supervised = metrics.get("supervised_rows", {}).get("validation")
+    if not isinstance(supervised, int) or supervised <= 0:
+        raise ValueError("supervised_rows.validation missing")
+    expected_sha = metrics.get("sha256", {}).get("validation_predictions")
+    actual_sha = TRANSFORM.sha256_file(pred_path)
+    if expected_sha != actual_sha:
+        raise ValueError(
+            f"fold {fold_id}/{arm} validation prediction SHA mismatch"
+        )
+    frame = pd.read_csv(
+        pred_path,
+        compression="gzip",
+        dtype={
+            "race_id": "string",
+            "entry_id": "string",
+            "source_ym": "string",
+            TARGET: "float32",
+            "prediction": "float64",
+        },
+        keep_default_na=True,
+    )
+    if list(frame.columns) != VALIDATION_PRED_COLUMNS:
+        raise ValueError(
+            f"fold {fold_id}/{arm} prediction columns mismatch"
+        )
+    if len(frame) != supervised:
+        raise ValueError(
+            f"fold {fold_id}/{arm} supervised row count mismatch"
+        )
+    if frame[["race_id", "entry_id", "source_ym"]].isna().any().any():
+        raise ValueError("missing race_id/entry_id/source_ym")
+    if frame.entry_id.duplicated().any():
+        raise ValueError("duplicate entry_id in fold predictions")
+    if not frame[TARGET].isin([0.0, 1.0]).all():
+        raise ValueError("invalid target")
+    frame[TARGET] = frame[TARGET].astype("int8")
+    assert_valid_predictions(frame, frame["prediction"].to_numpy())
+    assert_no_locked_oot_months(
+        frame["source_ym"].astype(str).tolist(),
+        label=f"fold {fold_id}/{arm} predictions",
+    )
+    months_present = sorted(set(frame["source_ym"].astype(str)))
+    for ym in months_present:
+        if fold_id_for_validation_ym(ym) != fold_id:
+            raise ValueError(
+                f"fold {fold_id}/{arm} contains wrong validation month {ym}"
+            )
+    for ym in months_present:
+        if ym not in expected_months:
+            raise ValueError(
+                f"fold {fold_id}/{arm} unexpected validation month {ym}"
+            )
+    frame = _canonical_prediction_frame(frame)
+    return {
+        "fold_id": fold_id,
+        "arm": arm,
+        "frame": frame,
+        "metrics": metrics,
+        "validation_months": expected_months,
+        "prediction_sha256": actual_sha,
+        "predictions_path": pred_path.name,
+        "metrics_path": metrics_path.name,
+    }
+
+
+def assert_fold_prediction_alignment(baseline_loaded, candidate_loaded):
+    if baseline_loaded["fold_id"] != candidate_loaded["fold_id"]:
+        raise ValueError("fold_id mismatch")
+    if baseline_loaded["arm"] != ARM_BASELINE:
+        raise ValueError("left arm must be baseline")
+    if candidate_loaded["arm"] != ARM_SEX1:
+        raise ValueError("right arm must be sex1")
+    left = baseline_loaded["frame"]
+    right = candidate_loaded["frame"]
+    left_id = left[["race_id", "entry_id", "source_ym", TARGET]]
+    right_id = right[["race_id", "entry_id", "source_ym", TARGET]]
+    left_entries = set(left_id["entry_id"])
+    right_entries = set(right_id["entry_id"])
+    missing = sorted(left_entries - right_entries)
+    extra = sorted(right_entries - left_entries)
+    if missing or extra:
+        raise ValueError(
+            f"prediction entry mismatch missing={missing[:5]!r} "
+            f"extra={extra[:5]!r}"
+        )
+    if not left_id.equals(right_id):
+        raise ValueError(
+            "prediction race_id/entry_id/source_ym/label mismatch"
+        )
+    if len(left) != len(right):
+        raise ValueError("prediction row count mismatch")
+
+
+def _evaluate_arm_predictions(frame, prediction_col):
+    y = frame[TARGET].to_numpy(dtype=np.int8)
+    p = frame[prediction_col].to_numpy(dtype=np.float64)
+    global_metrics = oof_metrics(y, p)
+    race = oof_race_metrics(frame, p)
+    return {"global": global_metrics, "race": race}
+
+
+def build_development_oof(fold_roots, out_root):
+    """Concatenate 3fold validation predictions into Development OOF.
+
+    fold_roots maps fold_id -> {"baseline": path, "sex1": path}.
+    """
+    out_root = Path(out_root)
+    assert_ablation_out_root_allowed(out_root)
+    if out_root.exists():
+        raise FileExistsError(
+            f"OOF output root already exists: {out_root}"
+        )
+    if set(fold_roots) != set(FOLD_IDS):
+        raise ValueError("OOF requires folds 1, 2, and 3 exactly")
+
+    fold_frames = []
+    source_shas = {}
+    fold_supervised = {}
+    for fold_id in FOLD_IDS:
+        arms = fold_roots[fold_id]
+        if set(arms) != {ARM_BASELINE, ARM_SEX1}:
+            raise ValueError(f"fold {fold_id} requires baseline and sex1")
+        baseline = load_fold_arm_predictions(
+            fold_id,
+            ARM_BASELINE,
+            arms[ARM_BASELINE],
+        )
+        candidate = load_fold_arm_predictions(
+            fold_id,
+            ARM_SEX1,
+            arms[ARM_SEX1],
+        )
+        assert_fold_prediction_alignment(baseline, candidate)
+        left = baseline["frame"]
+        right = candidate["frame"]
+        merged = pd.DataFrame(
+            {
+                "race_id": left["race_id"],
+                "entry_id": left["entry_id"],
+                "fold": fold_id,
+                "source_ym": left["source_ym"],
+                TARGET: left[TARGET],
+                "baseline_prediction": left["prediction"],
+                "candidate_prediction": right["prediction"],
+            }
+        )
+        fold_frames.append(merged)
+        fold_supervised[fold_id] = len(merged)
+        source_shas[f"fold{fold_id}_baseline"] = baseline["prediction_sha256"]
+        source_shas[f"fold{fold_id}_sex1"] = candidate["prediction_sha256"]
+
+    oof = pd.concat(fold_frames, ignore_index=True)
+    oof = oof.sort_values(
+        ["fold", "source_ym", "entry_id"],
+        kind="mergesort",
+    ).reset_index(drop=True)
+    if list(oof.columns) != OOF_COLUMNS:
+        raise ValueError("OOF column contract mismatch")
+    if oof.entry_id.duplicated().any():
+        raise ValueError("global duplicate entry_id in OOF")
+    if len(oof) != sum(fold_supervised.values()):
+        raise ValueError("OOF row count mismatch vs fold supervised sums")
+    assert_no_locked_oot_months(
+        oof["source_ym"].astype(str).tolist(),
+        label="oof source_ym",
+    )
+    for ym in sorted(set(oof["source_ym"].astype(str))):
+        expected_fold = fold_id_for_validation_ym(ym)
+        actual_folds = set(
+            int(v) for v in oof.loc[oof["source_ym"] == ym, "fold"]
+        )
+        if actual_folds != {expected_fold}:
+            raise ValueError(
+                f"source_ym {ym} mapped to unexpected folds {actual_folds}"
+            )
+    if oof["source_ym"].min() < OOF_PERIOD_START_YM:
+        raise ValueError("OOF contains pre-validation DEVELOPMENT months")
+    if oof["source_ym"].max() > OOF_PERIOD_END_YM:
+        raise ValueError("OOF contains months after DEVELOPMENT validation")
+    assert_valid_predictions(
+        pd.DataFrame({"entry_id": oof["entry_id"].astype(str)}),
+        oof["baseline_prediction"].to_numpy(),
+    )
+    assert_valid_predictions(
+        pd.DataFrame({"entry_id": oof["entry_id"].astype(str)}),
+        oof["candidate_prediction"].to_numpy(),
+    )
+
+    baseline_eval = _evaluate_arm_predictions(oof, "baseline_prediction")
+    candidate_eval = _evaluate_arm_predictions(oof, "candidate_prediction")
+    fold_metrics = {}
+    for fold_id in FOLD_IDS:
+        part = oof.loc[oof["fold"] == fold_id].reset_index(drop=True)
+        fold_metrics[str(fold_id)] = {
+            "rows": len(part),
+            "validation_months": fold_month_lists(fold_id)[
+                "validation_months"
+            ],
+            "baseline": _evaluate_arm_predictions(
+                part,
+                "baseline_prediction",
+            ),
+            "candidate": _evaluate_arm_predictions(
+                part,
+                "candidate_prediction",
+            ),
+        }
+
+    observed_delta = (
+        candidate_eval["global"]["log_loss"]
+        - baseline_eval["global"]["log_loss"]
+    )
+    out_root.mkdir(parents=True, exist_ok=False)
+    pred_path = out_root / "oof-predictions.csv.gz"
+    oof.to_csv(
+        pred_path,
+        index=False,
+        compression={"method": "gzip", "mtime": 0},
+        lineterminator="\n",
+    )
+    contract_sha = TRANSFORM.sha256_file(EVALUATION_CONTRACT_PATH)
+    helper_sha = TRANSFORM.sha256_file(Path(__file__).resolve())
+    result = {
+        "folds": list(FOLD_IDS),
+        "validation_period": {
+            "start_ym": OOF_PERIOD_START_YM,
+            "end_ym": OOF_PERIOD_END_YM,
+        },
+        "total_rows": len(oof),
+        "fold_supervised_rows": {
+            str(k): v for k, v in fold_supervised.items()
+        },
+        "baseline": baseline_eval,
+        "candidate": candidate_eval,
+        "fold_metrics": fold_metrics,
+        "observed_log_loss_delta_candidate_minus_baseline": float(
+            observed_delta
+        ),
+        "calibration": {
+            "status": "not_yet_frozen",
+            "reason": (
+                "nar-v3 baseline trainer records calibration_bins=20 only; "
+                "no frozen DEVELOPMENT OOF calibration binning exists"
+            ),
+        },
+        "source_prediction_sha256": source_shas,
+        "sha256": {
+            "oof_predictions": TRANSFORM.sha256_file(pred_path),
+            "evaluation_contract": contract_sha,
+            "ablation_helper": helper_sha,
+        },
+        "runtime": {
+            "python": platform.python_version(),
+            "numpy": np.__version__,
+            "pandas": pd.__version__,
+            "lightgbm": lgb.__version__,
+        },
+        "predictions_file": pred_path.name,
+        "metrics_file": "oof-metrics.json",
+    }
+    if _json_contains_absolute_path(result):
+        raise ValueError("absolute path leaked into OOF metrics")
+    metrics_path = out_root / "oof-metrics.json"
+    TRANSFORM.write_json_atomic(metrics_path, result)
+    return {
+        "out_root": out_root,
+        "oof": oof,
+        "metrics": result,
+        "predictions_path": pred_path,
+        "metrics_path": metrics_path,
+        "oof_metrics_sha256": TRANSFORM.sha256_file(metrics_path),
+    }
+
+
 if __name__ == "__main__":
     raise SystemExit(
-        "fold-local transform/training helper; "
+        "fold-local transform/training/OOF helper; "
         "run python3 -m unittest tools.test_ablate_nar_v3_development"
     )

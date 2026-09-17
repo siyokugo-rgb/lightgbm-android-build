@@ -10,7 +10,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
+from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
@@ -655,15 +657,17 @@ class AblateNarV3DevelopmentTest(unittest.TestCase):
         after = frozen_fingerprint()
         self.assertEqual(before, after)
 
-    def test_helper_does_not_include_oof_or_production_runner(self):
+    def test_helper_does_not_include_bootstrap_or_production_runner(self):
         source = MODULE_PATH.read_text(encoding="utf-8")
         self.assertNotIn("TRANSFORM.run_transform", source)
         self.assertNotIn("def bootstrap", source)
-        self.assertNotIn("def concatenate_oof", source)
         self.assertNotIn("promotion", source.lower())
         self.assertIn("def train_fold_arm", source)
+        self.assertIn("def build_development_oof", source)
         self.assertNotIn("best_iteration = 55", source)
         self.assertNotIn("best = 55", source)
+        self.assertNotIn("resamples", source)
+        self.assertNotIn("10000", source)
 
 
 def fold_month_plus_oot():
@@ -1125,6 +1129,454 @@ class AblateNarV3FoldTrainingTest(unittest.TestCase):
                 model_sha_matched
                 or first["metrics"]["sha256"]["validation_predictions"]
                 == second["metrics"]["sha256"]["validation_predictions"]
+            )
+
+
+def write_prediction_artifact(root, fold_id, arm, rows):
+    root = Path(root)
+    root.mkdir(parents=True, exist_ok=False)
+    pred_path = root / "validation-predictions.csv.gz"
+    gzip_csv(
+        pred_path,
+        rows,
+        [
+            "race_id",
+            "entry_id",
+            "source_ym",
+            "label_win",
+            "prediction",
+        ],
+    )
+    metrics = {
+        "fold_id": fold_id,
+        "arm": arm,
+        "validation_months": MOD.fold_month_lists(fold_id)[
+            "validation_months"
+        ],
+        "supervised_rows": {
+            "train": 1,
+            "validation": len(rows),
+        },
+        "sha256": {
+            "validation_predictions": sha256_file(pred_path),
+        },
+    }
+    write_json(root / "fold-metrics.json", metrics)
+    return root
+
+
+def synthetic_fold_rows(
+    fold_id,
+    *,
+    prediction_offset=0.0,
+    scramble=False,
+    improve_winners=False,
+):
+    ym = {
+        1: "202206",
+        2: "202306",
+        3: "202406",
+    }[fold_id]
+    rows = [
+        {
+            "race_id": f"R{fold_id}|1",
+            "entry_id": f"R{fold_id}|1|A",
+            "source_ym": ym,
+            "label_win": "1",
+            "prediction": f"{0.70 + prediction_offset:.6f}",
+        },
+        {
+            "race_id": f"R{fold_id}|1",
+            "entry_id": f"R{fold_id}|1|B",
+            "source_ym": ym,
+            "label_win": "0",
+            "prediction": f"{0.30 + prediction_offset:.6f}",
+        },
+        {
+            "race_id": f"R{fold_id}|2",
+            "entry_id": f"R{fold_id}|2|A",
+            "source_ym": ym,
+            "label_win": "0",
+            "prediction": f"{0.40 + prediction_offset:.6f}",
+        },
+        {
+            "race_id": f"R{fold_id}|2",
+            "entry_id": f"R{fold_id}|2|B",
+            "source_ym": ym,
+            "label_win": "1",
+            "prediction": f"{0.60 + prediction_offset:.6f}",
+        },
+    ]
+    if improve_winners:
+        for row in rows:
+            value = float(row["prediction"])
+            if row["label_win"] == "1":
+                value = min(0.99, value + 0.15)
+            else:
+                value = max(0.01, value - 0.15)
+            row["prediction"] = f"{value:.6f}"
+    if scramble:
+        rows = list(reversed(rows))
+    return rows
+
+
+def build_three_fold_roots(
+    base,
+    *,
+    scramble_candidate=False,
+    improve_candidate=False,
+):
+    roots = {}
+    for fold_id in MOD.FOLD_IDS:
+        baseline_rows = synthetic_fold_rows(fold_id)
+        candidate_rows = synthetic_fold_rows(
+            fold_id,
+            scramble=scramble_candidate,
+            improve_winners=improve_candidate,
+        )
+        roots[fold_id] = {
+            MOD.ARM_BASELINE: write_prediction_artifact(
+                base / f"fold{fold_id}" / "baseline",
+                fold_id,
+                MOD.ARM_BASELINE,
+                baseline_rows,
+            ),
+            MOD.ARM_SEX1: write_prediction_artifact(
+                base / f"fold{fold_id}" / "sex1",
+                fold_id,
+                MOD.ARM_SEX1,
+                candidate_rows,
+            ),
+        }
+    return roots
+
+
+class AblateNarV3OofTest(unittest.TestCase):
+    def test_build_development_oof_happy_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            fold_roots = build_three_fold_roots(root / "inputs")
+            first = MOD.build_development_oof(
+                fold_roots,
+                root / "oof1",
+            )
+            second = MOD.build_development_oof(
+                fold_roots,
+                root / "oof2",
+            )
+            oof = first["oof"]
+            self.assertEqual(list(oof.columns), MOD.OOF_COLUMNS)
+            self.assertEqual(set(oof["fold"]), {1, 2, 3})
+            self.assertEqual(
+                set(oof["source_ym"].str[:4]),
+                {"2022", "2023", "2024"},
+            )
+            self.assertEqual(len(oof), 12)
+            self.assertEqual(
+                first["metrics"]["fold_supervised_rows"],
+                {"1": 4, "2": 4, "3": 4},
+            )
+            self.assertEqual(
+                first["metrics"]["sha256"]["oof_predictions"],
+                second["metrics"]["sha256"]["oof_predictions"],
+            )
+            self.assertEqual(
+                first["oof"].to_dict(orient="list"),
+                second["oof"].to_dict(orient="list"),
+            )
+            self.assertEqual(
+                json.loads(first["metrics_path"].read_text(encoding="utf-8")),
+                json.loads(second["metrics_path"].read_text(encoding="utf-8")),
+            )
+            self.assertEqual(
+                first["metrics"]["calibration"]["status"],
+                "not_yet_frozen",
+            )
+
+    def test_canonical_alignment_and_delta_direction(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            fold_roots = build_three_fold_roots(
+                root / "inputs",
+                scramble_candidate=True,
+                improve_candidate=True,
+            )
+            result = MOD.build_development_oof(fold_roots, root / "oof")
+            y = result["oof"][MOD.TARGET].to_numpy(dtype=np.int8)
+            base_p = result["oof"]["baseline_prediction"].to_numpy()
+            cand_p = result["oof"]["candidate_prediction"].to_numpy()
+            expected_base = float(log_loss(y, base_p, labels=[0, 1]))
+            expected_cand = float(log_loss(y, cand_p, labels=[0, 1]))
+            self.assertAlmostEqual(
+                result["metrics"]["baseline"]["global"]["log_loss"],
+                expected_base,
+            )
+            self.assertAlmostEqual(
+                result["metrics"]["candidate"]["global"]["log_loss"],
+                expected_cand,
+            )
+            self.assertAlmostEqual(
+                result["metrics"][
+                    "observed_log_loss_delta_candidate_minus_baseline"
+                ],
+                expected_cand - expected_base,
+            )
+            self.assertLess(
+                result["metrics"][
+                    "observed_log_loss_delta_candidate_minus_baseline"
+                ],
+                0.0,
+            )
+
+    def test_metric_parity_with_baseline_trainer(self):
+        frame = pd.DataFrame(
+            {
+                "race_id": ["R1", "R1", "R2", "R2"],
+                "entry_id": ["R1|A", "R1|B", "R2|A", "R2|B"],
+                "label_win": [1, 0, 0, 1],
+            }
+        )
+        pred = np.asarray([0.8, 0.2, 0.3, 0.7], dtype=np.float64)
+        y = frame["label_win"].to_numpy(dtype=np.int8)
+        ours = MOD.oof_metrics(y, pred)
+        theirs = MOD.BASELINE_TRAINER.metrics(y, pred)
+        self.assertEqual(ours, theirs)
+        self.assertAlmostEqual(
+            ours["brier_score"],
+            float(brier_score_loss(y, pred)),
+        )
+        self.assertAlmostEqual(
+            ours["roc_auc"],
+            float(roc_auc_score(y, pred)),
+        )
+        self.assertEqual(
+            MOD.oof_race_metrics(frame, pred),
+            MOD.BASELINE_TRAINER.race_metrics(frame, pred),
+        )
+
+    def test_auc_single_class_fails_closed(self):
+        with self.assertRaises(ValueError) as ctx:
+            MOD.oof_metrics([1, 1, 1], [0.2, 0.3, 0.4])
+        self.assertIn("both label classes", str(ctx.exception))
+
+    def test_alignment_failures(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            fold_roots = build_three_fold_roots(root / "ok")
+            # missing entry
+            bad = synthetic_fold_rows(1)[:-1]
+            fold_roots[1][MOD.ARM_SEX1] = write_prediction_artifact(
+                root / "missing" / "sex1",
+                1,
+                MOD.ARM_SEX1,
+                bad,
+            )
+            with self.assertRaises(ValueError) as ctx:
+                MOD.build_development_oof(fold_roots, root / "oof-missing")
+            self.assertIn("entry mismatch", str(ctx.exception))
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            fold_roots = build_three_fold_roots(root / "ok")
+            extra = synthetic_fold_rows(1) + [
+                {
+                    "race_id": "RX",
+                    "entry_id": "RX|Z",
+                    "source_ym": "202206",
+                    "label_win": "0",
+                    "prediction": "0.1",
+                }
+            ]
+            fold_roots[1][MOD.ARM_SEX1] = write_prediction_artifact(
+                root / "extra" / "sex1",
+                1,
+                MOD.ARM_SEX1,
+                extra,
+            )
+            with self.assertRaises(ValueError) as ctx:
+                MOD.build_development_oof(fold_roots, root / "oof-extra")
+            self.assertIn("entry mismatch", str(ctx.exception))
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            fold_roots = build_three_fold_roots(root / "ok")
+            rows = synthetic_fold_rows(1)
+            rows[0] = {**rows[0], "label_win": "0"}
+            fold_roots[1][MOD.ARM_SEX1] = write_prediction_artifact(
+                root / "label" / "sex1",
+                1,
+                MOD.ARM_SEX1,
+                rows,
+            )
+            with self.assertRaises(ValueError) as ctx:
+                MOD.build_development_oof(fold_roots, root / "oof-label")
+            self.assertIn("label", str(ctx.exception))
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            fold_roots = build_three_fold_roots(root / "ok")
+            rows = synthetic_fold_rows(1)
+            rows[0] = {**rows[0], "race_id": "CHANGED"}
+            fold_roots[1][MOD.ARM_SEX1] = write_prediction_artifact(
+                root / "race" / "sex1",
+                1,
+                MOD.ARM_SEX1,
+                rows,
+            )
+            with self.assertRaises(ValueError) as ctx:
+                MOD.build_development_oof(fold_roots, root / "oof-race")
+            self.assertIn("race_id", str(ctx.exception))
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            fold_roots = build_three_fold_roots(root / "ok")
+            rows = synthetic_fold_rows(1)
+            rows.append(dict(rows[0]))
+            fold_roots[1][MOD.ARM_BASELINE] = write_prediction_artifact(
+                root / "dup" / "baseline",
+                1,
+                MOD.ARM_BASELINE,
+                rows,
+            )
+            with self.assertRaises(ValueError) as ctx:
+                MOD.build_development_oof(fold_roots, root / "oof-dup")
+            self.assertIn("duplicate", str(ctx.exception))
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            fold_roots = build_three_fold_roots(root / "ok")
+            rows = synthetic_fold_rows(2)
+            # reuse fold1 entry ids inside fold2 artifact wrongly
+            rows[0] = {
+                **rows[0],
+                "entry_id": "R1|1|A",
+                "race_id": "R1|1",
+                "source_ym": "202306",
+            }
+            fold_roots[2][MOD.ARM_BASELINE] = write_prediction_artifact(
+                root / "cross" / "baseline",
+                2,
+                MOD.ARM_BASELINE,
+                rows,
+            )
+            fold_roots[2][MOD.ARM_SEX1] = write_prediction_artifact(
+                root / "cross" / "sex1",
+                2,
+                MOD.ARM_SEX1,
+                rows,
+            )
+            with self.assertRaises(ValueError) as ctx:
+                MOD.build_development_oof(fold_roots, root / "oof-cross")
+            self.assertIn("global duplicate", str(ctx.exception))
+
+    def test_prediction_and_sha_and_locked_guards(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            fold_roots = build_three_fold_roots(root / "ok")
+            rows = synthetic_fold_rows(1)
+            rows[0] = {**rows[0], "prediction": "nan"}
+            fold_roots[1][MOD.ARM_BASELINE] = write_prediction_artifact(
+                root / "nan" / "baseline",
+                1,
+                MOD.ARM_BASELINE,
+                rows,
+            )
+            with self.assertRaises(ValueError):
+                MOD.build_development_oof(fold_roots, root / "oof-nan")
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            fold_roots = build_three_fold_roots(root / "ok")
+            rows = synthetic_fold_rows(1)
+            rows[0] = {**rows[0], "prediction": "1.5"}
+            fold_roots[1][MOD.ARM_SEX1] = write_prediction_artifact(
+                root / "hi" / "sex1",
+                1,
+                MOD.ARM_SEX1,
+                rows,
+            )
+            with self.assertRaises(ValueError):
+                MOD.build_development_oof(fold_roots, root / "oof-hi")
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            fold_roots = build_three_fold_roots(root / "ok")
+            metrics_path = (
+                fold_roots[1][MOD.ARM_BASELINE] / "fold-metrics.json"
+            )
+            obj = json.loads(metrics_path.read_text(encoding="utf-8"))
+            obj["sha256"]["validation_predictions"] = "0" * 64
+            write_json(metrics_path, obj)
+            with self.assertRaises(ValueError) as ctx:
+                MOD.build_development_oof(fold_roots, root / "oof-sha")
+            self.assertIn("SHA mismatch", str(ctx.exception))
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            fold_roots = build_three_fold_roots(root / "ok")
+            rows = synthetic_fold_rows(1)
+            rows[0] = {**rows[0], "source_ym": "202501"}
+            fold_roots[1][MOD.ARM_BASELINE] = write_prediction_artifact(
+                root / "locked" / "baseline",
+                1,
+                MOD.ARM_BASELINE,
+                rows,
+            )
+            with self.assertRaises(ValueError) as ctx:
+                MOD.build_development_oof(fold_roots, root / "oof-locked")
+            self.assertIn("locked/OOT", str(ctx.exception))
+
+        with self.assertRaises(ValueError) as ctx:
+            MOD.fold_id_for_validation_ym("202607")
+        self.assertIn("locked/OOT", str(ctx.exception))
+
+    def test_wrong_fold_month_assignment_fails(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            fold_roots = build_three_fold_roots(root / "ok")
+            rows = synthetic_fold_rows(1)
+            rows = [
+                {**row, "source_ym": "202306", "entry_id": row["entry_id"] + "X"}
+                for row in rows
+            ]
+            fold_roots[1][MOD.ARM_BASELINE] = write_prediction_artifact(
+                root / "wrong" / "baseline",
+                1,
+                MOD.ARM_BASELINE,
+                rows,
+            )
+            fold_roots[1][MOD.ARM_SEX1] = write_prediction_artifact(
+                root / "wrong" / "sex1",
+                1,
+                MOD.ARM_SEX1,
+                rows,
+            )
+            with self.assertRaises(ValueError) as ctx:
+                MOD.build_development_oof(fold_roots, root / "oof-wrong")
+            self.assertIn("wrong validation month", str(ctx.exception))
+
+    def test_output_collision_and_no_absolute_paths(self):
+        frozen = REPO_ROOT / "data-manifests" / "nar-v3-baseline9"
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            fold_roots = build_three_fold_roots(root / "inputs")
+            with self.assertRaises(ValueError):
+                MOD.build_development_oof(fold_roots, frozen)
+            alias = root / "alias"
+            alias.symlink_to(frozen, target_is_directory=True)
+            with self.assertRaises(ValueError) as ctx:
+                MOD.build_development_oof(fold_roots, alias)
+            self.assertIn("collides", str(ctx.exception))
+            existing = root / "existing"
+            existing.mkdir()
+            with self.assertRaises(FileExistsError):
+                MOD.build_development_oof(fold_roots, existing)
+            result = MOD.build_development_oof(fold_roots, root / "oof")
+            text = result["metrics_path"].read_text(encoding="utf-8")
+            self.assertNotIn("/workspace", text)
+            self.assertNotIn("C:\\", text)
+            self.assertFalse(
+                MOD._json_contains_absolute_path(result["metrics"])
             )
 
 
