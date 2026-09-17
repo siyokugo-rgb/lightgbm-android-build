@@ -1,0 +1,132 @@
+{
+  "format_version": 1,
+  "candidate_profile": "nar-v3-sex1",
+  "evaluation_state": "DEVELOPMENT",
+  "status": "DEVELOPMENT_ELIGIBLE",
+  "semantics": {
+    "promotion_scope": "DEVELOPMENT_CHAMPION_CANDIDATE_EVIDENCE_FREEZE",
+    "means": "sex1 met Evaluation Contract Section 7 DEVELOPMENT champion eligibility against baseline9 on 3fold OOF + race_id paired bootstrap",
+    "does_not_mean": [
+      "production model adoption",
+      "Android serving adoption",
+      "2025 LOCKED evaluation",
+      "2026 OOT evaluation",
+      "baseline9 frozen artifact deletion or overwrite",
+      "R3 checkpoint overwrite",
+      "production feature contract update",
+      "formal development champion pointer already installed"
+    ],
+    "development_champion_eligible": true,
+    "development_champion_promoted": false,
+    "formal_champion_pointer": "not_created_in_this_gate",
+    "recommended_next_pointer_path": "data-manifests/nar-v3-development-champion/checkpoint.json"
+  },
+  "comparison_champion": "baseline9",
+  "comparison_champion_role": {
+    "during_this_evaluation": "DEVELOPMENT comparator",
+    "ongoing_roles": [
+      "historical frozen baseline",
+      "R12 LOCKED comparator baseline"
+    ],
+    "artifact_protection": "DO_NOT_MODIFY"
+  },
+  "git_commit": "c237630617eca406f1f813ef6bfff0eea6465409",
+  "development_period": {
+    "start_ym": "202101",
+    "end_ym": "202412",
+    "label": "202101-202412"
+  },
+  "folds": {
+    "1": {
+      "train": "202101-202112",
+      "validation": "202201-202212"
+    },
+    "2": {
+      "train": "202101-202212",
+      "validation": "202301-202312"
+    },
+    "3": {
+      "train": "202101-202312",
+      "validation": "202401-202412"
+    }
+  },
+  "feature_counts": {
+    "baseline": 9,
+    "candidate": 10
+  },
+  "candidate_feature_delta": [
+    "feature_entry__性"
+  ],
+  "related_checkpoints": {
+    "baseline9_checkpoint_sha256": "7ca0248675cecff197d88dd30d6a3554ea8188e22bc2e65a4a650303d456fecd",
+    "baseline9_training_config_sha256": "c340b011a6aa1fccc4a828a35b423da3140fd2f97615d49958cd94f53f3963fd",
+    "sex1_dataset_checkpoint_sha256": "4bfa96209cd0ac36c9dbdf12a9100d7626bbcdc1c4ffc34c062863872ee5571a",
+    "sex1_transformed_checkpoint_sha256": "6effe7736f99d380a6f2c9bea720590b8e49637a82452f9298b21bb01a9e1e48",
+    "sex1_features_config_sha256": "228c548d91f47c0c71de0312fc066f224b4c314e99cb8c7b3713cf3c8db2fe17",
+    "sex1_transform_config_sha256": "a8ef32743458495a95ba437beb439500b2a64f96214953834fe8c8a5bd1c933d"
+  },
+  "oof": {
+    "rows": 458741,
+    "races": 46003,
+    "baseline_log_loss": 0.32105034444077707,
+    "candidate_log_loss": 0.3204989959771442,
+    "observed_delta": -0.0005513484636328614,
+    "prediction_sha256": "a87b08a7fff43167e24e6ac8671a8b1daefdf0d8e42fe1451d0e2763b6ebad68",
+    "metrics_sha256": "a176ba1800974c11b865f17820c4cb3bde41d2d08ffe19b948fdf0df1198c5a6",
+    "source_ym_min": "202201",
+    "source_ym_max": "202412",
+    "rows_2025": 0,
+    "rows_2026": 0
+  },
+  "bootstrap": {
+    "resampling_unit": "race_id",
+    "resamples": 10000,
+    "seed": 20260825,
+    "rng": "numpy.random.Generator(numpy.random.PCG64)",
+    "interval_method": "percentile",
+    "confidence_level": 0.95,
+    "percentile_method": "numpy.percentile:linear",
+    "statistic": "candidate_log_loss_minus_baseline_log_loss",
+    "ci_lower": -0.0006753285157048372,
+    "ci_upper": -0.0004293347270110451,
+    "mean": -0.0005517837845062033,
+    "median": -0.0005518994717827186,
+    "min": -0.0007653196589228473,
+    "max": -0.00031859692881280877,
+    "distribution_sha256": "e50cb9f45bffcd5b15596818911a387829d461ad6d291ed9f57fc0066d76eb98",
+    "metrics_sha256": "09a6bad8b66a19370b394b03f5a2945d7cdae695583c8ab7b051da04507b4078",
+    "reproducibility": "PASS"
+  },
+  "violations": {
+    "PIT": 0,
+    "schema": 0,
+    "reproducibility": 0,
+    "total": 0
+  },
+  "promotion_rule_result": {
+    "A_candidate_log_loss_lt_champion": true,
+    "B_ci_upper_lt_zero": true,
+    "violations_zero": true,
+    "development_eligible": true
+  },
+  "access_policy": {
+    "locked_2025_months_opened": 0,
+    "oot_2026_months_opened": 0,
+    "monthly_model_raw_prediction_open": 0
+  },
+  "production": {
+    "feature_contract_changed": false,
+    "model_changed": false,
+    "android_changed": false,
+    "serving_sex_connected": false
+  },
+  "calibration": {
+    "status": "not_yet_frozen"
+  },
+  "artifacts_policy": {
+    "stores_prediction_bodies": false,
+    "stores_bootstrap_distribution_bodies": false,
+    "stores_absolute_paths": false,
+    "stores_secrets": false
+  }
+}
