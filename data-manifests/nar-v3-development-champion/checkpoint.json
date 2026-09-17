@@ -1,0 +1,71 @@
+{
+  "format_version": 1,
+  "scope": "DEVELOPMENT",
+  "role": "DEVELOPMENT_ABLATION_CHAMPION",
+  "champion_profile": "nar-v3-sex1",
+  "target": "label_win",
+  "feature_count": 10,
+  "previous_champion": "baseline9",
+  "promotion_basis": {
+    "evaluation_checkpoint": "data-manifests/candidates/nar-v3-sex1/evaluation/checkpoint.json",
+    "evaluation_checkpoint_sha256": "d3c281b9d0756d66036e91558e2d4e0400a33a30f5d48292868250b5c71ac873",
+    "status_required": "DEVELOPMENT_ELIGIBLE",
+    "status_observed": "DEVELOPMENT_ELIGIBLE",
+    "violations_total": 0,
+    "promotion_rule_result": {
+      "A_candidate_log_loss_lt_champion": true,
+      "B_ci_upper_lt_zero": true,
+      "violations_zero": true,
+      "development_eligible": true
+    }
+  },
+  "feature_delta_from_previous": [
+    "feature_entry__性"
+  ],
+  "development_period": {
+    "start_ym": "202101",
+    "end_ym": "202412"
+  },
+  "comparison_contract": {
+    "folds": 3,
+    "target": "label_win",
+    "bootstrap_resampling_unit": "race_id",
+    "bootstrap_resamples": 10000,
+    "bootstrap_seed": 20260825,
+    "bootstrap_rng": "numpy.random.Generator(numpy.random.PCG64)",
+    "bootstrap_interval_method": "percentile",
+    "bootstrap_confidence_level": 0.95,
+    "statistic": "candidate_log_loss_minus_champion_log_loss"
+  },
+  "semantics": {
+    "means": "current DEVELOPMENT ablation champion for subsequent R5 feature candidates",
+    "does_not_mean": [
+      "production model adoption",
+      "Android serving adoption",
+      "production feature contract update",
+      "2025 LOCKED evaluation",
+      "2026 OOT evaluation",
+      "baseline9 deletion or overwrite",
+      "final-fit execution",
+      "R12 acceptance"
+    ]
+  },
+  "baseline9_protection": {
+    "checkpoint": "data-manifests/nar-v3-baseline9/checkpoint.json",
+    "roles": [
+      "historical frozen baseline",
+      "R3 reproducibility checkpoint",
+      "R12 LOCKED comparator baseline"
+    ],
+    "modified_by_this_pointer": false
+  },
+  "production_status": "NOT_PROMOTED",
+  "locked_test_status": "NOT_EVALUATED",
+  "oot_status": "NOT_EVALUATED",
+  "artifacts_policy": {
+    "stores_prediction_bodies": false,
+    "stores_bootstrap_distribution_bodies": false,
+    "stores_absolute_paths": false,
+    "stores_secrets": false
+  }
+}
