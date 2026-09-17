@@ -657,17 +657,16 @@ class AblateNarV3DevelopmentTest(unittest.TestCase):
         after = frozen_fingerprint()
         self.assertEqual(before, after)
 
-    def test_helper_does_not_include_bootstrap_or_production_runner(self):
+    def test_helper_does_not_include_production_runner_or_champion_rewrite(self):
         source = MODULE_PATH.read_text(encoding="utf-8")
         self.assertNotIn("TRANSFORM.run_transform", source)
-        self.assertNotIn("def bootstrap", source)
-        self.assertNotIn("promotion", source.lower())
+        self.assertNotIn("def promote_champion", source)
+        self.assertNotIn("champion.json", source)
         self.assertIn("def train_fold_arm", source)
         self.assertIn("def build_development_oof", source)
+        self.assertIn("def run_race_paired_bootstrap", source)
         self.assertNotIn("best_iteration = 55", source)
         self.assertNotIn("best = 55", source)
-        self.assertNotIn("resamples", source)
-        self.assertNotIn("10000", source)
 
 
 def fold_month_plus_oot():
@@ -1578,6 +1577,432 @@ class AblateNarV3OofTest(unittest.TestCase):
             self.assertFalse(
                 MOD._json_contains_absolute_path(result["metrics"])
             )
+
+
+def make_bootstrap_oof(rows):
+    frame = pd.DataFrame(rows)
+    return frame[MOD.OOF_COLUMNS]
+
+
+def unequal_field_oof(*, candidate_mode="better"):
+    """Unequal race sizes: one tiny race, one large race."""
+    rows = []
+    # Race A: 2 entries
+    if candidate_mode == "better":
+        a_base = (0.20, 0.80)
+        a_cand = (0.90, 0.10)
+    elif candidate_mode == "worse":
+        a_base = (0.90, 0.10)
+        a_cand = (0.20, 0.80)
+    else:
+        a_base = (0.35, 0.65)
+        a_cand = a_base
+    rows.append(
+        {
+            "race_id": "A",
+            "entry_id": "A-1",
+            "fold": 1,
+            "source_ym": "202206",
+            MOD.TARGET: 1,
+            "baseline_prediction": a_base[0],
+            "candidate_prediction": a_cand[0],
+        }
+    )
+    rows.append(
+        {
+            "race_id": "A",
+            "entry_id": "A-2",
+            "fold": 1,
+            "source_ym": "202206",
+            MOD.TARGET: 0,
+            "baseline_prediction": a_base[1],
+            "candidate_prediction": a_cand[1],
+        }
+    )
+    # Race B: 8 entries (dominates global log loss)
+    for i in range(8):
+        label = 1 if i % 2 == 0 else 0
+        if candidate_mode == "better":
+            base = 0.55 if label == 1 else 0.45
+            cand = 0.85 if label == 1 else 0.15
+        elif candidate_mode == "worse":
+            base = 0.85 if label == 1 else 0.15
+            cand = 0.55 if label == 1 else 0.45
+        else:
+            base = 0.6 if label == 1 else 0.4
+            cand = base
+        rows.append(
+            {
+                "race_id": "B",
+                "entry_id": f"B-{i}",
+                "fold": 2,
+                "source_ym": "202306",
+                MOD.TARGET: label,
+                "baseline_prediction": base,
+                "candidate_prediction": cand,
+            }
+        )
+    return make_bootstrap_oof(rows)
+
+
+class AblateNarV3BootstrapTest(unittest.TestCase):
+    def test_contract_constants_and_rng(self):
+        self.assertEqual(MOD.BOOTSTRAP_RESAMPLING_UNIT, "race_id")
+        self.assertEqual(MOD.BOOTSTRAP_RESAMPLES, 10000)
+        self.assertEqual(MOD.BOOTSTRAP_SEED, 20260825)
+        self.assertEqual(MOD.BOOTSTRAP_CONFIDENCE_LEVEL, 0.95)
+        self.assertEqual(MOD.BOOTSTRAP_INTERVAL_METHOD, "percentile")
+        self.assertEqual(MOD.BOOTSTRAP_CI_LOWER_Q, 2.5)
+        self.assertEqual(MOD.BOOTSTRAP_CI_UPPER_Q, 97.5)
+        self.assertEqual(
+            MOD.BOOTSTRAP_STATISTIC,
+            "candidate_log_loss_minus_baseline_log_loss",
+        )
+        rng = MOD.bootstrap_rng()
+        self.assertIsInstance(rng, np.random.Generator)
+        self.assertIsInstance(rng.bit_generator, np.random.PCG64)
+        a = MOD.bootstrap_rng(MOD.BOOTSTRAP_SEED).integers(0, 1000, size=5)
+        b = MOD.bootstrap_rng(MOD.BOOTSTRAP_SEED).integers(0, 1000, size=5)
+        self.assertTrue(np.array_equal(a, b))
+
+    def test_race_cluster_sampling_not_entry_unit(self):
+        # Race A: 2 entries, Race B: 5 entries — unequal field size.
+        rows = []
+        for i in range(2):
+            rows.append(
+                {
+                    "race_id": "A",
+                    "entry_id": f"A-{i}",
+                    "fold": 1,
+                    "source_ym": "202206",
+                    MOD.TARGET: i % 2,
+                    "baseline_prediction": 0.3,
+                    "candidate_prediction": 0.4,
+                }
+            )
+        for i in range(5):
+            rows.append(
+                {
+                    "race_id": "B",
+                    "entry_id": f"B-{i}",
+                    "fold": 1,
+                    "source_ym": "202206",
+                    MOD.TARGET: i % 2,
+                    "baseline_prediction": 0.3,
+                    "candidate_prediction": 0.4,
+                }
+            )
+        oof = make_bootstrap_oof(rows)
+        races, groups = MOD.race_index_groups(oof["race_id"])
+        self.assertEqual(races, ["A", "B"])
+        self.assertEqual(len(groups[0]), 2)
+        self.assertEqual(len(groups[1]), 5)
+
+        # Sample sequence B, B, A => positions [1, 1, 0]
+        expanded = MOD.expand_race_sample(groups, [1, 1, 0])
+        self.assertEqual(len(expanded), 5 + 5 + 2)
+        # B entries appear twice contiguously, then A.
+        self.assertTrue(np.array_equal(expanded[:5], groups[1]))
+        self.assertTrue(np.array_equal(expanded[5:10], groups[1]))
+        self.assertTrue(np.array_equal(expanded[10:], groups[0]))
+
+        # Entry-unit sampling would draw independent entries and would not
+        # guarantee whole-race replication. Cluster expand always
+        # replicates full race membership.
+        for idx in groups[0]:
+            self.assertEqual(int(np.sum(expanded == idx)), 1)
+        for idx in groups[1]:
+            self.assertEqual(int(np.sum(expanded == idx)), 2)
+
+    def test_paired_same_sequence_and_statistic_direction(self):
+        oof = unequal_field_oof(candidate_mode="better")
+        races, groups = MOD.race_index_groups(oof["race_id"])
+        y = oof[MOD.TARGET].to_numpy(dtype=np.int8)
+        base = oof["baseline_prediction"].to_numpy()
+        cand = oof["candidate_prediction"].to_numpy()
+        # Fixed sample: always draw race B then A then B => same rows for both
+        positions = np.array([1, 0, 1], dtype=np.int64)
+        rows = MOD.expand_race_sample(groups, positions)
+        delta = (
+            float(log_loss(y[rows], cand[rows], labels=[0, 1]))
+            - float(log_loss(y[rows], base[rows], labels=[0, 1]))
+        )
+        # Paired: swapping arms negates delta with identical row index.
+        swapped = (
+            float(log_loss(y[rows], base[rows], labels=[0, 1]))
+            - float(log_loss(y[rows], cand[rows], labels=[0, 1]))
+        )
+        self.assertAlmostEqual(delta, -swapped)
+        self.assertEqual(
+            MOD.BOOTSTRAP_STATISTIC,
+            "candidate_log_loss_minus_baseline_log_loss",
+        )
+
+    def test_global_log_loss_not_race_average(self):
+        # Craft unequal races so race-mean delta != global delta.
+        rows = [
+            {
+                "race_id": "tiny",
+                "entry_id": "t1",
+                "fold": 1,
+                "source_ym": "202206",
+                MOD.TARGET: 1,
+                "baseline_prediction": 0.99,
+                "candidate_prediction": 0.01,
+            },
+            {
+                "race_id": "tiny",
+                "entry_id": "t0",
+                "fold": 1,
+                "source_ym": "202206",
+                MOD.TARGET: 0,
+                "baseline_prediction": 0.01,
+                "candidate_prediction": 0.99,
+            },
+        ]
+        # Large race: candidate slightly worse on many rows.
+        for i in range(20):
+            label = 1 if i < 10 else 0
+            rows.append(
+                {
+                    "race_id": "huge",
+                    "entry_id": f"h{i}",
+                    "fold": 1,
+                    "source_ym": "202206",
+                    MOD.TARGET: label,
+                    "baseline_prediction": 0.80 if label == 1 else 0.20,
+                    "candidate_prediction": 0.70 if label == 1 else 0.30,
+                }
+            )
+        oof = make_bootstrap_oof(rows)
+        y = oof[MOD.TARGET].to_numpy(dtype=np.int8)
+        base = oof["baseline_prediction"].to_numpy()
+        cand = oof["candidate_prediction"].to_numpy()
+        global_delta = float(log_loss(y, cand, labels=[0, 1])) - float(
+            log_loss(y, base, labels=[0, 1])
+        )
+        race_deltas = []
+        for race in oof["race_id"].unique():
+            mask = oof["race_id"] == race
+            race_deltas.append(
+                float(log_loss(y[mask], cand[mask], labels=[0, 1]))
+                - float(log_loss(y[mask], base[mask], labels=[0, 1]))
+            )
+        race_mean_delta = float(np.mean(race_deltas))
+        self.assertNotAlmostEqual(global_delta, race_mean_delta, places=6)
+
+        with tempfile.TemporaryDirectory() as td:
+            result = MOD.run_race_paired_bootstrap(oof, Path(td) / "boot")
+            self.assertAlmostEqual(
+                result["metrics"]["observed_delta"],
+                global_delta,
+                places=12,
+            )
+            self.assertNotAlmostEqual(
+                result["metrics"]["observed_delta"],
+                race_mean_delta,
+                places=6,
+            )
+
+    def test_better_worse_identical_and_single_race(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            better = unequal_field_oof(candidate_mode="better")
+            worse = unequal_field_oof(candidate_mode="worse")
+            identical = unequal_field_oof(candidate_mode="identical")
+
+            b = MOD.run_race_paired_bootstrap(better, root / "better")
+            self.assertLess(b["metrics"]["observed_delta"], 0)
+
+            w = MOD.run_race_paired_bootstrap(worse, root / "worse")
+            self.assertGreater(w["metrics"]["observed_delta"], 0)
+
+            same = MOD.run_race_paired_bootstrap(identical, root / "same")
+            self.assertEqual(same["metrics"]["observed_delta"], 0.0)
+            self.assertTrue(np.all(same["deltas"] == 0.0))
+            self.assertEqual(same["metrics"]["bootstrap"]["ci_lower"], 0.0)
+            self.assertEqual(same["metrics"]["bootstrap"]["ci_upper"], 0.0)
+            self.assertEqual(same["metrics"]["bootstrap"]["mean"], 0.0)
+            self.assertEqual(same["metrics"]["bootstrap"]["median"], 0.0)
+
+            # Single race: still well-defined (always resamples that race).
+            single_rows = [
+                {
+                    "race_id": "only",
+                    "entry_id": f"e{i}",
+                    "fold": 1,
+                    "source_ym": "202206",
+                    MOD.TARGET: 1 if i % 2 == 0 else 0,
+                    "baseline_prediction": 0.4,
+                    "candidate_prediction": 0.7 if i % 2 == 0 else 0.2,
+                }
+                for i in range(4)
+            ]
+            single = make_bootstrap_oof(single_rows)
+            s1 = MOD.run_race_paired_bootstrap(single, root / "single1")
+            s2 = MOD.run_race_paired_bootstrap(single, root / "single2")
+            self.assertEqual(s1["metrics"]["race_count"], 1)
+            self.assertEqual(
+                s1["metrics"]["observed_delta"],
+                s1["metrics"]["bootstrap"]["mean"],
+            )
+            self.assertTrue(np.allclose(s1["deltas"], s1["deltas"][0]))
+            self.assertEqual(
+                s1["metrics"]["bootstrap"]["distribution_sha256"],
+                s2["metrics"]["bootstrap"]["distribution_sha256"],
+            )
+
+    def test_determinism_two_runs(self):
+        oof = unequal_field_oof(candidate_mode="better")
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            first = MOD.run_race_paired_bootstrap(oof, root / "a")
+            second = MOD.run_race_paired_bootstrap(oof, root / "b")
+            m1 = first["metrics"]
+            m2 = second["metrics"]
+            self.assertEqual(
+                m1["bootstrap"]["ci_lower"],
+                m2["bootstrap"]["ci_lower"],
+            )
+            self.assertEqual(
+                m1["bootstrap"]["ci_upper"],
+                m2["bootstrap"]["ci_upper"],
+            )
+            self.assertEqual(m1["bootstrap"]["mean"], m2["bootstrap"]["mean"])
+            self.assertEqual(
+                m1["bootstrap"]["median"],
+                m2["bootstrap"]["median"],
+            )
+            self.assertEqual(
+                m1["bootstrap"]["distribution_sha256"],
+                m2["bootstrap"]["distribution_sha256"],
+            )
+            self.assertEqual(
+                first["bootstrap_metrics_sha256"],
+                second["bootstrap_metrics_sha256"],
+            )
+            self.assertEqual(
+                first["metrics_path"].read_text(encoding="utf-8"),
+                second["metrics_path"].read_text(encoding="utf-8"),
+            )
+            self.assertEqual(len(first["deltas"]), 10000)
+            self.assertEqual(m1["resamples"], 10000)
+            self.assertEqual(m1["seed"], 20260825)
+            self.assertEqual(m1["interval_method"], "percentile")
+            self.assertEqual(m1["ci_lower_percentile"], 2.5)
+            self.assertEqual(m1["ci_upper_percentile"], 97.5)
+            self.assertEqual(m1["reproducibility"], "PASS")
+            self.assertEqual(
+                m1["calibration"]["status"],
+                "not_yet_frozen",
+            )
+            lower, upper = MOD.percentile_ci(first["deltas"])
+            self.assertEqual(lower, m1["bootstrap"]["ci_lower"])
+            self.assertEqual(upper, m1["bootstrap"]["ci_upper"])
+
+    def test_eligibility_boundary(self):
+        self.assertTrue(
+            MOD.development_candidate_eligible(0.5, 0.6, -0.01, 0)
+        )
+        self.assertFalse(
+            MOD.development_candidate_eligible(0.5, 0.6, 0.0, 0)
+        )
+        self.assertFalse(
+            MOD.development_candidate_eligible(0.5, 0.6, 0.01, 0)
+        )
+        self.assertFalse(
+            MOD.development_candidate_eligible(0.6, 0.6, -0.01, 0)
+        )
+        self.assertFalse(
+            MOD.development_candidate_eligible(0.7, 0.6, -0.01, 0)
+        )
+        self.assertFalse(
+            MOD.development_candidate_eligible(0.5, 0.6, -0.01, 1)
+        )
+
+    def test_input_guards(self):
+        base = unequal_field_oof(candidate_mode="better")
+        with self.assertRaises(ValueError) as ctx:
+            MOD.assert_bootstrap_oof_input(base.iloc[0:0])
+        self.assertIn("empty", str(ctx.exception))
+
+        missing_race = base.copy()
+        missing_race.loc[0, "race_id"] = pd.NA
+        with self.assertRaises(ValueError) as ctx:
+            MOD.assert_bootstrap_oof_input(missing_race)
+        self.assertIn("missing race_id", str(ctx.exception))
+
+        dup = base.copy()
+        dup.loc[1, "entry_id"] = dup.loc[0, "entry_id"]
+        with self.assertRaises(ValueError) as ctx:
+            MOD.assert_bootstrap_oof_input(dup)
+        self.assertIn("duplicate entry_id", str(ctx.exception))
+
+        bad_label = base.copy()
+        bad_label.loc[0, MOD.TARGET] = 2
+        with self.assertRaises(ValueError) as ctx:
+            MOD.assert_bootstrap_oof_input(bad_label)
+        self.assertIn("invalid target", str(ctx.exception))
+
+        nan_pred = base.copy()
+        nan_pred.loc[0, "baseline_prediction"] = np.nan
+        with self.assertRaises(ValueError) as ctx:
+            MOD.assert_bootstrap_oof_input(nan_pred)
+        self.assertIn("NaN/inf", str(ctx.exception))
+
+        inf_pred = base.copy()
+        inf_pred.loc[0, "candidate_prediction"] = np.inf
+        with self.assertRaises(ValueError) as ctx:
+            MOD.assert_bootstrap_oof_input(inf_pred)
+        self.assertIn("NaN/inf", str(ctx.exception))
+
+        oor = base.copy()
+        oor.loc[0, "candidate_prediction"] = 1.5
+        with self.assertRaises(ValueError) as ctx:
+            MOD.assert_bootstrap_oof_input(oor)
+        self.assertIn("out of range", str(ctx.exception))
+
+        locked = base.copy()
+        locked.loc[0, "source_ym"] = "202501"
+        with self.assertRaises(ValueError) as ctx:
+            MOD.assert_bootstrap_oof_input(locked)
+        self.assertIn("locked/OOT", str(ctx.exception))
+
+        oot = base.copy()
+        oot.loc[0, "source_ym"] = "202606"
+        with self.assertRaises(ValueError) as ctx:
+            MOD.assert_bootstrap_oof_input(oot)
+        self.assertIn("locked/OOT", str(ctx.exception))
+
+    def test_output_collision_symlink_and_no_leaks(self):
+        oof = unequal_field_oof(candidate_mode="better")
+        frozen = REPO_ROOT / "data-manifests" / "nar-v3-baseline9"
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            with self.assertRaises(ValueError):
+                MOD.run_race_paired_bootstrap(oof, frozen)
+            alias = root / "alias"
+            alias.symlink_to(frozen, target_is_directory=True)
+            with self.assertRaises(ValueError) as ctx:
+                MOD.run_race_paired_bootstrap(oof, alias)
+            self.assertIn("collides", str(ctx.exception))
+            existing = root / "existing"
+            existing.mkdir()
+            with self.assertRaises(FileExistsError):
+                MOD.run_race_paired_bootstrap(oof, existing)
+            result = MOD.run_race_paired_bootstrap(oof, root / "boot")
+            text = result["metrics_path"].read_text(encoding="utf-8")
+            self.assertNotIn("/workspace", text)
+            self.assertNotIn("C:\\", text)
+            self.assertNotIn("secret", text.lower())
+            self.assertNotIn("api_key", text.lower())
+            self.assertFalse(
+                MOD._json_contains_absolute_path(result["metrics"])
+            )
+            # Huge delta array must not appear in the artifact.
+            self.assertNotIn("deltas", result["metrics"])
+            parsed = json.loads(text)
+            self.assertNotIn("deltas", parsed)
 
 
 if __name__ == "__main__":

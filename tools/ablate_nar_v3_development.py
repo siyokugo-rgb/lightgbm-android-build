@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Fold-local transform, training, and OOF helpers for NAR V3 DEVELOPMENT ablation.
+"""Fold-local transform, training, OOF, and bootstrap helpers for NAR V3
+DEVELOPMENT ablation.
 
 This module fits category dictionaries on each rolling-origin fold's
 training months, transforms that fold's train+validation months, trains
-one fold/arm with the frozen baseline9 LightGBM contract, and concatenates
-Development OOF validation predictions for baseline vs sex1.
+one fold/arm with the frozen baseline9 LightGBM contract, concatenates
+Development OOF validation predictions for baseline vs sex1, and runs
+race_id paired bootstrap on those OOF predictions.
 
-It does not run paired bootstrap, promote a champion, or invoke the
+It does not promote a champion, rewrite frozen artifacts, or invoke the
 production transform runner.
 """
 
@@ -19,6 +21,7 @@ from pathlib import Path
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
+import sklearn
 from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score
 
 
@@ -101,6 +104,17 @@ OOF_COLUMNS = [
 EVALUATION_CONTRACT_PATH = REPO_ROOT / "docs" / "nar-evaluation-contract.md"
 OOF_PERIOD_START_YM = "202201"
 OOF_PERIOD_END_YM = "202412"
+
+BOOTSTRAP_RESAMPLING_UNIT = "race_id"
+BOOTSTRAP_RESAMPLES = 10000
+BOOTSTRAP_SEED = 20260825
+BOOTSTRAP_CONFIDENCE_LEVEL = 0.95
+BOOTSTRAP_INTERVAL_METHOD = "percentile"
+BOOTSTRAP_STATISTIC = "candidate_log_loss_minus_baseline_log_loss"
+# numpy.percentile default on this runtime; pin for reproducibility.
+BOOTSTRAP_PERCENTILE_METHOD = "linear"
+BOOTSTRAP_CI_LOWER_Q = 2.5
+BOOTSTRAP_CI_UPPER_Q = 97.5
 
 # Exclusive start of months this fold must not open.
 FOLD_WINDOWS = {
@@ -1489,8 +1503,342 @@ def build_development_oof(fold_roots, out_root):
     }
 
 
+def bootstrap_rng(seed=BOOTSTRAP_SEED):
+    """Contract RNG: numpy Generator backed by PCG64."""
+    return np.random.Generator(np.random.PCG64(int(seed)))
+
+
+def race_index_groups(race_ids):
+    """Map unique race_id (first-seen order) to row index arrays.
+
+    Sampling unit is race_id; each group holds every entry belonging to
+    that race so cluster membership is preserved under resampling.
+    """
+    series = pd.Series(np.asarray(race_ids), dtype="string")
+    if series.isna().any() or (series == "").any():
+        raise ValueError("missing race_id")
+    unique = list(dict.fromkeys(series.tolist()))
+    groups = []
+    for race_id in unique:
+        idx = np.flatnonzero(series.to_numpy() == race_id)
+        if len(idx) == 0:
+            raise ValueError(f"empty race cluster: {race_id}")
+        groups.append(idx.astype(np.int64, copy=False))
+    return unique, groups
+
+
+def expand_race_sample(race_groups, sampled_positions):
+    """Expand sampled race positions into entry-level row indices.
+
+    If a race is drawn k times, every entry of that race appears k times.
+    """
+    positions = np.asarray(sampled_positions, dtype=np.int64)
+    if positions.ndim != 1:
+        raise ValueError("sampled_positions must be 1-d")
+    n_races = len(race_groups)
+    if n_races == 0:
+        raise ValueError("empty race groups")
+    if np.any(positions < 0) or np.any(positions >= n_races):
+        raise ValueError("sampled race position out of range")
+    parts = [race_groups[int(p)] for p in positions]
+    return np.concatenate(parts)
+
+
+def _canonical_bootstrap_oof(frame):
+    out = frame.copy()
+    if list(out.columns) != OOF_COLUMNS:
+        if set(out.columns) != set(OOF_COLUMNS):
+            raise ValueError("bootstrap OOF column contract mismatch")
+        out = out[OOF_COLUMNS]
+    out["race_id"] = out["race_id"].astype(str)
+    out["entry_id"] = out["entry_id"].astype(str)
+    out["fold"] = pd.to_numeric(out["fold"], errors="raise").astype(np.int64)
+    out["source_ym"] = out["source_ym"].astype(str)
+    out[TARGET] = out[TARGET].astype("int8")
+    out["baseline_prediction"] = out["baseline_prediction"].astype(np.float64)
+    out["candidate_prediction"] = out["candidate_prediction"].astype(
+        np.float64
+    )
+    return out.reset_index(drop=True)
+
+
+def assert_bootstrap_oof_input(frame):
+    """Fail-closed schema / identity / prediction guards for bootstrap."""
+    if frame is None:
+        raise ValueError("bootstrap OOF is required")
+    if not isinstance(frame, pd.DataFrame):
+        raise ValueError("bootstrap OOF must be a DataFrame")
+    if len(frame) == 0:
+        raise ValueError("empty OOF")
+    if set(frame.columns) != set(OOF_COLUMNS):
+        raise ValueError("bootstrap OOF column contract mismatch")
+    raw = frame[OOF_COLUMNS].copy()
+    if raw["race_id"].isna().any():
+        raise ValueError("missing race_id")
+    if raw["entry_id"].isna().any():
+        raise ValueError("missing entry_id")
+    oof = _canonical_bootstrap_oof(raw)
+    if (oof["race_id"] == "").any() or (oof["race_id"] == "nan").any():
+        raise ValueError("missing race_id")
+    if (oof["entry_id"] == "").any() or (oof["entry_id"] == "nan").any():
+        raise ValueError("missing entry_id")
+    if oof["entry_id"].duplicated().any():
+        raise ValueError("global duplicate entry_id in OOF")
+    labels = pd.to_numeric(oof[TARGET], errors="coerce")
+    if labels.isna().any() or not labels.isin([0, 1]).all():
+        raise ValueError("invalid target")
+    oof[TARGET] = labels.astype("int8")
+    assert_valid_predictions(
+        pd.DataFrame({"entry_id": oof["entry_id"].astype(str)}),
+        oof["baseline_prediction"].to_numpy(),
+    )
+    assert_valid_predictions(
+        pd.DataFrame({"entry_id": oof["entry_id"].astype(str)}),
+        oof["candidate_prediction"].to_numpy(),
+    )
+    assert_no_locked_oot_months(
+        oof["source_ym"].astype(str).tolist(),
+        label="bootstrap source_ym",
+    )
+    return oof
+
+
+def load_bootstrap_oof_frame(source):
+    """Load bootstrap input from OOF DataFrame or oof-predictions.csv.gz."""
+    if isinstance(source, pd.DataFrame):
+        return assert_bootstrap_oof_input(source)
+    path = Path(source)
+    if not path.is_file():
+        raise FileNotFoundError(f"OOF predictions missing: {path.name}")
+    frame = pd.read_csv(
+        path,
+        compression="gzip" if path.name.endswith(".gz") else None,
+        dtype={
+            "race_id": "string",
+            "entry_id": "string",
+            "fold": "int64",
+            "source_ym": "string",
+            TARGET: "float32",
+            "baseline_prediction": "float64",
+            "candidate_prediction": "float64",
+        },
+        keep_default_na=True,
+    )
+    if TARGET in frame.columns:
+        if not frame[TARGET].isin([0.0, 1.0]).all():
+            raise ValueError("invalid target")
+        frame[TARGET] = frame[TARGET].astype("int8")
+    return assert_bootstrap_oof_input(frame)
+
+
+def oof_content_sha256(frame):
+    """Content SHA of canonical OOF rows (relative, path-free)."""
+    oof = assert_bootstrap_oof_input(frame)
+    payload = oof[OOF_COLUMNS].to_csv(
+        index=False,
+        lineterminator="\n",
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _global_log_loss(y, p):
+    return float(log_loss(y, p, labels=[0, 1]))
+
+
+def paired_bootstrap_deltas(
+    y,
+    baseline_p,
+    candidate_p,
+    race_groups,
+    *,
+    resamples=BOOTSTRAP_RESAMPLES,
+    seed=BOOTSTRAP_SEED,
+    rng=None,
+):
+    """Compute candidate-baseline global log-loss deltas via race resampling."""
+    y = np.asarray(y, dtype=np.int8)
+    baseline_p = np.asarray(baseline_p, dtype=np.float64)
+    candidate_p = np.asarray(candidate_p, dtype=np.float64)
+    if len(y) == 0:
+        raise ValueError("empty OOF")
+    if not (len(y) == len(baseline_p) == len(candidate_p)):
+        raise ValueError("prediction row count mismatch")
+    n_races = len(race_groups)
+    if n_races == 0:
+        raise ValueError("empty race groups")
+    if int(resamples) != BOOTSTRAP_RESAMPLES:
+        raise ValueError(
+            f"resamples must be {BOOTSTRAP_RESAMPLES} per evaluation contract"
+        )
+    if int(seed) != BOOTSTRAP_SEED and rng is None:
+        raise ValueError(
+            f"seed must be {BOOTSTRAP_SEED} per evaluation contract"
+        )
+    generator = bootstrap_rng(seed) if rng is None else rng
+    deltas = np.empty(int(resamples), dtype=np.float64)
+    for i in range(int(resamples)):
+        sampled = generator.integers(0, n_races, size=n_races, endpoint=False)
+        rows = expand_race_sample(race_groups, sampled)
+        y_s = y[rows]
+        b_s = baseline_p[rows]
+        c_s = candidate_p[rows]
+        deltas[i] = _global_log_loss(y_s, c_s) - _global_log_loss(y_s, b_s)
+    return deltas
+
+
+def percentile_ci(deltas, *, confidence_level=BOOTSTRAP_CONFIDENCE_LEVEL):
+    """Percentile CI; DEVELOPMENT uses 95% => 2.5 / 97.5."""
+    values = np.asarray(deltas, dtype=np.float64)
+    if len(values) != BOOTSTRAP_RESAMPLES:
+        raise ValueError(
+            f"percentile CI requires exactly {BOOTSTRAP_RESAMPLES} deltas"
+        )
+    if float(confidence_level) != BOOTSTRAP_CONFIDENCE_LEVEL:
+        raise ValueError(
+            f"confidence_level must be {BOOTSTRAP_CONFIDENCE_LEVEL}"
+        )
+    lower = float(
+        np.percentile(
+            values,
+            BOOTSTRAP_CI_LOWER_Q,
+            method=BOOTSTRAP_PERCENTILE_METHOD,
+        )
+    )
+    upper = float(
+        np.percentile(
+            values,
+            BOOTSTRAP_CI_UPPER_Q,
+            method=BOOTSTRAP_PERCENTILE_METHOD,
+        )
+    )
+    return lower, upper
+
+
+def distribution_sha256(deltas):
+    """SHA-256 of little-endian float64 delta bytes."""
+    arr = np.ascontiguousarray(deltas, dtype="<f8")
+    return hashlib.sha256(arr.tobytes()).hexdigest()
+
+
+def development_candidate_eligible(
+    observed_candidate_log_loss,
+    baseline_log_loss,
+    ci_upper,
+    violations,
+):
+    """Pure DEVELOPMENT eligibility check (no artifact side effects).
+
+    DEVELOPMENT requires ci_upper < 0 (strict), not <= 0.
+    """
+    if int(violations) != 0:
+        return False
+    if not (
+        float(observed_candidate_log_loss) < float(baseline_log_loss)
+    ):
+        return False
+    if not (float(ci_upper) < 0.0):
+        return False
+    return True
+
+
+def run_race_paired_bootstrap(oof_source, out_root):
+    """Race_id paired bootstrap on Development OOF predictions.
+
+    Writes bootstrap-metrics.json only. Does not promote a champion.
+    """
+    out_root = Path(out_root)
+    assert_ablation_out_root_allowed(out_root)
+    if out_root.exists():
+        raise FileExistsError(
+            f"bootstrap output root already exists: {out_root}"
+        )
+
+    oof = load_bootstrap_oof_frame(oof_source)
+    input_sha = oof_content_sha256(oof)
+    unique_races, race_groups = race_index_groups(oof["race_id"])
+    y = oof[TARGET].to_numpy(dtype=np.int8)
+    baseline_p = oof["baseline_prediction"].to_numpy(dtype=np.float64)
+    candidate_p = oof["candidate_prediction"].to_numpy(dtype=np.float64)
+
+    observed_baseline = _global_log_loss(y, baseline_p)
+    observed_candidate = _global_log_loss(y, candidate_p)
+    observed_delta = observed_candidate - observed_baseline
+
+    deltas = paired_bootstrap_deltas(
+        y,
+        baseline_p,
+        candidate_p,
+        race_groups,
+        resamples=BOOTSTRAP_RESAMPLES,
+        seed=BOOTSTRAP_SEED,
+    )
+    ci_lower, ci_upper = percentile_ci(deltas)
+    dist_sha = distribution_sha256(deltas)
+
+    out_root.mkdir(parents=True, exist_ok=False)
+    metrics = {
+        "resampling_unit": BOOTSTRAP_RESAMPLING_UNIT,
+        "resamples": BOOTSTRAP_RESAMPLES,
+        "seed": BOOTSTRAP_SEED,
+        "rng": "numpy.random.Generator(numpy.random.PCG64)",
+        "confidence_level": BOOTSTRAP_CONFIDENCE_LEVEL,
+        "interval_method": BOOTSTRAP_INTERVAL_METHOD,
+        "percentile_method": (
+            f"numpy.percentile:{BOOTSTRAP_PERCENTILE_METHOD}"
+        ),
+        "ci_lower_percentile": BOOTSTRAP_CI_LOWER_Q,
+        "ci_upper_percentile": BOOTSTRAP_CI_UPPER_Q,
+        "statistic": BOOTSTRAP_STATISTIC,
+        "race_count": len(unique_races),
+        "row_count": len(oof),
+        "observed_baseline_log_loss": float(observed_baseline),
+        "observed_candidate_log_loss": float(observed_candidate),
+        "observed_delta": float(observed_delta),
+        "bootstrap": {
+            "mean": float(np.mean(deltas)),
+            "median": float(np.median(deltas)),
+            "min": float(np.min(deltas)),
+            "max": float(np.max(deltas)),
+            "ci_lower": float(ci_lower),
+            "ci_upper": float(ci_upper),
+            "distribution_sha256": dist_sha,
+        },
+        "runtime": {
+            "python": platform.python_version(),
+            "numpy": np.__version__,
+            "scikit_learn": sklearn.__version__,
+        },
+        "input": {
+            "oof_content_sha256": input_sha,
+        },
+        "reproducibility": "PASS",
+        "calibration": {
+            "status": "not_yet_frozen",
+            "reason": (
+                "calibration method is not frozen; "
+                "bootstrap does not apply calibration"
+            ),
+        },
+        "metrics_file": "bootstrap-metrics.json",
+    }
+    if _json_contains_absolute_path(metrics):
+        raise ValueError("absolute path leaked into bootstrap metrics")
+    metrics_path = out_root / "bootstrap-metrics.json"
+    TRANSFORM.write_json_atomic(metrics_path, metrics)
+    return {
+        "out_root": out_root,
+        "oof": oof,
+        "metrics": metrics,
+        "deltas": deltas,
+        "metrics_path": metrics_path,
+        "bootstrap_metrics_sha256": TRANSFORM.sha256_file(metrics_path),
+        "race_ids": unique_races,
+        "race_groups": race_groups,
+    }
+
+
 if __name__ == "__main__":
     raise SystemExit(
-        "fold-local transform/training/OOF helper; "
+        "fold-local transform/training/OOF/bootstrap helper; "
         "run python3 -m unittest tools.test_ablate_nar_v3_development"
     )
