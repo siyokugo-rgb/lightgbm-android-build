@@ -1,0 +1,137 @@
+{
+  "format_version": 1,
+  "phase": "R5",
+  "title": "NAR Internal Feature Development",
+  "status": "COMPLETE",
+  "completed_main_sha": "a3fa187e3d9e5af568d0c365a35a1940c3c88ced",
+  "development_champion": "nar-v3-sex1",
+  "champion_pointer": "data-manifests/nar-v3-development-champion/checkpoint.json",
+  "champion_pointer_sha256": "656106845b5ee03ec422f18223cc8871820930e6ac394175dc5b9c7ea93eec3a",
+  "evaluation_checkpoint": "data-manifests/candidates/nar-v3-sex1/evaluation/checkpoint.json",
+  "evaluation_checkpoint_sha256": "d3c281b9d0756d66036e91558e2d4e0400a33a30f5d48292868250b5c71ac873",
+  "champion_feature_count": 10,
+  "promoted_features": [
+    "feature_entry__性"
+  ],
+  "previous_champion": "baseline9",
+  "baseline9_role": [
+    "historical frozen baseline",
+    "R3 reproducibility checkpoint",
+    "R12 LOCKED comparator baseline"
+  ],
+  "deferred": {
+    "feature_race__距離": {
+      "decision": "KEEP_LIVE_ONLY",
+      "reason_categories": [
+        "historical_PIT_evidence_insufficient",
+        "live_only"
+      ],
+      "note": "semantic/coverage/numeric OK; 202101-202412 contemporaneous pre-race evidence=0"
+    },
+    "safe_derived_from_champion_inputs": {
+      "decision": "NO_SAFE_DERIVED_CANDIDATE",
+      "reason_categories": [
+        "redundant",
+        "high_cardinality",
+        "historical_PIT_evidence_insufficient"
+      ],
+      "note": "date/age transforms redundant for LightGBM; explicit interactions learnable or explode; race-relative blocked without scratch PIT proof"
+    },
+    "program_and_assignment_live_only": {
+      "features": [
+        "競走種類名称",
+        "芝ダート区分",
+        "回り",
+        "距離",
+        "条件",
+        "1着賞金(円)",
+        "2着賞金(円)",
+        "3着賞金(円)",
+        "4着賞金(円)",
+        "5着賞金(円)",
+        "頭数",
+        "枠番",
+        "馬番",
+        "騎手名",
+        "騎手所属",
+        "負担重量",
+        "調教師",
+        "調教師所属"
+      ],
+      "reason_categories": [
+        "live_only",
+        "historical_PIT_evidence_insufficient"
+      ],
+      "permanent_reject": false
+    },
+    "cumulative_record_and_identity_sensitive": {
+      "features": [
+        "騎手成績",
+        "全成績",
+        "ダート左成績",
+        "ダート右成績",
+        "当競馬場成績",
+        "うち当距離成績",
+        "最高タイム",
+        "最高タイム良馬場"
+      ],
+      "reason_categories": [
+        "live_only",
+        "semantic_or_identity_unresolved",
+        "historical_PIT_evidence_insufficient"
+      ],
+      "permanent_reject": false
+    },
+    "late_dynamic_and_result_adjacent": {
+      "features": [
+        "天候",
+        "馬場",
+        "馬体重",
+        "馬体重増減",
+        "人気",
+        "odds",
+        "payout"
+      ],
+      "reason_categories": [
+        "LATE_or_dynamic",
+        "historical_PIT_evidence_insufficient"
+      ],
+      "permanent_reject": false
+    },
+    "self_computed_history_rolling": {
+      "features": [
+        "過去走rolling",
+        "直近着順",
+        "休養間隔",
+        "過去距離適性",
+        "過去競馬場適性"
+      ],
+      "reason_categories": [
+        "implementation_not_started",
+        "historical_PIT_evidence_insufficient"
+      ],
+      "permanent_reject": false
+    }
+  },
+  "r4_live_capture_continuation": {
+    "continue_after_r5": true,
+    "purpose": "accumulate contemporaneous pre-race evidence for future historical training of currently live-only program features",
+    "r5_does_not_stop_capture": true
+  },
+  "access_policy": {
+    "locked_2025_opened": false,
+    "oot_2026_opened": false,
+    "production_promoted": false,
+    "android_changed": false,
+    "baseline9_modified": false,
+    "evaluation_evidence_rewritten": false,
+    "champion_pointer_rewritten_by_this_checkpoint": false
+  },
+  "next_phase": "R6_PIT_SAFE_WEATHER_CORE",
+  "artifacts_policy": {
+    "stores_prediction_bodies": false,
+    "stores_bootstrap_distribution_bodies": false,
+    "stores_absolute_paths": false,
+    "stores_secrets": false
+  }
+}
