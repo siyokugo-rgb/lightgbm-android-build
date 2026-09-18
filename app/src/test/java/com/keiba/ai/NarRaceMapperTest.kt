@@ -486,5 +486,91 @@ class NarRaceMapperTest {
         }
     }
 
+    @Test
+    fun mapsStrictFourDigitPostTimeIncludingLeadingZeroRaw() {
+        val bundle =
+            mapWithPostTimeRaw("0930")
 
+        assertEquals(
+            930,
+            bundle.race.postTime
+        )
+    }
+
+    @Test
+    fun blankPostTimeMapsToNull() {
+        val bundle =
+            mapWithPostTimeRaw("")
+
+        assertEquals(
+            null,
+            bundle.race.postTime
+        )
+    }
+
+    @Test
+    fun malformedColonPostTimeFails() {
+        org.junit.Assert.assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            mapWithPostTimeRaw("12:30")
+        }
+    }
+
+    @Test
+    fun malformedThreeDigitPostTimeFails() {
+        org.junit.Assert.assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            mapWithPostTimeRaw("930")
+        }
+    }
+
+    @Test
+    fun malformedMixedCharPostTimeFails() {
+        org.junit.Assert.assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            mapWithPostTimeRaw("12a0")
+        }
+    }
+
+    @Test
+    fun leadingWhitespacePostTimeFails() {
+        org.junit.Assert.assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            mapWithPostTimeRaw(" 1050")
+        }
+    }
+
+    @Test
+    fun trailingWhitespacePostTimeFails() {
+        org.junit.Assert.assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            mapWithPostTimeRaw("1050 ")
+        }
+    }
+
+    private fun mapWithPostTimeRaw(
+        postTimeRaw: String
+    ) = NarRaceMapper.map(
+        races = NarCsvParser.parseTable(
+            "競馬場,競走年月日,レース番号,発走時刻,距離,天候,馬場,頭数,レース名\n" +
+                "大井,19980806,1,$postTimeRaw,1600,曇,稍重,1,４才\n"
+        ),
+        horses = NarCsvParser.parseTable(
+            """
+            競馬場,競走年月日,レース番号,馬番,馬名,騎手名,負担重量,馬体重,着順
+            大井,19980806,1,1,テスト馬,騎手,53,454,1
+            """.trimIndent()
+        ),
+        paybacks = NarCsvParser.parseTable(
+            """
+            競馬場,競走年月日,レース番号
+            """.trimIndent()
+        ),
+        key = RaceKey("大井", 19980806, 1)
+    )
 }

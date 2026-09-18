@@ -38,7 +38,7 @@ object NarRaceMapper {
 
         val race = RaceRecord(
             key = key,
-            postTime = intValue(races, raceRow, "発走時刻"),
+            postTime = postTimeValue(races, raceRow),
             distanceMeters = intValue(races, raceRow, "距離"),
             weather = textValue(races, raceRow, "天候"),
             trackCondition = textValue(races, raceRow, "馬場"),
@@ -292,6 +292,29 @@ object NarRaceMapper {
         return NarCsvParser.value(table, row, "競馬場") == key.track &&
             intValue(table, row, "競走年月日") == key.date &&
             intValue(table, row, "レース番号") == key.raceNumber
+    }
+
+    private fun postTimeValue(
+        table: NarCsvParser.CsvTable,
+        row: List<String>
+    ): Int? {
+        // Do not trim or digit-filter. Empty cell → null; otherwise
+        // fail-closed through the strict HHMM raw contract.
+        val raw =
+            NarCsvParser.value(
+                table,
+                row,
+                "発走時刻"
+            )
+
+        if (raw.isEmpty()) {
+            return null
+        }
+
+        return NarRaceScheduledStartTime
+            .parsePostTimeRaw(
+                raw
+            )
     }
 
     private fun textValue(
