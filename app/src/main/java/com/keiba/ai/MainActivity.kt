@@ -10,12 +10,29 @@ import android.widget.TextView
 import java.io.File
 
 class MainActivity : Activity() {
+
+    companion object {
+        const val EXTRA_WEATHER_SELF_CHECK_ONLY =
+            "extra_weather_self_check_only"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         actionBar?.hide()
 
+        val weatherOnly =
+            intent.getBooleanExtra(
+                EXTRA_WEATHER_SELF_CHECK_ONLY,
+                false
+            )
+
         val view = TextView(this).apply {
-            text = "Starting test..."
+            text =
+                if (weatherOnly) {
+                    "R6 Weather 実機検証を開始しています..."
+                } else {
+                    "Starting test..."
+                }
             textSize = 18f
             gravity = Gravity.START
             setPadding(48, 48, 48, 48)
@@ -38,6 +55,52 @@ class MainActivity : Activity() {
         }
 
         setContentView(scrollView)
+
+        if (weatherOnly) {
+            Thread {
+                val weatherStart =
+                    SystemClock.elapsedRealtime()
+
+                val displayText =
+                    try {
+                        val result =
+                            NarForecastWeatherRuntimeSelfCheck
+                                .run(
+                                    this@MainActivity
+                                )
+
+                        val weatherMs =
+                            SystemClock
+                                .elapsedRealtime() -
+                                weatherStart
+
+                        result.formatDisplay() +
+                            "\n\nelapsed=${weatherMs}ms"
+                    } catch (t: Throwable) {
+                        "=== R6 Weather 実機検証 ===\n" +
+                            "総合判定=異常\n" +
+                            "error=" +
+                            t.javaClass.simpleName +
+                            ": " +
+                            (
+                                t.message
+                                    ?.take(160)
+                                    ?: ""
+                            )
+                    }
+
+                runOnUiThread {
+                    view.text = displayText
+
+                    scrollView.post {
+                        scrollView.fullScroll(View.FOCUS_UP)
+                        scrollView.scrollTo(0, 0)
+                    }
+                }
+            }.start()
+
+            return
+        }
 
         Thread {
             val modelFile = File(filesDir, "lightgbm_test_model.txt")
@@ -74,6 +137,53 @@ class MainActivity : Activity() {
                     "\n\nLightGBM elapsed=${lightMs}ms" +
                     "\n\n保存済みNARデータを検証しています..."
             }
+
+            val weatherStart =
+                SystemClock.elapsedRealtime()
+
+            val weatherResult =
+                try {
+                    NarForecastWeatherRuntimeSelfCheck
+                        .run(
+                            this@MainActivity
+                        )
+                } catch (t: Throwable) {
+                    NarForecastWeatherRuntimeSelfCheck
+                        .Result(
+                            verdict =
+                                NarForecastWeatherRuntimeSelfCheck
+                                    .Verdict.FAIL,
+                            venueAssetOk = false,
+                            venueCount = null,
+                            platformOrgJsonValidOk =
+                                false,
+                            platformOrgJsonMalformedRejectOk =
+                                false,
+                            duplicateKeyBehavior =
+                                null,
+                            scheduledUtcEpochSeconds =
+                                null,
+                            venueLatitude = null,
+                            venueLongitude = null,
+                            snapshotSaveOk = false,
+                            pitReaderOk = false,
+                            futureExclusionOk =
+                                false,
+                            targetHourOk = false,
+                            targetEpochSeconds =
+                                null,
+                            targetTemperatureCelsius =
+                                null,
+                            errorClass =
+                                t.javaClass.simpleName,
+                            errorMessage =
+                                t.message
+                        )
+                }
+
+            val weatherMs =
+                SystemClock.elapsedRealtime() -
+                    weatherStart
 
             val parityStart = SystemClock.elapsedRealtime()
 
@@ -268,6 +378,11 @@ class MainActivity : Activity() {
                     "NAR DAILY V2 PREDICT OK"
                 )
 
+            val weatherOk =
+                weatherResult.verdict !=
+                    NarForecastWeatherRuntimeSelfCheck
+                        .Verdict.FAIL
+
             val overallOk =
                 lightGbmOk &&
                     parityOk &&
@@ -278,12 +393,42 @@ class MainActivity : Activity() {
                     dailyOk &&
                     dailyPredictOk &&
                     dailyV2PredictOk &&
-                    narDataOk
+                    narDataOk &&
+                    weatherResult.verdict ==
+                    NarForecastWeatherRuntimeSelfCheck
+                        .Verdict.OK
+
+            val overallLabel =
+                when {
+                    !lightGbmOk ||
+                        !parityOk ||
+                        !v2ParityOk ||
+                        !v2TransformParityOk ||
+                        !transformParityOk ||
+                        !sourceParityOk ||
+                        !dailyOk ||
+                        !dailyPredictOk ||
+                        !dailyV2PredictOk ||
+                        !narDataOk ||
+                        !weatherOk ->
+                        "要確認"
+
+                    weatherResult.verdict ==
+                        NarForecastWeatherRuntimeSelfCheck
+                            .Verdict.NEEDS_REVIEW ->
+                        "要確認"
+
+                    overallOk ->
+                        "正常"
+
+                    else ->
+                        "要確認"
+                }
 
             val summary = buildString {
                 append("=== 実機検証結果 ===")
                 append("\n総合判定=")
-                append(if (overallOk) "正常" else "要確認")
+                append(overallLabel)
 
                 append("\nLightGBM/JNI=")
                 append(if (lightGbmOk) "正常" else "異常")
@@ -357,6 +502,23 @@ class MainActivity : Activity() {
                 append("\n保存済みNARデータ=")
                 append(if (narDataOk) "正常" else "異常")
 
+                append("\nR6 Weather=")
+                append(
+                    when (weatherResult.verdict) {
+                        NarForecastWeatherRuntimeSelfCheck
+                            .Verdict.OK ->
+                            "正常"
+
+                        NarForecastWeatherRuntimeSelfCheck
+                            .Verdict.NEEDS_REVIEW ->
+                            "要確認"
+
+                        NarForecastWeatherRuntimeSelfCheck
+                            .Verdict.FAIL ->
+                            "異常"
+                    }
+                )
+
                 append("\nこの検証でのNAR通信=あり")
                 append("\n検証対象=大井 1998/08/06 1R")
 
@@ -397,6 +559,9 @@ class MainActivity : Activity() {
             runOnUiThread {
                 view.text =
                     summary +
+                    "\n\n--- R6 Weather self-check ---\n\n" +
+                    weatherResult.formatDisplay() +
+                    "\nWeather elapsed=${weatherMs}ms" +
                     "\n\n--- 詳細ログ ---\n\n" +
                     lightGbmStatus +
                     "\n\nLightGBM elapsed=${lightMs}ms" +
