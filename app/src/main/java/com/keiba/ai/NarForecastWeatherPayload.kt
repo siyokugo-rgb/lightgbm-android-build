@@ -12,8 +12,15 @@ package com.keiba.ai
  * ([NarForecastWeatherDownloader.buildRequestUrl]):
  * temperature=celsius, wind=ms, precipitation=mm, time=unixtime,
  * timezone/offset=GMT (utc_offset_seconds=0).
- * Response `hourly_units` strings are not strict-validated in this
- * Step because R4 archive fixtures do not pin those strings.
+ *
+ * When response `hourly_units` is present, [NarForecastWeatherParser]
+ * validates exact Open-Meteo unit strings
+ * ([NarForecastWeatherHourlyUnits]). Missing `hourly_units` remains
+ * allowed for legacy snapshots whose units are implied by the pinned
+ * request_url. New downloads require `hourly_units`.
+ *
+ * Duplicate object keys are rejected before platform `org.json`
+ * construction ([NarForecastJsonDuplicateKeyGuard]).
  */
 data class NarForecastWeatherPayload(
     val providerLatitude: Double,

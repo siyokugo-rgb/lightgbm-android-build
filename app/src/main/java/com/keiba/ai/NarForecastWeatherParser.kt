@@ -62,6 +62,11 @@ object NarForecastWeatherParser {
         val text =
             decodeUtf8Strict(rawBytes)
 
+        NarForecastJsonDuplicateKeyGuard
+            .rejectDuplicateKeys(
+                text
+            )
+
         val root =
             try {
                 JSONObject(text)
@@ -71,6 +76,11 @@ object NarForecastWeatherParser {
                     error
                 )
             }
+
+        NarForecastWeatherHourlyUnits
+            .validateIfPresent(
+                root
+            )
 
         val latitude =
             requireFiniteDouble(
