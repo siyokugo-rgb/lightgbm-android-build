@@ -52,7 +52,7 @@ class NarForecastWeatherParserTest {
               "utc_offset_seconds":0,
               "generationtime_ms":0.12,
               "timezone":"GMT",
-              "hourly_units":{"time":"unixtime","temperature_2m":"°C"},
+              "hourly_units":{"time":"unixtime","temperature_2m":"°C","relative_humidity_2m":"%","pressure_msl":"hPa","surface_pressure":"hPa","precipitation":"mm","weather_code":"wmo code","wind_speed_10m":"m/s","wind_direction_10m":"°","wind_gusts_10m":"m/s"},
               "hourly":{
                 "time":[1788404400,1788408000],
                 "temperature_2m":[29.0,28.5],
@@ -402,6 +402,321 @@ class NarForecastWeatherParserTest {
         }
     }
 
+    @Test
+    fun rejectsRootDuplicateKey() {
+        assertRejects(
+            """
+            {
+              "latitude":1.0,
+              "latitude":2.0,
+              "longitude":139.75,
+              "utc_offset_seconds":0,
+              "hourly":{
+                "time":[1788404400],
+                "temperature_2m":[29.0],
+                "relative_humidity_2m":[70],
+                "pressure_msl":[1008.0],
+                "surface_pressure":[1007.0],
+                "precipitation":[0.0],
+                "weather_code":[1],
+                "wind_speed_10m":[3.0],
+                "wind_direction_10m":[180],
+                "wind_gusts_10m":[5.0]
+              }
+            }
+            """.trimIndent()
+        )
+    }
+
+    @Test
+    fun rejectsHourlyDuplicateKey() {
+        assertRejects(
+            sampleResponse().replace(
+                """"temperature_2m":[29.0],""",
+                """"temperature_2m":[29.0],"temperature_2m":[28.0],"""
+            )
+        )
+    }
+
+    @Test
+    fun rejectsHourlyUnitsDuplicateKey() {
+        assertRejects(
+            sampleResponseWithUnits().replace(
+                """"temperature_2m":"°C",""",
+                """"temperature_2m":"°C","temperature_2m":"°F","""
+            )
+        )
+    }
+
+    @Test
+    fun rejectsNestedObjectDuplicateKey() {
+        assertRejects(
+            """
+            {
+              "latitude":35.6,
+              "longitude":139.75,
+              "utc_offset_seconds":0,
+              "meta":{"a":1,"a":2},
+              "hourly":{
+                "time":[1788404400],
+                "temperature_2m":[29.0],
+                "relative_humidity_2m":[70],
+                "pressure_msl":[1008.0],
+                "surface_pressure":[1007.0],
+                "precipitation":[0.0],
+                "weather_code":[1],
+                "wind_speed_10m":[3.0],
+                "wind_direction_10m":[180],
+                "wind_gusts_10m":[5.0]
+              }
+            }
+            """.trimIndent()
+        )
+    }
+
+    @Test
+    fun rejectsDuplicateKeyInsideArrayObject() {
+        assertRejects(
+            """
+            {
+              "latitude":35.6,
+              "longitude":139.75,
+              "utc_offset_seconds":0,
+              "notes":[{"k":1,"k":2}],
+              "hourly":{
+                "time":[1788404400],
+                "temperature_2m":[29.0],
+                "relative_humidity_2m":[70],
+                "pressure_msl":[1008.0],
+                "surface_pressure":[1007.0],
+                "precipitation":[0.0],
+                "weather_code":[1],
+                "wind_speed_10m":[3.0],
+                "wind_direction_10m":[180],
+                "wind_gusts_10m":[5.0]
+              }
+            }
+            """.trimIndent()
+        )
+    }
+
+    @Test
+    fun allowsSameKeyNameInDifferentObjectScopes() {
+        val payload =
+            NarForecastWeatherParser.parse(
+                """
+                {
+                  "latitude":35.6,
+                  "longitude":139.75,
+                  "utc_offset_seconds":0,
+                  "meta":{"time":"label"},
+                  "hourly":{
+                    "time":[1788404400],
+                    "temperature_2m":[29.0],
+                    "relative_humidity_2m":[70],
+                    "pressure_msl":[1008.0],
+                    "surface_pressure":[1007.0],
+                    "precipitation":[0.0],
+                    "weather_code":[1],
+                    "wind_speed_10m":[3.0],
+                    "wind_direction_10m":[180],
+                    "wind_gusts_10m":[5.0]
+                  }
+                }
+                """.trimIndent()
+                    .toByteArray(
+                        StandardCharsets.UTF_8
+                    )
+            )
+
+        assertEquals(1, payload.hourly.size)
+    }
+
+    @Test
+    fun doesNotFalsePositiveOnBracesInsideStrings() {
+        val payload =
+            NarForecastWeatherParser.parse(
+                """
+                {
+                  "latitude":35.6,
+                  "longitude":139.75,
+                  "utc_offset_seconds":0,
+                  "note":"not { \"latitude\": 1, \"latitude\": 2 }",
+                  "hourly":{
+                    "time":[1788404400],
+                    "temperature_2m":[29.0],
+                    "relative_humidity_2m":[70],
+                    "pressure_msl":[1008.0],
+                    "surface_pressure":[1007.0],
+                    "precipitation":[0.0],
+                    "weather_code":[1],
+                    "wind_speed_10m":[3.0],
+                    "wind_direction_10m":[180],
+                    "wind_gusts_10m":[5.0]
+                  }
+                }
+                """.trimIndent()
+                    .toByteArray(
+                        StandardCharsets.UTF_8
+                    )
+            )
+
+        assertEquals(1, payload.hourly.size)
+    }
+
+    @Test
+    fun doesNotFalsePositiveOnEscapedQuotesInStrings() {
+        val payload =
+            NarForecastWeatherParser.parse(
+                """
+                {
+                  "latitude":35.6,
+                  "longitude":139.75,
+                  "utc_offset_seconds":0,
+                  "note":"say \"hello\", then continue",
+                  "hourly":{
+                    "time":[1788404400],
+                    "temperature_2m":[29.0],
+                    "relative_humidity_2m":[70],
+                    "pressure_msl":[1008.0],
+                    "surface_pressure":[1007.0],
+                    "precipitation":[0.0],
+                    "weather_code":[1],
+                    "wind_speed_10m":[3.0],
+                    "wind_direction_10m":[180],
+                    "wind_gusts_10m":[5.0]
+                  }
+                }
+                """.trimIndent()
+                    .toByteArray(
+                        StandardCharsets.UTF_8
+                    )
+            )
+
+        assertEquals(1, payload.hourly.size)
+    }
+
+    @Test
+    fun rejectsUnicodeEscapeSemanticDuplicateKey() {
+        assertRejects(
+            """
+            {
+              "latitude":1.0,
+              "latit\u0075de":2.0,
+              "longitude":139.75,
+              "utc_offset_seconds":0,
+              "hourly":{
+                "time":[1788404400],
+                "temperature_2m":[29.0],
+                "relative_humidity_2m":[70],
+                "pressure_msl":[1008.0],
+                "surface_pressure":[1007.0],
+                "precipitation":[0.0],
+                "weather_code":[1],
+                "wind_speed_10m":[3.0],
+                "wind_direction_10m":[180],
+                "wind_gusts_10m":[5.0]
+              }
+            }
+            """.trimIndent()
+        )
+    }
+
+    @Test
+    fun acceptsExactHourlyUnitsWhenPresent() {
+        val payload =
+            NarForecastWeatherParser.parse(
+                sampleResponseWithUnits()
+                    .toByteArray(
+                        StandardCharsets.UTF_8
+                    )
+            )
+
+        assertEquals(1, payload.hourly.size)
+    }
+
+    @Test
+    fun acceptsLegacyPayloadMissingHourlyUnits() {
+        val payload =
+            NarForecastWeatherParser.parse(
+                sampleResponse().toByteArray(
+                    StandardCharsets.UTF_8
+                )
+            )
+
+        assertEquals(1, payload.hourly.size)
+    }
+
+    @Test
+    fun rejectsWrongTemperatureUnit() {
+        assertRejects(
+            sampleResponseWithUnits().replace(
+                """"temperature_2m":"°C"""",
+                """"temperature_2m":"°F""""
+            )
+        )
+    }
+
+    @Test
+    fun rejectsWrongWindUnit() {
+        assertRejects(
+            sampleResponseWithUnits().replace(
+                """"wind_speed_10m":"m/s"""",
+                """"wind_speed_10m":"km/h""""
+            )
+        )
+    }
+
+    @Test
+    fun rejectsWrongPrecipitationUnit() {
+        assertRejects(
+            sampleResponseWithUnits().replace(
+                """"precipitation":"mm"""",
+                """"precipitation":"inch""""
+            )
+        )
+    }
+
+    @Test
+    fun rejectsWrongTimeUnit() {
+        assertRejects(
+            sampleResponseWithUnits().replace(
+                """"time":"unixtime"""",
+                """"time":"iso8601""""
+            )
+        )
+    }
+
+    @Test
+    fun rejectsNullHourlyUnit() {
+        assertRejects(
+            sampleResponseWithUnits().replace(
+                """"weather_code":"wmo code"""",
+                """"weather_code":null"""
+            )
+        )
+    }
+
+    @Test
+    fun rejectsNonStringHourlyUnit() {
+        assertRejects(
+            sampleResponseWithUnits().replace(
+                """"pressure_msl":"hPa"""",
+                """"pressure_msl":1"""
+            )
+        )
+    }
+
+    @Test
+    fun rejectsMissingRequiredHourlyUnitField() {
+        assertRejects(
+            sampleResponseWithUnits().replace(
+                """"weather_code":"wmo code",""",
+                ""
+            )
+        )
+    }
+
     private fun multiHourBody(
         times: String
     ): String =
@@ -421,6 +736,28 @@ class NarForecastWeatherParserTest {
             "wind_speed_10m":[3.0,3.1],
             "wind_direction_10m":[180,190],
             "wind_gusts_10m":[5.0,5.1]
+          }
+        }
+        """.trimIndent()
+
+    private fun sampleResponseWithUnits(): String =
+        """
+        {
+          "latitude":35.6,
+          "longitude":139.75,
+          "utc_offset_seconds":0,
+          "hourly_units":${NarForecastWeatherHourlyUnits.expectedObjectJson()},
+          "hourly":{
+            "time":[1788404400],
+            "temperature_2m":[29.0],
+            "relative_humidity_2m":[70],
+            "pressure_msl":[1008.0],
+            "surface_pressure":[1007.0],
+            "precipitation":[0.0],
+            "weather_code":[1],
+            "wind_speed_10m":[3.0],
+            "wind_direction_10m":[180],
+            "wind_gusts_10m":[5.0]
           }
         }
         """.trimIndent()

@@ -323,6 +323,18 @@ class NarForecastWeatherSnapshotReaderTest {
                   "latitude":35.6,
                   "longitude":139.75,
                   "utc_offset_seconds":0,
+          "hourly_units":{
+            "time":"unixtime",
+            "temperature_2m":"°C",
+            "relative_humidity_2m":"%",
+            "pressure_msl":"hPa",
+            "surface_pressure":"hPa",
+            "precipitation":"mm",
+            "weather_code":"wmo code",
+            "wind_speed_10m":"m/s",
+            "wind_direction_10m":"°",
+            "wind_gusts_10m":"m/s"
+          },
                   "hourly":{
                     "time":[1788404400,1788408000],
                     "temperature_2m":[20.0],
@@ -670,6 +682,18 @@ class NarForecastWeatherSnapshotReaderTest {
           "latitude":$providerLatitude,
           "longitude":$providerLongitude,
           "utc_offset_seconds":0,
+          "hourly_units":{
+            "time":"unixtime",
+            "temperature_2m":"°C",
+            "relative_humidity_2m":"%",
+            "pressure_msl":"hPa",
+            "surface_pressure":"hPa",
+            "precipitation":"mm",
+            "weather_code":"wmo code",
+            "wind_speed_10m":"m/s",
+            "wind_direction_10m":"°",
+            "wind_gusts_10m":"m/s"
+          },
           "hourly":{
             "time":[1788404400],
             "temperature_2m":[$temperature],

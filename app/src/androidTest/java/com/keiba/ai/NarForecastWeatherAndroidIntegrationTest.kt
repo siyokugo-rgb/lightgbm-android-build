@@ -549,9 +549,7 @@ class NarForecastWeatherAndroidIntegrationTest {
     }
 
     @Test
-    fun platformOrgJsonDuplicateKeyBehaviorIsObserved() {
-        // Measure Android platform org.json duplicate-key behavior.
-        // Do not guess — assert the observed last-wins / reject fact.
+    fun platformOrgJsonDuplicateKeyIsLastWinsButForecastParserRejects() {
         val duplicateLatitude =
             """
             {
@@ -579,21 +577,15 @@ class NarForecastWeatherAndroidIntegrationTest {
                 duplicateLatitude
             )
 
-        val observedLatitude =
-            rawRoot.getDouble(
-                "latitude"
-            )
-
-        // Android platform org.json historically last-wins.
-        // If this ever becomes reject/fail-closed, update this assertion
-        // and re-evaluate the known Medium.
         assertEquals(
             2.0,
-            observedLatitude,
+            rawRoot.getDouble("latitude"),
             0.0
         )
 
-        val parsed =
+        assertThrows(
+            IllegalArgumentException::class.java
+        ) {
             NarForecastWeatherParser
                 .parse(
                     duplicateLatitude
@@ -601,12 +593,7 @@ class NarForecastWeatherAndroidIntegrationTest {
                             StandardCharsets.UTF_8
                         )
                 )
-
-        assertEquals(
-            2.0,
-            parsed.providerLatitude,
-            0.0
-        )
+        }
     }
 
     private fun syntheticForecastJson(
@@ -638,11 +625,16 @@ class NarForecastWeatherAndroidIntegrationTest {
                 "1"
             }
 
+        val units =
+            NarForecastWeatherHourlyUnits
+                .expectedObjectJson()
+
         return """
             {
               "latitude":35.6,
               "longitude":139.75,
               "utc_offset_seconds":0,
+              "hourly_units":$units,
               "hourly":{
                 "time":[$timeCsv],
                 "temperature_2m":[$temps],

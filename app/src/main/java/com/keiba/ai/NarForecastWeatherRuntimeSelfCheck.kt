@@ -41,7 +41,11 @@ object NarForecastWeatherRuntimeSelfCheck {
         val venueCount: Int?,
         val platformOrgJsonValidOk: Boolean,
         val platformOrgJsonMalformedRejectOk: Boolean,
-        val duplicateKeyBehavior: DuplicateKeyBehavior?,
+        val platformDuplicateKeyBehavior:
+            DuplicateKeyBehavior?,
+        val forecastParserDuplicateKeyBehavior:
+            DuplicateKeyBehavior?,
+        val duplicateHardeningOk: Boolean,
         val scheduledUtcEpochSeconds: Long?,
         val venueLatitude: Double?,
         val venueLongitude: Double?,
@@ -79,21 +83,29 @@ object NarForecastWeatherRuntimeSelfCheck {
                     }
                 )
 
-                append("\nduplicate key=")
                 append(
-                    when (duplicateKeyBehavior) {
-                        DuplicateKeyBehavior.REJECT ->
-                            "REJECT"
+                    "\nplatform org.json duplicate="
+                )
+                append(
+                    behaviorLabel(
+                        platformDuplicateKeyBehavior
+                    )
+                )
 
-                        DuplicateKeyBehavior.LAST_WINS ->
-                            "LAST_WINS"
+                append(
+                    "\nForecast parser duplicate="
+                )
+                append(
+                    behaviorLabel(
+                        forecastParserDuplicateKeyBehavior
+                    )
+                )
 
-                        DuplicateKeyBehavior.OTHER ->
-                            "OTHER"
-
-                        null ->
-                            "取得失敗"
-                    }
+                append("\nduplicate hardening=")
+                append(
+                    okLabel(
+                        duplicateHardeningOk
+                    )
                 )
 
                 append("\nscheduled UTC=")
@@ -162,13 +174,15 @@ object NarForecastWeatherRuntimeSelfCheck {
                 }
 
                 if (
-                    duplicateKeyBehavior ==
-                        DuplicateKeyBehavior.LAST_WINS
+                    platformDuplicateKeyBehavior ==
+                        DuplicateKeyBehavior.LAST_WINS &&
+                    forecastParserDuplicateKeyBehavior ==
+                        DuplicateKeyBehavior.REJECT
                 ) {
                     append(
-                        "\n\n※duplicate-key=LAST_WINS は" +
-                            "既知Medium（Android platform org.json）。" +
-                            "fail-closedではないため総合判定は要確認。"
+                        "\n\n※platform org.json は LAST_WINS のままだが、" +
+                            "Forecast parser が duplicate key を REJECT するため" +
+                            "契約上は封じ済み。"
                     )
                 }
             }
@@ -177,6 +191,23 @@ object NarForecastWeatherRuntimeSelfCheck {
             ok: Boolean
         ): String =
             if (ok) "正常" else "異常"
+
+        private fun behaviorLabel(
+            behavior: DuplicateKeyBehavior?
+        ): String =
+            when (behavior) {
+                DuplicateKeyBehavior.REJECT ->
+                    "REJECT"
+
+                DuplicateKeyBehavior.LAST_WINS ->
+                    "LAST_WINS"
+
+                DuplicateKeyBehavior.OTHER ->
+                    "OTHER"
+
+                null ->
+                    "取得失敗"
+            }
     }
 
     fun run(
@@ -231,7 +262,11 @@ object NarForecastWeatherRuntimeSelfCheck {
                 platformOrgJsonValidOk = false,
                 platformOrgJsonMalformedRejectOk =
                     false,
-                duplicateKeyBehavior = null,
+                platformDuplicateKeyBehavior =
+                    null,
+                forecastParserDuplicateKeyBehavior =
+                    null,
+                duplicateHardeningOk = false,
                 scheduledUtcEpochSeconds = null,
                 venueLatitude = null,
                 venueLongitude = null,
@@ -276,6 +311,13 @@ object NarForecastWeatherRuntimeSelfCheck {
 
         val orgJson =
             probePlatformOrgJson()
+
+        val forecastParserDuplicate =
+            probeForecastParserDuplicate()
+
+        val duplicateHardeningOk =
+            forecastParserDuplicate ==
+                DuplicateKeyBehavior.REJECT
 
         val race =
             RaceRecord(
@@ -532,6 +574,7 @@ object NarForecastWeatherRuntimeSelfCheck {
             venueAssetOk &&
                 orgJson.validOk &&
                 orgJson.malformedRejectOk &&
+                duplicateHardeningOk &&
                 scheduledUtc ==
                 1_787_985_900L &&
                 snapshotSaveOk &&
@@ -540,16 +583,10 @@ object NarForecastWeatherRuntimeSelfCheck {
                 targetHourOk
 
         val verdict =
-            when {
-                !coreOk ->
-                    Verdict.FAIL
-
-                orgJson.duplicateKeyBehavior ==
-                    DuplicateKeyBehavior.LAST_WINS ->
-                    Verdict.NEEDS_REVIEW
-
-                else ->
-                    Verdict.OK
+            if (coreOk) {
+                Verdict.OK
+            } else {
+                Verdict.FAIL
             }
 
         return Result(
@@ -560,8 +597,12 @@ object NarForecastWeatherRuntimeSelfCheck {
                 orgJson.validOk,
             platformOrgJsonMalformedRejectOk =
                 orgJson.malformedRejectOk,
-            duplicateKeyBehavior =
+            platformDuplicateKeyBehavior =
                 orgJson.duplicateKeyBehavior,
+            forecastParserDuplicateKeyBehavior =
+                forecastParserDuplicate,
+            duplicateHardeningOk =
+                duplicateHardeningOk,
             scheduledUtcEpochSeconds =
                 scheduledUtc,
             venueLatitude =
@@ -586,6 +627,45 @@ object NarForecastWeatherRuntimeSelfCheck {
         val duplicateKeyBehavior:
             DuplicateKeyBehavior
     )
+
+    private fun probeForecastParserDuplicate():
+        DuplicateKeyBehavior {
+        val duplicateBody =
+            """
+            {
+              "latitude":1.0,
+              "latitude":2.0,
+              "longitude":139.75,
+              "utc_offset_seconds":0,
+              "hourly":{
+                "time":[1787983200],
+                "temperature_2m":[1.0],
+                "relative_humidity_2m":[1],
+                "pressure_msl":[1.0],
+                "surface_pressure":[1.0],
+                "precipitation":[0.0],
+                "weather_code":[1],
+                "wind_speed_10m":[1.0],
+                "wind_direction_10m":[1.0],
+                "wind_gusts_10m":[1.0]
+              }
+            }
+            """.trimIndent()
+                .toByteArray(
+                    StandardCharsets.UTF_8
+                )
+
+        return try {
+            NarForecastWeatherParser.parse(
+                duplicateBody
+            )
+            DuplicateKeyBehavior.OTHER
+        } catch (_: IllegalArgumentException) {
+            DuplicateKeyBehavior.REJECT
+        } catch (_: Throwable) {
+            DuplicateKeyBehavior.OTHER
+        }
+    }
 
     private fun probePlatformOrgJson():
         OrgJsonProbe {
@@ -719,11 +799,16 @@ object NarForecastWeatherRuntimeSelfCheck {
                 "1"
             }
 
+        val units =
+            NarForecastWeatherHourlyUnits
+                .expectedObjectJson()
+
         return """
             {
               "latitude":35.6,
               "longitude":139.75,
               "utc_offset_seconds":0,
+              "hourly_units":$units,
               "hourly":{
                 "time":[$timeCsv],
                 "temperature_2m":[$temps],

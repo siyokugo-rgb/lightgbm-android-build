@@ -159,8 +159,12 @@ class MainActivity : Activity() {
                                 false,
                             platformOrgJsonMalformedRejectOk =
                                 false,
-                            duplicateKeyBehavior =
+                            platformDuplicateKeyBehavior =
                                 null,
+                            forecastParserDuplicateKeyBehavior =
+                                null,
+                            duplicateHardeningOk =
+                                false,
                             scheduledUtcEpochSeconds =
                                 null,
                             venueLatitude = null,

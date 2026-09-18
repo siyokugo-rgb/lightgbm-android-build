@@ -1,5 +1,7 @@
 package com.keiba.ai
 
+import org.json.JSONException
+import org.json.JSONObject
 import java.io.ByteArrayInputStream
 import java.io.FilterInputStream
 import java.io.InputStream
@@ -269,9 +271,16 @@ object NarForecastWeatherDownloader {
                 )
 
         val text =
-            decoder.decode(
-                ByteBuffer.wrap(bytes)
-            ).toString()
+            try {
+                decoder.decode(
+                    ByteBuffer.wrap(bytes)
+                ).toString()
+            } catch (error: java.nio.charset.CharacterCodingException) {
+                throw IllegalArgumentException(
+                    "weather response is not valid UTF-8",
+                    error
+                )
+            }
 
         val trimmed =
             text.trim()
@@ -283,14 +292,38 @@ object NarForecastWeatherDownloader {
             "weather response is not JSON object"
         }
 
-        val utcOffsetZero =
-            Regex(
-                "\"utc_offset_seconds\"\\s*:\\s*0(?:\\s*[,}])"
+        NarForecastJsonDuplicateKeyGuard
+            .rejectDuplicateKeys(
+                text
             )
 
-        require(
-            utcOffsetZero.containsMatchIn(text)
-        ) {
+        val root =
+            try {
+                JSONObject(text)
+            } catch (error: JSONException) {
+                throw IllegalArgumentException(
+                    "weather response is not valid JSON",
+                    error
+                )
+            }
+
+        require(!root.isNull("utc_offset_seconds")) {
+            "weather response missing field: utc_offset_seconds"
+        }
+
+        val utcOffset =
+            try {
+                root.getInt(
+                    "utc_offset_seconds"
+                )
+            } catch (error: JSONException) {
+                throw IllegalArgumentException(
+                    "weather response missing field: utc_offset_seconds",
+                    error
+                )
+            }
+
+        require(utcOffset == 0) {
             "weather response UTC offset is not zero"
         }
 
@@ -300,7 +333,8 @@ object NarForecastWeatherDownloader {
                 "\"longitude\"",
                 "\"utc_offset_seconds\"",
                 "\"hourly\"",
-                "\"time\""
+                "\"time\"",
+                "\"hourly_units\""
             ) +
                 hourlyFields.map {
                     "\"$it\""
@@ -313,6 +347,11 @@ object NarForecastWeatherDownloader {
                 "weather response missing field: $token"
             }
         }
+
+        NarForecastWeatherHourlyUnits
+            .requirePresentAndExact(
+                root
+            )
     }
 
     private class SizeLimitedInputStream(
