@@ -8,6 +8,9 @@ app/build/
 LightGbmAndroidTest.apk
 test-data/
 
+# Generated venue coordinate assets (copied from config/ SoT at build time)
+app/build/generated/
+
 *.apk
 app/.cxx/
 
@@ -33,3 +36,6 @@ __pycache__/
 /wheelhouse-v3-linux/
 /wheelhouse-v3-linux-sha256.csv
 /nar-v3-training-requirements.lock
+
+# Optional local emulator-only LightGBM stub (never commit)
+/android-libs/x86_64/
