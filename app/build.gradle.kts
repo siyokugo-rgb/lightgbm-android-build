@@ -50,4 +50,8 @@ android {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    // Android framework org.json is stubbed in local JVM unit tests.
+    // Production code continues to use the platform org.json; this jar is
+    // test-classpath only so typed ForecastWeather parser tests can run.
+    testImplementation("org.json:json:20240303")
 }
