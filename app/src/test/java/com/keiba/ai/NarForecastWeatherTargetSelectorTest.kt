@@ -297,6 +297,104 @@ class NarForecastWeatherTargetSelectorTest {
         )
     }
 
+    @Test
+    fun exactHourlySpacing3600Passes() {
+        val payload =
+            payload(
+                10_000L,
+                13_600L,
+                17_200L
+            )
+
+        val selected =
+            NarForecastWeatherTargetSelector
+                .select(
+                    payload = payload,
+                    raceScheduledStartEpochSeconds =
+                        13_601L
+                )
+
+        assertEquals(
+            13_600L,
+            selected!!.targetEpochSeconds
+        )
+    }
+
+    @Test
+    fun rejectsMissingHourlyPointWith7200Gap() {
+        val broken =
+            NarForecastWeatherPayload(
+                providerLatitude = 35.6,
+                providerLongitude = 139.75,
+                utcOffsetSeconds = 0,
+                hourly = listOf(
+                    point(10_000L, 20.0),
+                    point(17_200L, 21.0)
+                )
+            )
+
+        assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            NarForecastWeatherTargetSelector
+                .select(
+                    payload = broken,
+                    raceScheduledStartEpochSeconds =
+                        10_000L
+                )
+        }
+    }
+
+    @Test
+    fun rejectsNonHourlySpacing3599() {
+        val broken =
+            NarForecastWeatherPayload(
+                providerLatitude = 35.6,
+                providerLongitude = 139.75,
+                utcOffsetSeconds = 0,
+                hourly = listOf(
+                    point(10_000L, 20.0),
+                    point(13_599L, 21.0)
+                )
+            )
+
+        assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            NarForecastWeatherTargetSelector
+                .select(
+                    payload = broken,
+                    raceScheduledStartEpochSeconds =
+                        10_000L
+                )
+        }
+    }
+
+    @Test
+    fun rejectsNonHourlySpacing3601() {
+        val broken =
+            NarForecastWeatherPayload(
+                providerLatitude = 35.6,
+                providerLongitude = 139.75,
+                utcOffsetSeconds = 0,
+                hourly = listOf(
+                    point(10_000L, 20.0),
+                    point(13_601L, 21.0)
+                )
+            )
+
+        assertThrows(
+            IllegalArgumentException::class.java
+        ) {
+            NarForecastWeatherTargetSelector
+                .select(
+                    payload = broken,
+                    raceScheduledStartEpochSeconds =
+                        10_000L
+                )
+        }
+    }
+
     private fun payload(
         vararg times: Long
     ): NarForecastWeatherPayload {

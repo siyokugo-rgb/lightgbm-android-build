@@ -8,9 +8,8 @@ package com.keiba.ai
  *
  * ## Provider hourly timestamp semantics (Open-Meteo Forecast API)
  *
- * Open-Meteo documents that most hourly variables are an
- * **instantaneous value for the indicated hour**, while some are
- * preceding-hour aggregates. For the fields this project requests:
+ * Open-Meteo documents field meanings at each labeled hourly stamp.
+ * These are provider facts, not a selection algorithm:
  *
  * - Instantaneous at `targetEpochSeconds`:
  *   temperature_2m, relative_humidity_2m, pressure_msl,
@@ -24,11 +23,20 @@ package com.keiba.ai
  * the indicated hour. Some variables like precipitation are calculated
  * from the preceding hour as an average or sum.")
  *
- * ## Selection rule: FLOOR_TO_HOUR
+ * ## Project selection policy: FLOOR_TO_HOUR
  *
- * Given a parsed payload whose hourly times are strictly increasing
- * UTC epoch seconds:
+ * FLOOR_TO_HOUR is a **deterministic project approximation**, not an
+ * Open-Meteo-mandated mapping rule. Open-Meteo labels instants /
+ * preceding-hour aggregates; it does not prescribe floor vs nearest
+ * vs exact for mid-hour race starts.
  *
+ * Preconditions on `payload.hourly`:
+ * - non-empty
+ * - each `targetEpochSeconds` positive
+ * - strictly increasing
+ * - adjacent deltas exactly `3600` seconds (fail-closed)
+ *
+ * Selection:
  * 1. Require `raceScheduledStartEpochSeconds` in
  *    `[first.targetEpochSeconds, last.targetEpochSeconds]`.
  *    Outside that closed range → `null` (no silent clamp /
@@ -36,13 +44,11 @@ package com.keiba.ai
  * 2. Otherwise return the latest point with
  *    `targetEpochSeconds <= raceScheduledStartEpochSeconds`.
  *
- * Rationale:
- * - Provider labels **instants**, not invented forward hour bins.
- * - Floor uses the most recent labeled forecast instant at or before
- *   race start without interpolation and without selecting a later
- *   labeled instant after the race second.
- * - Coverage is exactly the labeled series span; mid-hour race times
- *   resolve deterministically to the preceding labeled hour.
+ * Why this project chose floor (policy, not provider necessity):
+ * - No interpolation
+ * - No later labeled instant after the race second
+ * - Deterministic UTC epoch arithmetic
+ * - Exact 1-hour grid makes "preceding labeled hour" well-defined
  *
  * Precipitation / gust values on the selected point remain the
  * provider's preceding-hour aggregates ending at that stamp; they are
@@ -50,6 +56,9 @@ package com.keiba.ai
  * of scope for Step C.
  */
 object NarForecastWeatherTargetSelector {
+
+    private const val HOUR_SECONDS =
+        3_600L
 
     /**
      * @param payload typed ForecastWeather hourly series
@@ -72,8 +81,8 @@ object NarForecastWeatherTargetSelector {
 
         // Payload from NarForecastWeatherParser already guarantees
         // non-empty + strictly increasing positive times. Re-assert
-        // only the invariants this selector's binary search depends on,
-        // so an arbitrarily constructed Payload cannot silently mis-map.
+        // those invariants plus exact 3600s spacing, so an arbitrarily
+        // constructed Payload cannot silently mis-map under FLOOR_TO_HOUR.
         require(hourly.isNotEmpty()) {
             "forecast hourly points must not be empty"
         }
@@ -95,6 +104,19 @@ object NarForecastWeatherTargetSelector {
             if (prior != null) {
                 require(target > prior) {
                     "forecast target timestamps must be strictly increasing"
+                }
+
+                val delta =
+                    Math.subtractExact(
+                        target,
+                        prior
+                    )
+
+                require(
+                    delta ==
+                        HOUR_SECONDS
+                ) {
+                    "forecast target timestamps must be exactly hourly (3600s)"
                 }
             }
 
