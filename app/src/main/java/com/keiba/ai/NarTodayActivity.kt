@@ -1,6 +1,8 @@
 package com.keiba.ai
 
 import android.app.Activity
+import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -138,6 +140,29 @@ class NarTodayActivity : Activity() {
         root.addView(title)
         root.addView(statusView)
         root.addView(refreshButton)
+
+        if (isDebuggableBuild()) {
+            val weatherVerifyButton =
+                Button(this).apply {
+                    text = "Weather実機検証"
+
+                    setOnClickListener {
+                        startActivity(
+                            Intent(
+                                this@NarTodayActivity,
+                                MainActivity::class.java
+                            ).putExtra(
+                                MainActivity
+                                    .EXTRA_WEATHER_SELF_CHECK_ONLY,
+                                true
+                            )
+                        )
+                    }
+                }
+
+            root.addView(weatherVerifyButton)
+        }
+
         root.addView(trackLabel)
         root.addView(trackSpinner)
         root.addView(raceLabel)
@@ -198,6 +223,12 @@ class NarTodayActivity : Activity() {
 
         loadToday()
     }
+
+    private fun isDebuggableBuild(): Boolean =
+        (
+            applicationInfo.flags and
+                ApplicationInfo.FLAG_DEBUGGABLE
+            ) != 0
 
     private fun loadToday() {
 

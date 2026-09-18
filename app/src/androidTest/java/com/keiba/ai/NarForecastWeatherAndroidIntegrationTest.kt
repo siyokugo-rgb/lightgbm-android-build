@@ -258,7 +258,7 @@ class NarForecastWeatherAndroidIntegrationTest {
         assertTrue(
             File(
                 saved.directory,
-                "manifest.properties"
+                "manifest.txt"
             ).isFile
         )
         assertTrue(
