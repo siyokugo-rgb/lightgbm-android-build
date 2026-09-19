@@ -178,6 +178,17 @@ Weatherは以下に分離する。
 
 `prediction_as_of` までに実際に観測済みの気象。
 
+JMA ObservedWeather の role / PIT / quality / station-history 契約は
+`docs/nar-observed-weather-contract.md` を正とする。
+
+現行 JMA historical download は
+`HISTORICAL_FINAL_OBSERVED` であり
+`NOT_PIT_ELIGIBLE` である。
+
+draft station candidates は
+`config/nar-jma-observed-station-candidates.json`
+（`DRAFT_CANDIDATES_ONLY`）を参照する。
+
 ## ForecastWeather
 
 `prediction_as_of` 以前に発行された、

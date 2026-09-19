@@ -1,0 +1,3589 @@
+{
+  "version": 1,
+  "status": "DRAFT_CANDIDATES_ONLY",
+  "purpose": "Date-aware draft JMA station candidates for NAR ObservedWeather. Not a production venue→station mapping. Does not authorize HISTORICAL_FINAL_OBSERVED as PIT-safe features.",
+  "pit_eligibility": "NOT_PIT_ELIGIBLE",
+  "observed_role_scope": "HISTORICAL_FINAL_OBSERVED_REFERENCE_MAPPING_ONLY",
+  "coordinate_system": "WGS84",
+  "venue_coordinate_source": "config/nar-v3-venue-coordinates.json",
+  "contract_doc": "docs/nar-observed-weather-contract.md",
+  "source_metadata": {
+    "audit_step": "ObservedWeather Step A (2026-09-18) + Step B freeze (2026-09-19)",
+    "official_sources": [
+      {
+        "identifier": "jma_historical_data_search",
+        "url": "https://www.data.jma.go.jp/obd/stats/etrn/index.php",
+        "note": "JMA past meteorological data search (historical final observed download UI).",
+        "audited_at": "2026-09-18"
+      },
+      {
+        "identifier": "ame_master",
+        "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+        "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+        "audited_at": "2026-09-18"
+      },
+      {
+        "identifier": "amdmaster.index4",
+        "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+        "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+        "audited_at": "2026-09-18"
+      },
+      {
+        "identifier": "smaster.index",
+        "url": "https://www.data.jma.go.jp/stats/data/mdrr/man/kansoku_gaiyou.html",
+        "note": "JMA surface observation station metadata history (smaster.index).",
+        "audited_at": "2026-09-18"
+      },
+      {
+        "identifier": "discnt_sfc.csv",
+        "url": "https://www.data.jma.go.jp/stats/data/mdrr/man/kansoku_gaiyou.html",
+        "note": "JMA statistical discontinuity file for surface observations.",
+        "audited_at": "2026-09-18"
+      }
+    ],
+    "notes": [
+      "No production station is selected in this file.",
+      "Distance is ranking information only.",
+      "Guessed station IDs are not included.",
+      "Element UNKNOWN must not be treated as UNAVAILABLE."
+    ]
+  },
+  "candidate_status_values": [
+    "CANDIDATE",
+    "NEEDS_VERIFICATION",
+    "NEEDS_HISTORY_REVIEW"
+  ],
+  "element_availability_values": [
+    "AVAILABLE",
+    "UNAVAILABLE",
+    "UNKNOWN"
+  ],
+  "venues": {
+    "帯広ば": {
+      "venue_periods": [
+        {
+          "from": null,
+          "to": null,
+          "venue_latitude": 42.921,
+          "venue_longitude": 143.182167,
+          "station_candidates": [
+            {
+              "station_id": "20432",
+              "station_name": "帯広",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1998-01-28",
+              "to": null,
+              "latitude": 42.921667,
+              "longitude": 143.211667,
+              "elevation_m": 38.0,
+              "distance_km": 2.4,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 42.921,
+                "venue_longitude": 143.182167,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Official Obihiro. amdmaster shows ID succession from 20431 and multiple metadata periods; ame_master lists split instrument sites. Distance ranking only.",
+              "station_metadata_history_summary": {
+                "period_count": 6,
+                "coverage_from": "1998-01-28",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "20431",
+                  "20432"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              },
+              "instrument_sites_note": "ame_master lists multiple instrument sites under the same station_id (e.g. temperature/precip vs wind). Do not collapse without history review."
+            },
+            {
+              "station_id": "20431",
+              "station_name": "帯広",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1975-04-01",
+              "to": "1998-01-28",
+              "latitude": 42.92,
+              "longitude": 143.212,
+              "elevation_m": 41.0,
+              "distance_km": 2.43,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 42.921,
+                "venue_longitude": 143.182167,
+                "station_coordinate_source": "amdmaster.index4"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "smaster.index",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/man/kansoku_gaiyou.html",
+                    "note": "JMA surface observation station metadata history (smaster.index).",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "1986-01-01"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Predecessor station number for Obihiro in amdmaster (ends 1998-01-28). Required for pre-1998-01-28 coverage; not in current ame_master.",
+              "station_metadata_history_summary": {
+                "period_count": 3,
+                "coverage_from": "1974-11-01",
+                "coverage_to": "1998-01-28",
+                "related_old_station_numbers": [
+                  "20431"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "20421",
+              "station_name": "芽室",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 42.9,
+              "longitude": 143.043333,
+              "elevation_m": 90.0,
+              "distance_km": 11.55,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 42.921,
+                "venue_longitude": 143.182167,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2025-10-23"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Nearby AMeDAS four-element station (芽室). Alternate if official coverage or elements need cross-check.",
+              "station_metadata_history_summary": {
+                "period_count": 8,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "20421"
+                ],
+                "coordinate_or_elevation_changes_observed": true,
+                "source_identifier": "amdmaster.index4",
+                "note": "amdmaster shows coordinate/elevation changes across periods"
+              }
+            },
+            {
+              "station_id": "20551",
+              "station_name": "帯広泉",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "2003-01-01",
+              "to": null,
+              "latitude": 42.733333,
+              "longitude": 143.216667,
+              "elevation_m": 149.0,
+              "distance_km": 21.06,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 42.921,
+                "venue_longitude": 143.182167,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "UNAVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2018-10-11"
+              },
+              "candidate_status": "CANDIDATE",
+              "rationale": "帯広泉 official airport-style station; ame note excludes sunshine/humidity/pressure. Not a drop-in full-element substitute.",
+              "station_metadata_history_summary": {
+                "period_count": 4,
+                "coverage_from": "2003-01-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "20551"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "園田": {
+      "venue_periods": [
+        {
+          "from": null,
+          "to": null,
+          "venue_latitude": 34.766583,
+          "venue_longitude": 135.445194,
+          "station_candidates": [
+            {
+              "station_id": "62051",
+              "station_name": "豊中",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 34.783333,
+              "longitude": 135.438333,
+              "elevation_m": 12.0,
+              "distance_km": 1.97,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 34.766583,
+                "venue_longitude": 135.445194,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "UNAVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2009-01-29"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Nearest listed station (豊中). Airport-style exclusions for humidity/pressure in ame_master. History periods in amdmaster.",
+              "station_metadata_history_summary": {
+                "period_count": 5,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "62051"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "62078",
+              "station_name": "大阪",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1999-02-24",
+              "to": null,
+              "latitude": 34.681667,
+              "longitude": 135.518333,
+              "elevation_m": 23.0,
+              "distance_km": 11.57,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 34.766583,
+                "venue_longitude": 135.445194,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Osaka official. Full-element candidate farther away; ame_master split instrument sites; ID succession from 62077.",
+              "station_metadata_history_summary": {
+                "period_count": 5,
+                "coverage_from": "1999-02-24",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "62077",
+                  "62078"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              },
+              "instrument_sites_note": "ame_master lists multiple instrument sites under the same station_id (e.g. temperature/precip vs wind). Do not collapse without history review."
+            },
+            {
+              "station_id": "63477",
+              "station_name": "西宮",
+              "station_type": "PRECIPITATION_ONLY",
+              "station_type_jma": "雨",
+              "from": "2006-03-06",
+              "to": null,
+              "latitude": 34.75,
+              "longitude": 135.335,
+              "elevation_m": 38.0,
+              "distance_km": 10.23,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 34.766583,
+                "venue_longitude": 135.445194,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "UNAVAILABLE",
+                "relative_humidity": "UNAVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "UNAVAILABLE",
+                "wind_direction": "UNAVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2006-03-06"
+              },
+              "candidate_status": "CANDIDATE",
+              "rationale": "西宮 precipitation-only. Useful only for precipitation element coverage.",
+              "station_metadata_history_summary": {
+                "period_count": 1,
+                "coverage_from": "2006-03-06",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "63477"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "名古屋": {
+      "venue_periods": [
+        {
+          "from": null,
+          "to": "2022-03-11",
+          "venue_latitude": 35.112458,
+          "venue_longitude": 136.866569,
+          "location": "旧・名古屋競馬場（名古屋市港区）",
+          "station_candidates": [
+            {
+              "station_id": "51106",
+              "station_name": "名古屋",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 35.166667,
+              "longitude": 136.965,
+              "elevation_m": 51.0,
+              "distance_km": 10.79,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.112458,
+                "venue_longitude": 136.866569,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Nagoya Local Meteorological Office. Primary full-element candidate for old venue period; not auto-selected.",
+              "station_metadata_history_summary": {
+                "period_count": 7,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "51106"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "51096",
+              "station_name": "蟹江",
+              "station_type": "PRECIPITATION_ONLY",
+              "station_type_jma": "雨",
+              "from": "1975-05-12",
+              "to": null,
+              "latitude": 35.136667,
+              "longitude": 136.791667,
+              "elevation_m": 2.0,
+              "distance_km": 7.32,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.112458,
+                "venue_longitude": 136.866569,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "UNAVAILABLE",
+                "relative_humidity": "UNAVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "UNAVAILABLE",
+                "wind_direction": "UNAVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "1975-05-12"
+              },
+              "candidate_status": "CANDIDATE",
+              "rationale": "蟹江 precipitation-only nearer to old venue. Precipitation element candidate only.",
+              "station_metadata_history_summary": {
+                "period_count": 1,
+                "coverage_from": "1975-05-12",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "51096"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "53041",
+              "station_name": "桑名",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 35.05,
+              "longitude": 136.693333,
+              "elevation_m": 3.0,
+              "distance_km": 17.23,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.112458,
+                "venue_longitude": 136.866569,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-12-01"
+              },
+              "candidate_status": "CANDIDATE",
+              "rationale": "桑名 AMeDAS four-element. Alternate nearer to coastal plain; element set differs from official.",
+              "station_metadata_history_summary": {
+                "period_count": 8,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "53041"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            }
+          ]
+        },
+        {
+          "from": "2022-04-08",
+          "to": null,
+          "venue_latitude": 35.0525,
+          "venue_longitude": 136.78472,
+          "location": "現・名古屋競馬場（弥富市）",
+          "station_candidates": [
+            {
+              "station_id": "53041",
+              "station_name": "桑名",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 35.05,
+              "longitude": 136.693333,
+              "elevation_m": 3.0,
+              "distance_km": 8.32,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.0525,
+                "venue_longitude": 136.78472,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-12-01"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "桑名 is nearer to new Yatomi venue than Nagoya official. Four-element; humidity/pressure unavailable. History review required before any selection.",
+              "station_metadata_history_summary": {
+                "period_count": 8,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "53041"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "51096",
+              "station_name": "蟹江",
+              "station_type": "PRECIPITATION_ONLY",
+              "station_type_jma": "雨",
+              "from": "1975-05-12",
+              "to": null,
+              "latitude": 35.136667,
+              "longitude": 136.791667,
+              "elevation_m": 2.0,
+              "distance_km": 9.38,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.0525,
+                "venue_longitude": 136.78472,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "UNAVAILABLE",
+                "relative_humidity": "UNAVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "UNAVAILABLE",
+                "wind_direction": "UNAVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "1975-05-12"
+              },
+              "candidate_status": "CANDIDATE",
+              "rationale": "蟹江 precipitation-only near new venue.",
+              "station_metadata_history_summary": {
+                "period_count": 1,
+                "coverage_from": "1975-05-12",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "51096"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "51106",
+              "station_name": "名古屋",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 35.166667,
+              "longitude": 136.965,
+              "elevation_m": 51.0,
+              "distance_km": 20.74,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.0525,
+                "venue_longitude": 136.78472,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Nagoya official remains a full-element candidate for new venue but is farther (~21km). Do not reuse old-venue ranking blindly.",
+              "station_metadata_history_summary": {
+                "period_count": 7,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "51106"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "51261",
+              "station_name": "セントレア",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "2005-02-17",
+              "to": null,
+              "latitude": 34.858333,
+              "longitude": 136.805,
+              "elevation_m": 4.0,
+              "distance_km": 21.67,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.0525,
+                "venue_longitude": 136.78472,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "UNAVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2009-01-30"
+              },
+              "candidate_status": "CANDIDATE",
+              "rationale": "セントレア airport official; excludes humidity/pressure. Not a full-element substitute.",
+              "station_metadata_history_summary": {
+                "period_count": 2,
+                "coverage_from": "2005-02-17",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "51261"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            }
+          ]
+        }
+      ],
+      "unmapped_gap": {
+        "from": "2022-03-12",
+        "to": "2022-04-07",
+        "reason": "Venue relocation gap. No venue coordinate mapping; do not invent station coverage for this interval."
+      }
+    },
+    "佐賀": {
+      "venue_periods": [
+        {
+          "from": null,
+          "to": null,
+          "venue_latitude": 33.349361,
+          "venue_longitude": 130.470861,
+          "station_candidates": [
+            {
+              "station_id": "82306",
+              "station_name": "久留米",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1977-03-01",
+              "to": null,
+              "latitude": 33.303333,
+              "longitude": 130.493333,
+              "elevation_m": 7.0,
+              "distance_km": 5.53,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 33.349361,
+                "venue_longitude": 130.470861,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-11-25"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "久留米 AMeDAS four-element nearest to venue. Humidity/pressure unavailable.",
+              "station_metadata_history_summary": {
+                "period_count": 7,
+                "coverage_from": "1977-03-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "82306"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "85142",
+              "station_name": "佐賀",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1995-10-19",
+              "to": null,
+              "latitude": 33.265,
+              "longitude": 130.305,
+              "elevation_m": 6.0,
+              "distance_km": 18.04,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 33.349361,
+                "venue_longitude": 130.470861,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Saga official full-element candidate farther away; ID succession from 85141.",
+              "station_metadata_history_summary": {
+                "period_count": 4,
+                "coverage_from": "1995-10-19",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "85141",
+                  "85142"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "85106",
+              "station_name": "鳥栖",
+              "station_type": "PRECIPITATION_ONLY",
+              "station_type_jma": "雨",
+              "from": "2010-03-04",
+              "to": null,
+              "latitude": 33.385,
+              "longitude": 130.516667,
+              "elevation_m": 25.0,
+              "distance_km": 5.81,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 33.349361,
+                "venue_longitude": 130.470861,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "UNAVAILABLE",
+                "relative_humidity": "UNAVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "UNAVAILABLE",
+                "wind_direction": "UNAVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2010-03-04"
+              },
+              "candidate_status": "CANDIDATE",
+              "rationale": "鳥栖 precipitation-only near venue.",
+              "station_metadata_history_summary": {
+                "period_count": 1,
+                "coverage_from": "2010-03-04",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "85106"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "高知": {
+      "venue_periods": [
+        {
+          "from": null,
+          "to": null,
+          "venue_latitude": 33.503194,
+          "venue_longitude": 133.530556,
+          "station_candidates": [
+            {
+              "station_id": "74182",
+              "station_name": "高知",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "2023-03-02",
+              "to": null,
+              "latitude": 33.566667,
+              "longitude": 133.548333,
+              "elevation_m": 1.0,
+              "distance_km": 7.25,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 33.503194,
+                "venue_longitude": 133.530556,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2023-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Current Kochi official (from 2023-03-02). ame_master split instrument sites; succeeds 74181. Do not backfill pre-2023 with current row only.",
+              "station_metadata_history_summary": {
+                "period_count": 1,
+                "coverage_from": "2023-03-02",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "74181"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              },
+              "instrument_sites_note": "ame_master lists multiple instrument sites under the same station_id (e.g. temperature/precip vs wind). Do not collapse without history review."
+            },
+            {
+              "station_id": "74181",
+              "station_name": "高知",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1975-12-16",
+              "to": "2023-03-02",
+              "latitude": 33.567,
+              "longitude": 133.548,
+              "elevation_m": 1.0,
+              "distance_km": 7.28,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 33.503194,
+                "venue_longitude": 133.530556,
+                "station_coordinate_source": "amdmaster.index4"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "smaster.index",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/man/kansoku_gaiyou.html",
+                    "note": "JMA surface observation station metadata history (smaster.index).",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Predecessor Kochi station number in amdmaster (to 2023-03-02). Required for historical coverage; not in current ame_master.",
+              "station_metadata_history_summary": {
+                "period_count": 8,
+                "coverage_from": "1974-11-01",
+                "coverage_to": "2023-03-02",
+                "related_old_station_numbers": [
+                  "74181"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "74188",
+              "station_name": "南国日章",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "2003-01-01",
+              "to": null,
+              "latitude": 33.545,
+              "longitude": 133.668333,
+              "elevation_m": 9.0,
+              "distance_km": 13.59,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 33.503194,
+                "venue_longitude": 133.530556,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "UNAVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2019-12-05"
+              },
+              "candidate_status": "CANDIDATE",
+              "rationale": "南国日章 airport-style official; excludes humidity/pressure.",
+              "station_metadata_history_summary": {
+                "period_count": 3,
+                "coverage_from": "2003-01-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "74188"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "74187",
+              "station_name": "後免",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1978-03-13",
+              "to": null,
+              "latitude": 33.59,
+              "longitude": 133.643333,
+              "elevation_m": 12.0,
+              "distance_km": 14.23,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 33.503194,
+                "venue_longitude": 133.530556,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2023-04-25"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "後免 AMeDAS four-element alternate.",
+              "station_metadata_history_summary": {
+                "period_count": 6,
+                "coverage_from": "1978-03-13",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "74187"
+                ],
+                "coordinate_or_elevation_changes_observed": true,
+                "source_identifier": "amdmaster.index4",
+                "note": "amdmaster shows coordinate/elevation changes across periods"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "大井": {
+      "venue_periods": [
+        {
+          "from": null,
+          "to": null,
+          "venue_latitude": 35.591339,
+          "venue_longitude": 139.742608,
+          "station_candidates": [
+            {
+              "station_id": "44166",
+              "station_name": "羽田",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 35.553333,
+              "longitude": 139.78,
+              "elevation_m": 6.0,
+              "distance_km": 5.41,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.591339,
+                "venue_longitude": 139.742608,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "UNAVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2009-01-30"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "羽田 nearest official but excludes humidity/pressure. Not full-element.",
+              "station_metadata_history_summary": {
+                "period_count": 3,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "44166"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "44132",
+              "station_name": "東京",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "2007-11-01",
+              "to": null,
+              "latitude": 35.691667,
+              "longitude": 139.75,
+              "elevation_m": 25.0,
+              "distance_km": 11.18,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.591339,
+                "venue_longitude": 139.742608,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Tokyo official full-element candidate; split instrument sites; relocation history in amdmaster.",
+              "station_metadata_history_summary": {
+                "period_count": 4,
+                "coverage_from": "2007-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "44131",
+                  "44132"
+                ],
+                "coordinate_or_elevation_changes_observed": true,
+                "source_identifier": "amdmaster.index4",
+                "note": "amdmaster shows coordinate/elevation changes across periods"
+              },
+              "instrument_sites_note": "ame_master lists multiple instrument sites under the same station_id (e.g. temperature/precip vs wind). Do not collapse without history review."
+            },
+            {
+              "station_id": "46061",
+              "station_name": "日吉",
+              "station_type": "PRECIPITATION_ONLY",
+              "station_type_jma": "雨",
+              "from": "1975-05-16",
+              "to": null,
+              "latitude": 35.551667,
+              "longitude": 139.65,
+              "elevation_m": 57.0,
+              "distance_km": 9.47,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.591339,
+                "venue_longitude": 139.742608,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "UNAVAILABLE",
+                "relative_humidity": "UNAVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "UNAVAILABLE",
+                "wind_direction": "UNAVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "1975-05-16"
+              },
+              "candidate_status": "CANDIDATE",
+              "rationale": "日吉 precipitation-only.",
+              "station_metadata_history_summary": {
+                "period_count": 1,
+                "coverage_from": "1975-05-16",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "46061"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "46106",
+              "station_name": "横浜",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 35.438333,
+              "longitude": 139.651667,
+              "elevation_m": 39.0,
+              "distance_km": 18.9,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.591339,
+                "venue_longitude": 139.742608,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Yokohama official full-element alternate south of venue.",
+              "station_metadata_history_summary": {
+                "period_count": 7,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "46106"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "金沢": {
+      "venue_periods": [
+        {
+          "from": null,
+          "to": null,
+          "venue_latitude": 36.636444,
+          "venue_longitude": 136.67475,
+          "station_candidates": [
+            {
+              "station_id": "56227",
+              "station_name": "金沢",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1991-10-23",
+              "to": null,
+              "latitude": 36.588333,
+              "longitude": 136.633333,
+              "elevation_m": 6.0,
+              "distance_km": 6.5,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 36.636444,
+                "venue_longitude": 136.67475,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Kanazawa Local Meteorological Office. Primary full-element candidate; metadata periods in amdmaster.",
+              "station_metadata_history_summary": {
+                "period_count": 4,
+                "coverage_from": "1991-10-23",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "56227"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "56186",
+              "station_name": "かほく",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 36.711667,
+              "longitude": 136.691667,
+              "elevation_m": 42.0,
+              "distance_km": 8.5,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 36.636444,
+                "venue_longitude": 136.67475,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2025-11-11"
+              },
+              "candidate_status": "CANDIDATE",
+              "rationale": "かほく AMeDAS four-element alternate.",
+              "station_metadata_history_summary": {
+                "period_count": 8,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "56186"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "門別": {
+      "venue_periods": [
+        {
+          "from": null,
+          "to": null,
+          "venue_latitude": 42.537944,
+          "venue_longitude": 142.002972,
+          "station_candidates": [
+            {
+              "station_id": "22141",
+              "station_name": "日高門別",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 42.496667,
+              "longitude": 142.053333,
+              "elevation_m": 47.0,
+              "distance_km": 6.17,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 42.537944,
+                "venue_longitude": 142.002972,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-10-25"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "日高門別 AMeDAS four-element nearest. amdmaster shows relocation (lat/lon/elev changes) and many discontinuity flags. History review required.",
+              "station_metadata_history_summary": {
+                "period_count": 9,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "22141"
+                ],
+                "coordinate_or_elevation_changes_observed": true,
+                "source_identifier": "amdmaster.index4",
+                "note": "amdmaster shows coordinate/elevation changes across periods"
+              }
+            },
+            {
+              "station_id": "21276",
+              "station_name": "鵡川",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 42.59,
+              "longitude": 141.933333,
+              "elevation_m": 10.0,
+              "distance_km": 8.13,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 42.537944,
+                "venue_longitude": 142.002972,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2025-11-19"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "鵡川 AMeDAS four-element alternate.",
+              "station_metadata_history_summary": {
+                "period_count": 7,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "21276"
+                ],
+                "coordinate_or_elevation_changes_observed": true,
+                "source_identifier": "amdmaster.index4",
+                "note": "amdmaster shows coordinate/elevation changes across periods"
+              }
+            },
+            {
+              "station_id": "21187",
+              "station_name": "苫小牧",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1988-06-25",
+              "to": null,
+              "latitude": 42.623333,
+              "longitude": 141.546667,
+              "elevation_m": 6.0,
+              "distance_km": 38.55,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 42.537944,
+                "venue_longitude": 142.002972,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "CANDIDATE",
+              "rationale": "苫小牧 official farther full-element candidate.",
+              "station_metadata_history_summary": {
+                "period_count": 7,
+                "coverage_from": "1988-06-25",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "21186",
+                  "21187"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "笠松": {
+      "venue_periods": [
+        {
+          "from": null,
+          "to": null,
+          "venue_latitude": 35.372167,
+          "venue_longitude": 136.767528,
+          "station_candidates": [
+            {
+              "station_id": "52586",
+              "station_name": "岐阜",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 35.4,
+              "longitude": 136.761667,
+              "elevation_m": 13.0,
+              "distance_km": 3.14,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.372167,
+                "venue_longitude": 136.767528,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Gifu Local Meteorological Office nearest full-element candidate.",
+              "station_metadata_history_summary": {
+                "period_count": 7,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "52586"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "51011",
+              "station_name": "一宮",
+              "station_type": "PRECIPITATION_ONLY",
+              "station_type_jma": "雨",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 35.298333,
+              "longitude": 136.853333,
+              "elevation_m": 11.0,
+              "distance_km": 11.31,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.372167,
+                "venue_longitude": 136.767528,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "UNAVAILABLE",
+                "relative_humidity": "UNAVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "UNAVAILABLE",
+                "wind_direction": "UNAVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2002-04-01"
+              },
+              "candidate_status": "CANDIDATE",
+              "rationale": "一宮 precipitation-only.",
+              "station_metadata_history_summary": {
+                "period_count": 2,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "51011"
+                ],
+                "coordinate_or_elevation_changes_observed": true,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "52581",
+              "station_name": "大垣",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 35.346667,
+              "longitude": 136.62,
+              "elevation_m": 6.0,
+              "distance_km": 13.68,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.372167,
+                "venue_longitude": 136.767528,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2025-11-20"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "大垣 AMeDAS four-element alternate.",
+              "station_metadata_history_summary": {
+                "period_count": 6,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "52581"
+                ],
+                "coordinate_or_elevation_changes_observed": true,
+                "source_identifier": "amdmaster.index4",
+                "note": "amdmaster shows coordinate/elevation changes across periods"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "水沢": {
+      "venue_periods": [
+        {
+          "from": null,
+          "to": null,
+          "venue_latitude": 39.129944,
+          "venue_longitude": 141.170333,
+          "station_candidates": [
+            {
+              "station_id": "33781",
+              "station_name": "江刺",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 39.183333,
+              "longitude": 141.161667,
+              "elevation_m": 42.0,
+              "distance_km": 5.98,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 39.129944,
+                "venue_longitude": 141.170333,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2025-11-04"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "江刺 AMeDAS four-element nearest to Mizusawa. No nearer official found within ~20km; humidity/pressure unavailable at this type.",
+              "station_metadata_history_summary": {
+                "period_count": 7,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "33781"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "33716",
+              "station_name": "北上",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1976-12-04",
+              "to": null,
+              "latitude": 39.288333,
+              "longitude": 141.11,
+              "elevation_m": 61.0,
+              "distance_km": 18.36,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 39.129944,
+                "venue_longitude": 141.170333,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2023-09-26"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "北上 AMeDAS four-element alternate.",
+              "station_metadata_history_summary": {
+                "period_count": 8,
+                "coverage_from": "1976-12-04",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "33716"
+                ],
+                "coordinate_or_elevation_changes_observed": true,
+                "source_identifier": "amdmaster.index4",
+                "note": "amdmaster shows coordinate/elevation changes across periods"
+              }
+            },
+            {
+              "station_id": "33911",
+              "station_name": "一関",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 38.933333,
+              "longitude": 141.125,
+              "elevation_m": 32.0,
+              "distance_km": 22.21,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 39.129944,
+                "venue_longitude": 141.170333,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-16"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "一関 AMeDAS four-element alternate with homogeneity number in ame notes.",
+              "station_metadata_history_summary": {
+                "period_count": 9,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "33911"
+                ],
+                "coordinate_or_elevation_changes_observed": true,
+                "source_identifier": "amdmaster.index4",
+                "note": "amdmaster shows coordinate/elevation changes across periods"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "川崎": {
+      "venue_periods": [
+        {
+          "from": null,
+          "to": null,
+          "venue_latitude": 35.532361,
+          "venue_longitude": 139.710667,
+          "station_candidates": [
+            {
+              "station_id": "46106",
+              "station_name": "横浜",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 35.438333,
+              "longitude": 139.651667,
+              "elevation_m": 39.0,
+              "distance_km": 11.74,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.532361,
+                "venue_longitude": 139.710667,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Yokohama official full-element candidate.",
+              "station_metadata_history_summary": {
+                "period_count": 7,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "46106"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "44166",
+              "station_name": "羽田",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 35.553333,
+              "longitude": 139.78,
+              "elevation_m": 6.0,
+              "distance_km": 6.69,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.532361,
+                "venue_longitude": 139.710667,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "UNAVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2009-01-30"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "羽田 nearer but excludes humidity/pressure.",
+              "station_metadata_history_summary": {
+                "period_count": 3,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "44166"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "46061",
+              "station_name": "日吉",
+              "station_type": "PRECIPITATION_ONLY",
+              "station_type_jma": "雨",
+              "from": "1975-05-16",
+              "to": null,
+              "latitude": 35.551667,
+              "longitude": 139.65,
+              "elevation_m": 57.0,
+              "distance_km": 5.89,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.532361,
+                "venue_longitude": 139.710667,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "UNAVAILABLE",
+                "relative_humidity": "UNAVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "UNAVAILABLE",
+                "wind_direction": "UNAVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "1975-05-16"
+              },
+              "candidate_status": "CANDIDATE",
+              "rationale": "日吉 precipitation-only nearest.",
+              "station_metadata_history_summary": {
+                "period_count": 1,
+                "coverage_from": "1975-05-16",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "46061"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "44132",
+              "station_name": "東京",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "2007-11-01",
+              "to": null,
+              "latitude": 35.691667,
+              "longitude": 139.75,
+              "elevation_m": 25.0,
+              "distance_km": 18.07,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.532361,
+                "venue_longitude": 139.710667,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Tokyo official full-element alternate.",
+              "station_metadata_history_summary": {
+                "period_count": 4,
+                "coverage_from": "2007-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "44131",
+                  "44132"
+                ],
+                "coordinate_or_elevation_changes_observed": true,
+                "source_identifier": "amdmaster.index4",
+                "note": "amdmaster shows coordinate/elevation changes across periods"
+              },
+              "instrument_sites_note": "ame_master lists multiple instrument sites under the same station_id (e.g. temperature/precip vs wind). Do not collapse without history review."
+            }
+          ]
+        }
+      ]
+    },
+    "盛岡": {
+      "venue_periods": [
+        {
+          "from": null,
+          "to": null,
+          "venue_latitude": 39.690822,
+          "venue_longitude": 141.220067,
+          "station_candidates": [
+            {
+              "station_id": "33431",
+              "station_name": "盛岡",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 39.698333,
+              "longitude": 141.165,
+              "elevation_m": 155.0,
+              "distance_km": 4.78,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 39.690822,
+                "venue_longitude": 141.220067,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Morioka Local Meteorological Office nearest full-element candidate; multiple amdmaster periods.",
+              "station_metadata_history_summary": {
+                "period_count": 8,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "33431"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "33501",
+              "station_name": "紫波",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1976-11-30",
+              "to": null,
+              "latitude": 39.546667,
+              "longitude": 141.126667,
+              "elevation_m": 125.0,
+              "distance_km": 17.91,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 39.690822,
+                "venue_longitude": 141.220067,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2025-10-15"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "紫波 AMeDAS four-element alternate.",
+              "station_metadata_history_summary": {
+                "period_count": 5,
+                "coverage_from": "1976-11-30",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "33501"
+                ],
+                "coordinate_or_elevation_changes_observed": true,
+                "source_identifier": "amdmaster.index4",
+                "note": "amdmaster shows coordinate/elevation changes across periods"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "船橋": {
+      "venue_periods": [
+        {
+          "from": null,
+          "to": null,
+          "venue_latitude": 35.684722,
+          "venue_longitude": 139.997778,
+          "station_candidates": [
+            {
+              "station_id": "45106",
+              "station_name": "船橋",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1999-08-03",
+              "to": null,
+              "latitude": 35.711667,
+              "longitude": 140.043333,
+              "elevation_m": 28.0,
+              "distance_km": 5.09,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.684722,
+                "venue_longitude": 139.997778,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2024-10-30"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "船橋 AMeDAS four-element nearest (same place name). Humidity/pressure unavailable.",
+              "station_metadata_history_summary": {
+                "period_count": 5,
+                "coverage_from": "1999-08-03",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "45106"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "45212",
+              "station_name": "千葉",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1981-03-30",
+              "to": null,
+              "latitude": 35.601667,
+              "longitude": 140.103333,
+              "elevation_m": 3.0,
+              "distance_km": 13.28,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.684722,
+                "venue_longitude": 139.997778,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Chiba official full-element candidate; ID succession from 45211.",
+              "station_metadata_history_summary": {
+                "period_count": 7,
+                "coverage_from": "1981-03-30",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "45211",
+                  "45212"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "44136",
+              "station_name": "江戸川臨海",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 35.638333,
+              "longitude": 139.863333,
+              "elevation_m": 5.0,
+              "distance_km": 13.2,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.684722,
+                "venue_longitude": 139.997778,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2025-12-04"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "江戸川臨海 AMeDAS four-element alternate.",
+              "station_metadata_history_summary": {
+                "period_count": 9,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "44136"
+                ],
+                "coordinate_or_elevation_changes_observed": true,
+                "source_identifier": "amdmaster.index4",
+                "note": "amdmaster shows coordinate/elevation changes across periods"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "浦和": {
+      "venue_periods": [
+        {
+          "from": null,
+          "to": null,
+          "venue_latitude": 35.857806,
+          "venue_longitude": 139.670389,
+          "station_candidates": [
+            {
+              "station_id": "43241",
+              "station_name": "さいたま",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 35.875,
+              "longitude": 139.586667,
+              "elevation_m": 8.0,
+              "distance_km": 7.78,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.857806,
+                "venue_longitude": 139.670389,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-11-30"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "さいたま (formerly 浦和) AMeDAS four-element nearest. Name change and metadata periods in amdmaster; humidity/pressure unavailable historically for this type.",
+              "station_metadata_history_summary": {
+                "period_count": 10,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "43241"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "43256",
+              "station_name": "越谷",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1974-11-01",
+              "to": null,
+              "latitude": 35.883333,
+              "longitude": 139.756667,
+              "elevation_m": 3.0,
+              "distance_km": 8.28,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.857806,
+                "venue_longitude": 139.670389,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-11-11"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "越谷 AMeDAS four-element alternate.",
+              "station_metadata_history_summary": {
+                "period_count": 7,
+                "coverage_from": "1974-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "43256"
+                ],
+                "coordinate_or_elevation_changes_observed": true,
+                "source_identifier": "amdmaster.index4",
+                "note": "amdmaster shows coordinate/elevation changes across periods"
+              }
+            },
+            {
+              "station_id": "44132",
+              "station_name": "東京",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "2007-11-01",
+              "to": null,
+              "latitude": 35.691667,
+              "longitude": 139.75,
+              "elevation_m": 25.0,
+              "distance_km": 19.82,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 35.857806,
+                "venue_longitude": 139.670389,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Tokyo official full-element alternate.",
+              "station_metadata_history_summary": {
+                "period_count": 4,
+                "coverage_from": "2007-11-01",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "44131",
+                  "44132"
+                ],
+                "coordinate_or_elevation_changes_observed": true,
+                "source_identifier": "amdmaster.index4",
+                "note": "amdmaster shows coordinate/elevation changes across periods"
+              },
+              "instrument_sites_note": "ame_master lists multiple instrument sites under the same station_id (e.g. temperature/precip vs wind). Do not collapse without history review."
+            }
+          ]
+        }
+      ]
+    },
+    "姫路": {
+      "venue_periods": [
+        {
+          "from": null,
+          "to": null,
+          "venue_latitude": 34.856278,
+          "venue_longitude": 134.701222,
+          "station_candidates": [
+            {
+              "station_id": "63383",
+              "station_name": "姫路",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "2008-11-21",
+              "to": null,
+              "latitude": 34.838333,
+              "longitude": 134.67,
+              "elevation_m": 38.0,
+              "distance_km": 3.48,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 34.856278,
+                "venue_longitude": 134.701222,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2021-03-02"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Himeji special regional station. Succeeds 63382 on 2008-11-21. Humidity flag late in amdmaster; history review required.",
+              "station_metadata_history_summary": {
+                "period_count": 3,
+                "coverage_from": "2008-11-21",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "63382",
+                  "63383"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "63382",
+              "station_name": "姫路",
+              "station_type": "OFFICIAL",
+              "station_type_jma": "官",
+              "from": "1987-03-25",
+              "to": "2008-11-21",
+              "latitude": 34.838,
+              "longitude": 134.67,
+              "elevation_m": 38.0,
+              "distance_km": 3.5,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 34.856278,
+                "venue_longitude": 134.701222,
+                "station_coordinate_source": "amdmaster.index4"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "AVAILABLE",
+                "sea_level_pressure": "AVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "smaster.index",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/man/kansoku_gaiyou.html",
+                    "note": "JMA surface observation station metadata history (smaster.index).",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2008-03-26"
+              },
+              "candidate_status": "NEEDS_HISTORY_REVIEW",
+              "rationale": "Predecessor Himeji station number (to 2008-11-21). Needed for earlier coverage; not in current ame_master.",
+              "station_metadata_history_summary": {
+                "period_count": 2,
+                "coverage_from": "1987-03-25",
+                "coverage_to": "2008-11-21",
+                "related_old_station_numbers": [
+                  "63381",
+                  "63382"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            },
+            {
+              "station_id": "63321",
+              "station_name": "福崎",
+              "station_type": "AMEDAS_FOUR_ELEMENT",
+              "station_type_jma": "四",
+              "from": "1975-05-02",
+              "to": null,
+              "latitude": 34.95,
+              "longitude": 134.748333,
+              "elevation_m": 72.0,
+              "distance_km": 11.27,
+              "distance_basis": {
+                "method": "haversine",
+                "coordinate_system": "WGS84",
+                "venue_latitude": 34.856278,
+                "venue_longitude": 134.701222,
+                "station_coordinate_source": "ame_master"
+              },
+              "available_elements": {
+                "temperature": "AVAILABLE",
+                "relative_humidity": "AVAILABLE",
+                "station_pressure": "UNAVAILABLE",
+                "sea_level_pressure": "UNAVAILABLE",
+                "precipitation": "AVAILABLE",
+                "wind_speed": "AVAILABLE",
+                "wind_direction": "AVAILABLE"
+              },
+              "source": {
+                "primary": "amdmaster.index4",
+                "references": [
+                  {
+                    "identifier": "nar-v3-venue-coordinates.json",
+                    "url": "config/nar-v3-venue-coordinates.json",
+                    "note": "Venue WGS84 coordinates used as distance calculation origin.",
+                    "audited_at": "2026-09-19"
+                  },
+                  {
+                    "identifier": "amdmaster.index4",
+                    "url": "https://www.data.jma.go.jp/stats/data/mdrr/chiten/meta/amdmaster.index4",
+                    "note": "JMA AMeDAS station metadata history including element flags, start/end dates, discontinuities.",
+                    "audited_at": "2026-09-18"
+                  },
+                  {
+                    "identifier": "ame_master",
+                    "url": "https://www.data.jma.go.jp/obd/stats/etrn/select/prefecture.php",
+                    "note": "JMA current AMeDAS/official station list (ame_master). Coordinates from degree+minute fields converted to decimal degrees WGS84.",
+                    "audited_at": "2026-09-18"
+                  }
+                ],
+                "metadata_effective_date": "2023-06-29"
+              },
+              "candidate_status": "CANDIDATE",
+              "rationale": "福崎 AMeDAS four-element alternate.",
+              "station_metadata_history_summary": {
+                "period_count": 7,
+                "coverage_from": "1975-05-02",
+                "coverage_to": null,
+                "related_old_station_numbers": [
+                  "63321"
+                ],
+                "coordinate_or_elevation_changes_observed": false,
+                "source_identifier": "amdmaster.index4",
+                "note": "metadata periods from amdmaster.index4; not a full production history implementation"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
