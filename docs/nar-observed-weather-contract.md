@@ -241,7 +241,41 @@ historical final が PIT-eligible になることはない。
 - `UNAVAILABLE` — 利用不可と確認済み
 - `UNKNOWN` — 未確認（`false` / `UNAVAILABLE` と同義にしない）
 
-### 「最寄り」は採用根拠にしない
+### candidate_status
+
+draft mapping 上の候補状態。production selection ではない。
+
+| Status | Meaning |
+| --- | --- |
+| `CANDIDATE` | history 確認済みで候補として維持可能 |
+| `EXCLUDED` | 根拠をもって候補から除外（`exclusion_reason` 必須） |
+| `NEEDS_VERIFICATION` | 公式 metadata だけでは判断不足 |
+| `NEEDS_HISTORY_REVIEW` | history 精査未完了（Step C 完了後は原則 0） |
+
+`EXCLUDED` の reason 例:
+
+- `NO_REQUIRED_ELEMENTS`
+- `NO_DATE_COVERAGE`
+- `STATION_ID_NOT_APPLICABLE`
+- `HISTORY_CONFLICT`
+
+不採用候補は JSON から削除せず、`EXCLUDED` + reason として残すことを優先する。
+
+### element_profile
+
+候補の要素充足分類。`selected station` ではない。
+
+| Profile | Meaning |
+| --- | --- |
+| `FULL_ELEMENT_CANDIDATE` | temperature / humidity / pressure / precipitation / wind を 1 station で充足可能 |
+| `PARTIAL_ELEMENT_CANDIDATE` | 一部要素のみ |
+| `PRECIP_ONLY_CANDIDATE` | 降水のみ |
+
+1 station で必要要素を満たせない venue period は
+`ELEMENT_COVERAGE_GAP` として記録する。
+multi-station fusion は後続 Gate で設計する。
+
+### 「最寄り」を採用根拠にしない
 
 `distance_km` は ranking 情報にすぎない。
 
