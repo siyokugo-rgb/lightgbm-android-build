@@ -765,6 +765,10 @@ ObservedWeather の PIT / role 契約は
 `observation time <= prediction_as_of` だけでは
 PIT-safe と判定しない。
 
+LIVE_CAPTURED_OBSERVED は
+`pit_evidence_at`（原則 `downloaded_at`）を用い、
+固定 publication lag を PIT 根拠にしない。
+
 ## Future JRA support
 
 NARをDomain Modelそのものとは扱わない。
