@@ -753,6 +753,18 @@ Parser実装前に別途監査する。
 - 予定発走時刻の変更履歴・source/captured_atをliveでどの時点から取得・保存できるか
 - 履歴系情報が09:58:36 JSTより前のどの時刻から取得可能か
 
+## ObservedWeather (JMA)
+
+ObservedWeather の PIT / role 契約は
+`docs/nar-observed-weather-contract.md` を正とする。
+
+現行 JMA historical final は
+`HISTORICAL_FINAL_OBSERVED` /
+`NOT_PIT_ELIGIBLE` である。
+
+`observation time <= prediction_as_of` だけでは
+PIT-safe と判定しない。
+
 ## Future JRA support
 
 NARをDomain Modelそのものとは扱わない。
