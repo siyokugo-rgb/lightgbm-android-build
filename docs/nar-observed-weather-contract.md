@@ -582,6 +582,124 @@ live availability が整備されても、
 
 ---
 
+## Acquisition strategy decision (Step E)
+
+### Decision
+
+`PUBLIC_ONLY_WITH_DEFERRED_GAPS`
+
+R6 ObservedWeather の live acquisition は、
+documented JMA public「最新の気象データ」CSV を
+第一経路とする。
+
+JMBSC（気象業務支援センター）は
+R6 時点では **導入しない**。
+`REQUIRES_JMBSC` は将来オプションとして文書上残す。
+
+### Why not JMBSC now
+
+| Factor | Finding |
+| --- | --- |
+| R6 scope | roadmap R6 は Observed/Forecast の取得・保存・監査完成。Observed 単体で Weather 全項目必須とは明記されていない |
+| Weather Data Layer | 「取得・保存、または PIT-safe に導出」は Layer 全体。ForecastWeather が既に temp/humidity/pressure/precip/wind/gust/weather_code を保持 |
+| public coverage | precip（1/3/6/12/24h products）+ quality は documented CSV で取得可。temp/wind/gust は日極値系が中心で PARTIAL |
+| public gaps | humidity / pressure / weather_condition / 10分瞬時フルセットは documented CSV では UNAVAILABLE または PARTIAL |
+| JMBSC cost | 公式負担金（税別）例: 開設時 50,000円 + 基本 4,200円/月 + 地域気象観測報 5,400円/月 + 通信（インターネット）1,500円/月。機器・回線別途 |
+| architecture | JMBSC は常時受信・BUFR・認証・secrets が必要。Android 端末内完結 + Drive secondary 方針と衝突し、server/runtime 常駐が事実上必要 |
+| Mizusawa pressure | 1場の Observed pressure gap だけで JMBSC 全体を導入しない |
+
+### Compared options
+
+| Option | Verdict |
+| --- | --- |
+| `PUBLIC_ONLY` | 不足要素があり、完全充足ではない |
+| `PUBLIC_ONLY_WITH_DEFERRED_GAPS` | **採用**。R6 blocker ではない不足を defer |
+| `PUBLIC_PLUS_JMBSC` | R6 では不要。費用・運用が過大 |
+| `JMBSC_PRIMARY` | 不採用。architecture 変更が過大 |
+
+### Public documented product coverage
+
+Source: `csv_dl_readme` / `update_n.html` / Step D–E probes。
+
+| Element | Status | Temporal / product notes |
+| --- | --- | --- |
+| precipitation | `AVAILABLE` | 1/3/6/12/24h 等の documented CSV。降水の状況は10分更新（観測から約30分後、公式記載）。品質情報あり |
+| temperature | `PARTIAL` | 日最高/最低気温 CSV。10分瞬時気温のフル提供ではない。更新は毎時50分頃 |
+| wind_speed | `PARTIAL` | 日最大風速 CSV。連続10分風速ではない |
+| wind_direction | `PARTIAL` | 最大風速観測時の風向等。連続10分風向ではない |
+| wind_gust | `PARTIAL` | 日最大瞬間風速 CSV（`gust00_rct.csv`） |
+| relative_humidity | `UNAVAILABLE` | documented latest CSV 群に無し |
+| station_pressure / sea_level_pressure | `UNAVAILABLE` | documented latest CSV 群に無し |
+| weather_code / weather_condition | `UNAVAILABLE` | documented latest CSV 群に無し |
+| quality/status | `AVAILABLE` | precip/temp/wind CSV に品質情報列あり |
+
+Forecast 値を Observed 値として保存しない。
+不足 Observed 要素は `MISSING` / `UNAVAILABLE` / `UNKNOWN` のまま保持し、0補完しない。
+
+### Cumulative precipitation
+
+public precip CSV が 1/3/6/12/24h product を直接提供する場合、
+当該 product を LIVE_CAPTURED_OBSERVED として保存してよい。
+
+自前で window 累積を導出する場合の条件（実装は後続）:
+
+- window 内 observation がすべて `pit_evidence_at <= prediction_as_of`
+- 欠測なし
+- quality 契約適合
+- partial window を完全値扱いしない
+
+### Mizusawa pressure gap
+
+判定: **ObservedWeather pressure のみ欠損許容（deferred）**。
+
+- R6 blocker ではない
+- JMBSC 導入理由にしない
+- multi-station fusion は今回決めない
+- ForecastWeather pressure は Forecast Domain のまま（Observed へコピーしない）
+
+### Responsibility split
+
+| Domain | Role in R6 |
+| --- | --- |
+| ForecastWeather | scheduled-start 向け予報の live archive（既存） |
+| ObservedWeather | documented public JMA で取得可能な実測の live archive + historical final（NOT_PIT） |
+| Weather Data Layer | 両 Domain の保存・監査。feature production 採用は R7 以降 |
+
+同一視しないもの:
+
+- Weather Data Layer 完成
+- ObservedWeather live archive 完成
+- ObservedWeather 全項目 coverage
+- Weather feature production 採用
+
+### Next station selection prerequisite
+
+次の production station selection Gate は:
+
+`PUBLIC_ONLY` product で実際に取得可能な要素
+（特に precipitation + quality）
++ history
++ distance
++ element_profile
+
+を基準とする。
+
+JMBSC station/product coverage は前提にしない。
+今回も `selected=true` は設定しない。
+
+### Revisit JMBSC only if
+
+後続で次が同時に成立した場合に限る:
+
+- Observed 必須 feature が public gaps（humidity/pressure/10分瞬時等）なしでは成立しない
+- その不足が defer 不可
+- server/runtime + secrets 運用を architecture として受け入れる
+- 費用が合理的
+
+「データが多いから」だけでは再導入しない。
+
+---
+
 ## Official sources only
 
 記録してよい source は公式 JMA に限る。
@@ -607,13 +725,14 @@ live availability が整備されても、
 
 ---
 
-## Out of scope (Step D)
+## Out of scope (Step E)
 
-本 availability 契約 Step では次を行わない。
+本 acquisition strategy Step では次を行わない。
 
 - JMA downloader / scraping / parser 実装
 - undocumented API client 実装
 - archive store / live capture daemon
+- JMBSC 契約申込 / credential 発行
 - WorkManager 等の scheduler
 - 1998～現在の一括取得
 - cumulative precipitation 実装

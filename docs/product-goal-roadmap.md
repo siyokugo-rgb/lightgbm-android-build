@@ -189,6 +189,11 @@ draft station candidates は
 `config/nar-jma-observed-station-candidates.json`
 （`DRAFT_CANDIDATES_ONLY`）を参照する。
 
+R6 ObservedWeather acquisition strategy は
+`PUBLIC_ONLY_WITH_DEFERRED_GAPS` とする。
+詳細は `docs/nar-observed-weather-contract.md` を正とする。
+JMBSC は R6 では導入しない。
+
 ## ForecastWeather
 
 `prediction_as_of` 以前に発行された、
