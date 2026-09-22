@@ -739,15 +739,40 @@ race 時刻の瞬時気温・瞬時風ではない。
 
 ---
 
-## Out of scope (Step E / Step F)
+### Live capture archive (Step G)
 
-本 acquisition strategy / live station mapping Step では次を行わない。
+Production classes (transport / append-only archive only):
 
-- JMA downloader / scraping / parser 実装
+- `NarJmaObservedWeatherProduct` — documented product allowlist + canonical HTTPS URL
+- `NarJmaObservedWeatherDownloader` — HTTPS GET of one product CSV
+- `NarJmaObservedWeatherSnapshotStore` — immutable product-wide raw archive
+- `NarJmaObservedWeatherSnapshotCoordinator` — download → save → verify
+
+Archive root (Android operational):
+
+`context.noBackupFilesDir/nar-jma-observed-weather-snapshots/<product-id>/<YYYYMMDD>/<downloadedAt>-<snapshotSha>/`
+
+Files:
+
+- `observed.csv` — raw response bytes (no decode / normalize)
+- `manifest.txt` — exact-key metadata + SHA-256
+
+Raw capture is **product-wide** (1 product × 1 capture time = 1 snapshot).
+Venue / station mapping is **not** applied at capture time.
+
+Still out of this Step: typed CSV parser, station row selection, scheduler, Drive backup, feature eligibility change.
+
+---
+
+## Out of scope (Step E / Step F / Step G typed layers)
+
+本 Steps では次を行わない（Step G は transport/archive のみ実装）。
+
+- CSV typed parser / station row extraction
 - undocumented API client 実装
-- archive store / live capture daemon
+- scheduler / WorkManager / periodic polling
+- Drive secondary backup
 - JMBSC 契約申込 / credential 発行
-- WorkManager 等の scheduler
 - 1998～現在の一括取得
 - cumulative precipitation 実装
 - 水沢 multi-station fusion / pressure 解決
