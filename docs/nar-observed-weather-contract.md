@@ -672,20 +672,34 @@ public precip CSV が 1/3/6/12/24h product を直接提供する場合、
 - ObservedWeather 全項目 coverage
 - Weather feature production 採用
 
-### Next station selection prerequisite
+### Live production station mapping (Step F)
 
-次の production station selection Gate は:
+SoT:
 
-`PUBLIC_ONLY` product で実際に取得可能な要素
-（特に precipitation + quality）
-+ history
-+ distance
-+ element_profile
+`config/nar-jma-observed-live-station-mapping.json`
 
-を基準とする。
+| Field | Value |
+| --- | --- |
+| status | `LIVE_CAPTURE_MAPPING` |
+| role | `LIVE_CAPTURED_OBSERVED` |
+| acquisition_strategy | `PUBLIC_ONLY_WITH_DEFERRED_GAPS` |
+| pit_status | `CANDIDATE` |
+| feature_eligibility | `NOT_YET_AUTHORIZED` |
+| mapping_scope | prospective live capture only |
 
-JMBSC station/product coverage は前提にしない。
-今回も `selected=true` は設定しない。
+固定ルール:
+
+- product family ごと（precipitation / temperature_extreme / wind_max / gust_max）に primary station を選定する
+- automatic fallback 禁止（primary missing → `MISSING` / `UNAVAILABLE`）
+- multi-station fusion / interpolation 禁止
+- mapping は `mapping_effective_from` 以降の live capture にのみ適用（historical へ遡及しない）
+- mapping 単独では Weather feature を production 使用可能にしない
+- humidity / pressure / weather_code / 10分瞬時 series は `DEFERRED_UNAVAILABLE`（無理に mapping しない）
+- candidate config へ `selected=true` / `production=true` を埋め込まない
+- `HISTORICAL_FINAL_OBSERVED = NOT_PIT_ELIGIBLE` を維持
+
+temperature_extreme / wind_max / gust_max は日極値・最大値系の PUBLIC partial coverage であり、
+race 時刻の瞬時気温・瞬時風ではない。
 
 ### Revisit JMBSC only if
 
@@ -725,9 +739,9 @@ JMBSC station/product coverage は前提にしない。
 
 ---
 
-## Out of scope (Step E)
+## Out of scope (Step E / Step F)
 
-本 acquisition strategy Step では次を行わない。
+本 acquisition strategy / live station mapping Step では次を行わない。
 
 - JMA downloader / scraping / parser 実装
 - undocumented API client 実装
@@ -736,8 +750,7 @@ JMBSC station/product coverage は前提にしない。
 - WorkManager 等の scheduler
 - 1998～現在の一括取得
 - cumulative precipitation 実装
-- 水沢 multi-station fusion
-- production station 最終選択
+- 水沢 multi-station fusion / pressure 解決
 - model feature 追加 / training
 - Forecast / Observed merge
 - Android UI
@@ -750,4 +763,5 @@ JMBSC station/product coverage は前提にしない。
 - `docs/product-goal-roadmap.md` — Weather Domain 概要
 - `docs/nar-pit-contract.md` — 全体 PIT 契約（Odds の observed_at と整合）
 - `config/nar-v3-venue-coordinates.json` — venue 座標 SoT
-- `config/nar-jma-observed-station-candidates.json` — draft station candidates
+- `config/nar-jma-observed-station-candidates.json` — candidate / evidence SoT
+- `config/nar-jma-observed-live-station-mapping.json` — LIVE_CAPTURED_OBSERVED production mapping SoT

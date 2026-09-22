@@ -1,0 +1,2766 @@
+{
+  "version": 1,
+  "status": "LIVE_CAPTURE_MAPPING",
+  "role": "LIVE_CAPTURED_OBSERVED",
+  "acquisition_strategy": "PUBLIC_ONLY_WITH_DEFERRED_GAPS",
+  "pit_status": "CANDIDATE",
+  "feature_eligibility": "NOT_YET_AUTHORIZED",
+  "mapping_effective_from": "2026-09-22",
+  "mapping_scope": "prospective_live_capture_only",
+  "candidate_source": "config/nar-jma-observed-station-candidates.json",
+  "venue_coordinate_source": "config/nar-v3-venue-coordinates.json",
+  "contract_doc": "docs/nar-observed-weather-contract.md",
+  "notes": [
+    "Product-specific primary stations for documented JMA public latest CSV products.",
+    "Does not authorize Weather features for production use by itself.",
+    "Must not be applied retrospectively to historical final observations.",
+    "No automatic fallback between stations.",
+    "No multi-station fusion / interpolation.",
+    "Humidity/pressure/weather_code are DEFERRED_UNAVAILABLE under PUBLIC_ONLY."
+  ],
+  "deferred_unavailable_elements": [
+    "relative_humidity",
+    "station_pressure",
+    "sea_level_pressure",
+    "weather_code",
+    "weather_condition",
+    "instantaneous_temperature_10min_series",
+    "instantaneous_wind_10min_series"
+  ],
+  "selection_policy": {
+    "method": "deterministic_nearest_eligible",
+    "requirements": [
+      "candidate_status=CANDIDATE",
+      "station period open (to=null) for live mapping",
+      "required element AVAILABLE in candidate available_elements",
+      "station_id present in documented public CSV for the product family",
+      "quality column present in product CSV"
+    ],
+    "tie_break": "smaller distance_km then station_id lexicographic",
+    "automatic_fallback": false,
+    "multi_station_fusion": false
+  },
+  "source_products": {
+    "precipitation": {
+      "product_id": "pre1h00_rct",
+      "shared_product_ids": [
+        "pre1h00_rct",
+        "pre3h00_rct",
+        "pre6h00_rct",
+        "pre12h00_rct",
+        "pre24h00_rct"
+      ],
+      "documented_url": "https://www.data.jma.go.jp/stats/data/mdrr/pre_rct/alltable/pre1h00_rct.csv",
+      "documentation_urls": [
+        "https://www.data.jma.go.jp/stats/data/mdrr/docs/csv_dl_readme.html",
+        "https://www.data.jma.go.jp/stats/data/mdrr/man/update_n.html"
+      ],
+      "semantic": "PUBLIC latest precipitation products (1/3/6/12/24h). Not a continuous 10-min private feed; update ~10 min per official note (~30 min after observation for precip page).",
+      "required_element": "precipitation",
+      "stations_in_csv": 1284,
+      "has_quality_column": true
+    },
+    "temperature_extreme": {
+      "product_id": "mxtemsadext00_rct",
+      "shared_product_ids": [
+        "mxtemsadext00_rct",
+        "mntemsadext00_rct"
+      ],
+      "documented_url": "https://www.data.jma.go.jp/stats/data/mdrr/tem_rct/alltable/mxtemsadext00_rct.csv",
+      "documentation_urls": [
+        "https://www.data.jma.go.jp/stats/data/mdrr/docs/csv_dl_readme.html",
+        "https://www.data.jma.go.jp/stats/data/mdrr/man/update_n.html"
+      ],
+      "semantic": "PUBLIC daily high/low temperature extreme tables. NOT race-time instantaneous temperature.",
+      "required_element": "temperature",
+      "stations_in_csv": 914,
+      "has_quality_column": true
+    },
+    "wind_max": {
+      "product_id": "mxwsp00_rct",
+      "shared_product_ids": [
+        "mxwsp00_rct"
+      ],
+      "documented_url": "https://www.data.jma.go.jp/stats/data/mdrr/wind_rct/alltable/mxwsp00_rct.csv",
+      "documentation_urls": [
+        "https://www.data.jma.go.jp/stats/data/mdrr/docs/csv_dl_readme.html",
+        "https://www.data.jma.go.jp/stats/data/mdrr/man/update_n.html"
+      ],
+      "semantic": "PUBLIC daily maximum wind speed tables (with direction at max). NOT continuous 10-min instantaneous wind.",
+      "required_element": "wind_speed",
+      "stations_in_csv": 914,
+      "has_quality_column": true
+    },
+    "gust_max": {
+      "product_id": "gust00_rct",
+      "shared_product_ids": [
+        "gust00_rct"
+      ],
+      "documented_url": "https://www.data.jma.go.jp/stats/data/mdrr/wind_rct/alltable/gust00_rct.csv",
+      "documentation_urls": [
+        "https://www.data.jma.go.jp/stats/data/mdrr/docs/csv_dl_readme.html",
+        "https://www.data.jma.go.jp/stats/data/mdrr/man/update_n.html"
+      ],
+      "semantic": "PUBLIC daily maximum wind gust tables. NOT continuous gust series at race time.",
+      "required_element": "wind_speed",
+      "stations_in_csv": 914,
+      "has_quality_column": true
+    }
+  },
+  "venues": {
+    "帯広ば": {
+      "venue_period": {
+        "from": null,
+        "to": null,
+        "venue_latitude": 42.921,
+        "venue_longitude": 143.182167,
+        "location": null
+      },
+      "product_mappings": {
+        "precipitation": {
+          "status": "SELECTED",
+          "station_id": "20432",
+          "station_name": "帯広",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 2.4,
+          "station_effective_from": "1998-01-28",
+          "station_effective_to": null,
+          "required_element": "precipitation",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "pre1h00_rct",
+            "pre3h00_rct",
+            "pre6h00_rct",
+            "pre12h00_rct",
+            "pre24h00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "pre1h00_rct",
+            "present": true,
+            "station_name_csv": "帯広（オビヒロ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with precipitation=AVAILABLE, open station period, and present in documented public CSV pre1h00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "20421",
+              "station_name": "芽室",
+              "distance_km": 11.55,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "20551",
+              "station_name": "帯広泉",
+              "distance_km": 21.06,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "temperature_extreme": {
+          "status": "SELECTED",
+          "station_id": "20432",
+          "station_name": "帯広",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 2.4,
+          "station_effective_from": "1998-01-28",
+          "station_effective_to": null,
+          "required_element": "temperature",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxtemsadext00_rct",
+            "mntemsadext00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxtemsadext00_rct",
+            "present": true,
+            "station_name_csv": "帯広（オビヒロ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with temperature=AVAILABLE, open station period, and present in documented public CSV mxtemsadext00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "20421",
+              "station_name": "芽室",
+              "distance_km": 11.55,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "20551",
+              "station_name": "帯広泉",
+              "distance_km": 21.06,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "wind_max": {
+          "status": "SELECTED",
+          "station_id": "20432",
+          "station_name": "帯広",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 2.4,
+          "station_effective_from": "1998-01-28",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxwsp00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxwsp00_rct",
+            "present": true,
+            "station_name_csv": "帯広（オビヒロ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV mxwsp00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "20421",
+              "station_name": "芽室",
+              "distance_km": 11.55,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "20551",
+              "station_name": "帯広泉",
+              "distance_km": 21.06,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "gust_max": {
+          "status": "SELECTED",
+          "station_id": "20432",
+          "station_name": "帯広",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 2.4,
+          "station_effective_from": "1998-01-28",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "gust00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "gust00_rct",
+            "present": true,
+            "station_name_csv": "帯広（オビヒロ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV gust00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "20421",
+              "station_name": "芽室",
+              "distance_km": 11.55,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "20551",
+              "station_name": "帯広泉",
+              "distance_km": 21.06,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        }
+      },
+      "deferred_unavailable_elements": [
+        "relative_humidity",
+        "station_pressure",
+        "sea_level_pressure",
+        "weather_code",
+        "weather_condition",
+        "instantaneous_temperature_10min_series",
+        "instantaneous_wind_10min_series"
+      ],
+      "product_station_identity": {
+        "unique_station_ids": [
+          "20432"
+        ],
+        "all_products_same_station": true
+      }
+    },
+    "園田": {
+      "venue_period": {
+        "from": null,
+        "to": null,
+        "venue_latitude": 34.766583,
+        "venue_longitude": 135.445194,
+        "location": null
+      },
+      "product_mappings": {
+        "precipitation": {
+          "status": "SELECTED",
+          "station_id": "62051",
+          "station_name": "豊中",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 1.97,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "precipitation",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "pre1h00_rct",
+            "pre3h00_rct",
+            "pre6h00_rct",
+            "pre12h00_rct",
+            "pre24h00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "pre1h00_rct",
+            "present": true,
+            "station_name_csv": "豊中（トヨナカ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with precipitation=AVAILABLE, open station period, and present in documented public CSV pre1h00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "63477",
+              "station_name": "西宮",
+              "distance_km": 10.23,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "62078",
+              "station_name": "大阪",
+              "distance_km": 11.57,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "temperature_extreme": {
+          "status": "SELECTED",
+          "station_id": "62051",
+          "station_name": "豊中",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 1.97,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "temperature",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxtemsadext00_rct",
+            "mntemsadext00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxtemsadext00_rct",
+            "present": true,
+            "station_name_csv": "豊中（トヨナカ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with temperature=AVAILABLE, open station period, and present in documented public CSV mxtemsadext00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "62078",
+              "station_name": "大阪",
+              "distance_km": 11.57,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "wind_max": {
+          "status": "SELECTED",
+          "station_id": "62051",
+          "station_name": "豊中",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 1.97,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxwsp00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxwsp00_rct",
+            "present": true,
+            "station_name_csv": "豊中（トヨナカ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV mxwsp00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "62078",
+              "station_name": "大阪",
+              "distance_km": 11.57,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "gust_max": {
+          "status": "SELECTED",
+          "station_id": "62051",
+          "station_name": "豊中",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 1.97,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "gust00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "gust00_rct",
+            "present": true,
+            "station_name_csv": "豊中（トヨナカ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV gust00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "62078",
+              "station_name": "大阪",
+              "distance_km": 11.57,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        }
+      },
+      "deferred_unavailable_elements": [
+        "relative_humidity",
+        "station_pressure",
+        "sea_level_pressure",
+        "weather_code",
+        "weather_condition",
+        "instantaneous_temperature_10min_series",
+        "instantaneous_wind_10min_series"
+      ],
+      "product_station_identity": {
+        "unique_station_ids": [
+          "62051"
+        ],
+        "all_products_same_station": true
+      }
+    },
+    "名古屋": {
+      "venue_period": {
+        "from": "2022-04-08",
+        "to": null,
+        "venue_latitude": 35.0525,
+        "venue_longitude": 136.78472,
+        "location": "現・名古屋競馬場（弥富市）"
+      },
+      "product_mappings": {
+        "precipitation": {
+          "status": "SELECTED",
+          "station_id": "53041",
+          "station_name": "桑名",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 8.32,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "precipitation",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "pre1h00_rct",
+            "pre3h00_rct",
+            "pre6h00_rct",
+            "pre12h00_rct",
+            "pre24h00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "pre1h00_rct",
+            "present": true,
+            "station_name_csv": "桑名（クワナ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with precipitation=AVAILABLE, open station period, and present in documented public CSV pre1h00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "51096",
+              "station_name": "蟹江",
+              "distance_km": 9.38,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "51106",
+              "station_name": "名古屋",
+              "distance_km": 20.74,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "51261",
+              "station_name": "セントレア",
+              "distance_km": 21.67,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "temperature_extreme": {
+          "status": "SELECTED",
+          "station_id": "53041",
+          "station_name": "桑名",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 8.32,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "temperature",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxtemsadext00_rct",
+            "mntemsadext00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxtemsadext00_rct",
+            "present": true,
+            "station_name_csv": "桑名（クワナ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with temperature=AVAILABLE, open station period, and present in documented public CSV mxtemsadext00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "51106",
+              "station_name": "名古屋",
+              "distance_km": 20.74,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "51261",
+              "station_name": "セントレア",
+              "distance_km": 21.67,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "wind_max": {
+          "status": "SELECTED",
+          "station_id": "53041",
+          "station_name": "桑名",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 8.32,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxwsp00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxwsp00_rct",
+            "present": true,
+            "station_name_csv": "桑名（クワナ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV mxwsp00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "51106",
+              "station_name": "名古屋",
+              "distance_km": 20.74,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "51261",
+              "station_name": "セントレア",
+              "distance_km": 21.67,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "gust_max": {
+          "status": "SELECTED",
+          "station_id": "53041",
+          "station_name": "桑名",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 8.32,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "gust00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "gust00_rct",
+            "present": true,
+            "station_name_csv": "桑名（クワナ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV gust00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "51106",
+              "station_name": "名古屋",
+              "distance_km": 20.74,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "51261",
+              "station_name": "セントレア",
+              "distance_km": 21.67,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        }
+      },
+      "deferred_unavailable_elements": [
+        "relative_humidity",
+        "station_pressure",
+        "sea_level_pressure",
+        "weather_code",
+        "weather_condition",
+        "instantaneous_temperature_10min_series",
+        "instantaneous_wind_10min_series"
+      ],
+      "notes": [
+        "Live mapping uses current Nagoya venue from 2022-04-08 only.",
+        "Old Nagoya venue period is not used for LIVE_CAPTURED_OBSERVED.",
+        "Gap 2022-03-12..2022-04-07 remains unmapped at venue SoT."
+      ],
+      "product_station_identity": {
+        "unique_station_ids": [
+          "53041"
+        ],
+        "all_products_same_station": true
+      }
+    },
+    "佐賀": {
+      "venue_period": {
+        "from": null,
+        "to": null,
+        "venue_latitude": 33.349361,
+        "venue_longitude": 130.470861,
+        "location": null
+      },
+      "product_mappings": {
+        "precipitation": {
+          "status": "SELECTED",
+          "station_id": "82306",
+          "station_name": "久留米",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 5.53,
+          "station_effective_from": "1977-03-01",
+          "station_effective_to": null,
+          "required_element": "precipitation",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "pre1h00_rct",
+            "pre3h00_rct",
+            "pre6h00_rct",
+            "pre12h00_rct",
+            "pre24h00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "pre1h00_rct",
+            "present": true,
+            "station_name_csv": "久留米（クルメ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with precipitation=AVAILABLE, open station period, and present in documented public CSV pre1h00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "85106",
+              "station_name": "鳥栖",
+              "distance_km": 5.81,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "85142",
+              "station_name": "佐賀",
+              "distance_km": 18.04,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "temperature_extreme": {
+          "status": "SELECTED",
+          "station_id": "82306",
+          "station_name": "久留米",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 5.53,
+          "station_effective_from": "1977-03-01",
+          "station_effective_to": null,
+          "required_element": "temperature",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxtemsadext00_rct",
+            "mntemsadext00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxtemsadext00_rct",
+            "present": true,
+            "station_name_csv": "久留米（クルメ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with temperature=AVAILABLE, open station period, and present in documented public CSV mxtemsadext00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "85142",
+              "station_name": "佐賀",
+              "distance_km": 18.04,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "wind_max": {
+          "status": "SELECTED",
+          "station_id": "82306",
+          "station_name": "久留米",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 5.53,
+          "station_effective_from": "1977-03-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxwsp00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxwsp00_rct",
+            "present": true,
+            "station_name_csv": "久留米（クルメ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV mxwsp00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "85142",
+              "station_name": "佐賀",
+              "distance_km": 18.04,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "gust_max": {
+          "status": "SELECTED",
+          "station_id": "82306",
+          "station_name": "久留米",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 5.53,
+          "station_effective_from": "1977-03-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "gust00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "gust00_rct",
+            "present": true,
+            "station_name_csv": "久留米（クルメ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV gust00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "85142",
+              "station_name": "佐賀",
+              "distance_km": 18.04,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        }
+      },
+      "deferred_unavailable_elements": [
+        "relative_humidity",
+        "station_pressure",
+        "sea_level_pressure",
+        "weather_code",
+        "weather_condition",
+        "instantaneous_temperature_10min_series",
+        "instantaneous_wind_10min_series"
+      ],
+      "product_station_identity": {
+        "unique_station_ids": [
+          "82306"
+        ],
+        "all_products_same_station": true
+      }
+    },
+    "高知": {
+      "venue_period": {
+        "from": null,
+        "to": null,
+        "venue_latitude": 33.503194,
+        "venue_longitude": 133.530556,
+        "location": null
+      },
+      "product_mappings": {
+        "precipitation": {
+          "status": "SELECTED",
+          "station_id": "74182",
+          "station_name": "高知",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 7.25,
+          "station_effective_from": "2023-03-02",
+          "station_effective_to": null,
+          "required_element": "precipitation",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "pre1h00_rct",
+            "pre3h00_rct",
+            "pre6h00_rct",
+            "pre12h00_rct",
+            "pre24h00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "pre1h00_rct",
+            "present": true,
+            "station_name_csv": "高知（コウチ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with precipitation=AVAILABLE, open station period, and present in documented public CSV pre1h00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "74188",
+              "station_name": "南国日章",
+              "distance_km": 13.59,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "74187",
+              "station_name": "後免",
+              "distance_km": 14.23,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "temperature_extreme": {
+          "status": "SELECTED",
+          "station_id": "74182",
+          "station_name": "高知",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 7.25,
+          "station_effective_from": "2023-03-02",
+          "station_effective_to": null,
+          "required_element": "temperature",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxtemsadext00_rct",
+            "mntemsadext00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxtemsadext00_rct",
+            "present": true,
+            "station_name_csv": "高知（コウチ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with temperature=AVAILABLE, open station period, and present in documented public CSV mxtemsadext00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "74188",
+              "station_name": "南国日章",
+              "distance_km": 13.59,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "74187",
+              "station_name": "後免",
+              "distance_km": 14.23,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "wind_max": {
+          "status": "SELECTED",
+          "station_id": "74182",
+          "station_name": "高知",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 7.25,
+          "station_effective_from": "2023-03-02",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxwsp00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxwsp00_rct",
+            "present": true,
+            "station_name_csv": "高知（コウチ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV mxwsp00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "74188",
+              "station_name": "南国日章",
+              "distance_km": 13.59,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "74187",
+              "station_name": "後免",
+              "distance_km": 14.23,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "gust_max": {
+          "status": "SELECTED",
+          "station_id": "74182",
+          "station_name": "高知",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 7.25,
+          "station_effective_from": "2023-03-02",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "gust00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "gust00_rct",
+            "present": true,
+            "station_name_csv": "高知（コウチ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV gust00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "74188",
+              "station_name": "南国日章",
+              "distance_km": 13.59,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "74187",
+              "station_name": "後免",
+              "distance_km": 14.23,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        }
+      },
+      "deferred_unavailable_elements": [
+        "relative_humidity",
+        "station_pressure",
+        "sea_level_pressure",
+        "weather_code",
+        "weather_condition",
+        "instantaneous_temperature_10min_series",
+        "instantaneous_wind_10min_series"
+      ],
+      "product_station_identity": {
+        "unique_station_ids": [
+          "74182"
+        ],
+        "all_products_same_station": true
+      }
+    },
+    "大井": {
+      "venue_period": {
+        "from": null,
+        "to": null,
+        "venue_latitude": 35.591339,
+        "venue_longitude": 139.742608,
+        "location": null
+      },
+      "product_mappings": {
+        "precipitation": {
+          "status": "SELECTED",
+          "station_id": "44166",
+          "station_name": "羽田",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 5.41,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "precipitation",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "pre1h00_rct",
+            "pre3h00_rct",
+            "pre6h00_rct",
+            "pre12h00_rct",
+            "pre24h00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "pre1h00_rct",
+            "present": true,
+            "station_name_csv": "羽田（ハネダ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with precipitation=AVAILABLE, open station period, and present in documented public CSV pre1h00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "46061",
+              "station_name": "日吉",
+              "distance_km": 9.47,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "44132",
+              "station_name": "東京",
+              "distance_km": 11.18,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "46106",
+              "station_name": "横浜",
+              "distance_km": 18.9,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "temperature_extreme": {
+          "status": "SELECTED",
+          "station_id": "44166",
+          "station_name": "羽田",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 5.41,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "temperature",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxtemsadext00_rct",
+            "mntemsadext00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxtemsadext00_rct",
+            "present": true,
+            "station_name_csv": "羽田（ハネダ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with temperature=AVAILABLE, open station period, and present in documented public CSV mxtemsadext00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "44132",
+              "station_name": "東京",
+              "distance_km": 11.18,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "46106",
+              "station_name": "横浜",
+              "distance_km": 18.9,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "wind_max": {
+          "status": "SELECTED",
+          "station_id": "44166",
+          "station_name": "羽田",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 5.41,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxwsp00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxwsp00_rct",
+            "present": true,
+            "station_name_csv": "羽田（ハネダ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV mxwsp00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "44132",
+              "station_name": "東京",
+              "distance_km": 11.18,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "46106",
+              "station_name": "横浜",
+              "distance_km": 18.9,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "gust_max": {
+          "status": "SELECTED",
+          "station_id": "44166",
+          "station_name": "羽田",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 5.41,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "gust00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "gust00_rct",
+            "present": true,
+            "station_name_csv": "羽田（ハネダ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV gust00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "44132",
+              "station_name": "東京",
+              "distance_km": 11.18,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "46106",
+              "station_name": "横浜",
+              "distance_km": 18.9,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        }
+      },
+      "deferred_unavailable_elements": [
+        "relative_humidity",
+        "station_pressure",
+        "sea_level_pressure",
+        "weather_code",
+        "weather_condition",
+        "instantaneous_temperature_10min_series",
+        "instantaneous_wind_10min_series"
+      ],
+      "product_station_identity": {
+        "unique_station_ids": [
+          "44166"
+        ],
+        "all_products_same_station": true
+      }
+    },
+    "金沢": {
+      "venue_period": {
+        "from": null,
+        "to": null,
+        "venue_latitude": 36.636444,
+        "venue_longitude": 136.67475,
+        "location": null
+      },
+      "product_mappings": {
+        "precipitation": {
+          "status": "SELECTED",
+          "station_id": "56227",
+          "station_name": "金沢",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 6.5,
+          "station_effective_from": "1991-10-23",
+          "station_effective_to": null,
+          "required_element": "precipitation",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "pre1h00_rct",
+            "pre3h00_rct",
+            "pre6h00_rct",
+            "pre12h00_rct",
+            "pre24h00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "pre1h00_rct",
+            "present": true,
+            "station_name_csv": "金沢（カナザワ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with precipitation=AVAILABLE, open station period, and present in documented public CSV pre1h00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "56186",
+              "station_name": "かほく",
+              "distance_km": 8.5,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "temperature_extreme": {
+          "status": "SELECTED",
+          "station_id": "56227",
+          "station_name": "金沢",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 6.5,
+          "station_effective_from": "1991-10-23",
+          "station_effective_to": null,
+          "required_element": "temperature",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxtemsadext00_rct",
+            "mntemsadext00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxtemsadext00_rct",
+            "present": true,
+            "station_name_csv": "金沢（カナザワ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with temperature=AVAILABLE, open station period, and present in documented public CSV mxtemsadext00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "56186",
+              "station_name": "かほく",
+              "distance_km": 8.5,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "wind_max": {
+          "status": "SELECTED",
+          "station_id": "56227",
+          "station_name": "金沢",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 6.5,
+          "station_effective_from": "1991-10-23",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxwsp00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxwsp00_rct",
+            "present": true,
+            "station_name_csv": "金沢（カナザワ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV mxwsp00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "56186",
+              "station_name": "かほく",
+              "distance_km": 8.5,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "gust_max": {
+          "status": "SELECTED",
+          "station_id": "56227",
+          "station_name": "金沢",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 6.5,
+          "station_effective_from": "1991-10-23",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "gust00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "gust00_rct",
+            "present": true,
+            "station_name_csv": "金沢（カナザワ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV gust00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "56186",
+              "station_name": "かほく",
+              "distance_km": 8.5,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        }
+      },
+      "deferred_unavailable_elements": [
+        "relative_humidity",
+        "station_pressure",
+        "sea_level_pressure",
+        "weather_code",
+        "weather_condition",
+        "instantaneous_temperature_10min_series",
+        "instantaneous_wind_10min_series"
+      ],
+      "product_station_identity": {
+        "unique_station_ids": [
+          "56227"
+        ],
+        "all_products_same_station": true
+      }
+    },
+    "門別": {
+      "venue_period": {
+        "from": null,
+        "to": null,
+        "venue_latitude": 42.537944,
+        "venue_longitude": 142.002972,
+        "location": null
+      },
+      "product_mappings": {
+        "precipitation": {
+          "status": "SELECTED",
+          "station_id": "22141",
+          "station_name": "日高門別",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 6.17,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "precipitation",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "pre1h00_rct",
+            "pre3h00_rct",
+            "pre6h00_rct",
+            "pre12h00_rct",
+            "pre24h00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "pre1h00_rct",
+            "present": true,
+            "station_name_csv": "日高門別（ヒダカモンベツ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with precipitation=AVAILABLE, open station period, and present in documented public CSV pre1h00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "21276",
+              "station_name": "鵡川",
+              "distance_km": 8.13,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "21187",
+              "station_name": "苫小牧",
+              "distance_km": 38.55,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "temperature_extreme": {
+          "status": "SELECTED",
+          "station_id": "22141",
+          "station_name": "日高門別",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 6.17,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "temperature",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxtemsadext00_rct",
+            "mntemsadext00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxtemsadext00_rct",
+            "present": true,
+            "station_name_csv": "日高門別（ヒダカモンベツ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with temperature=AVAILABLE, open station period, and present in documented public CSV mxtemsadext00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "21276",
+              "station_name": "鵡川",
+              "distance_km": 8.13,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "21187",
+              "station_name": "苫小牧",
+              "distance_km": 38.55,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "wind_max": {
+          "status": "SELECTED",
+          "station_id": "22141",
+          "station_name": "日高門別",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 6.17,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxwsp00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxwsp00_rct",
+            "present": true,
+            "station_name_csv": "日高門別（ヒダカモンベツ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV mxwsp00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "21276",
+              "station_name": "鵡川",
+              "distance_km": 8.13,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "21187",
+              "station_name": "苫小牧",
+              "distance_km": 38.55,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "gust_max": {
+          "status": "SELECTED",
+          "station_id": "22141",
+          "station_name": "日高門別",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 6.17,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "gust00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "gust00_rct",
+            "present": true,
+            "station_name_csv": "日高門別（ヒダカモンベツ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV gust00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "21276",
+              "station_name": "鵡川",
+              "distance_km": 8.13,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "21187",
+              "station_name": "苫小牧",
+              "distance_km": 38.55,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        }
+      },
+      "deferred_unavailable_elements": [
+        "relative_humidity",
+        "station_pressure",
+        "sea_level_pressure",
+        "weather_code",
+        "weather_condition",
+        "instantaneous_temperature_10min_series",
+        "instantaneous_wind_10min_series"
+      ],
+      "product_station_identity": {
+        "unique_station_ids": [
+          "22141"
+        ],
+        "all_products_same_station": true
+      }
+    },
+    "笠松": {
+      "venue_period": {
+        "from": null,
+        "to": null,
+        "venue_latitude": 35.372167,
+        "venue_longitude": 136.767528,
+        "location": null
+      },
+      "product_mappings": {
+        "precipitation": {
+          "status": "SELECTED",
+          "station_id": "52586",
+          "station_name": "岐阜",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 3.14,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "precipitation",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "pre1h00_rct",
+            "pre3h00_rct",
+            "pre6h00_rct",
+            "pre12h00_rct",
+            "pre24h00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "pre1h00_rct",
+            "present": true,
+            "station_name_csv": "岐阜（ギフ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with precipitation=AVAILABLE, open station period, and present in documented public CSV pre1h00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "51011",
+              "station_name": "一宮",
+              "distance_km": 11.31,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "52581",
+              "station_name": "大垣",
+              "distance_km": 13.68,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "temperature_extreme": {
+          "status": "SELECTED",
+          "station_id": "52586",
+          "station_name": "岐阜",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 3.14,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "temperature",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxtemsadext00_rct",
+            "mntemsadext00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxtemsadext00_rct",
+            "present": true,
+            "station_name_csv": "岐阜（ギフ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with temperature=AVAILABLE, open station period, and present in documented public CSV mxtemsadext00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "52581",
+              "station_name": "大垣",
+              "distance_km": 13.68,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "wind_max": {
+          "status": "SELECTED",
+          "station_id": "52586",
+          "station_name": "岐阜",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 3.14,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxwsp00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxwsp00_rct",
+            "present": true,
+            "station_name_csv": "岐阜（ギフ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV mxwsp00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "52581",
+              "station_name": "大垣",
+              "distance_km": 13.68,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "gust_max": {
+          "status": "SELECTED",
+          "station_id": "52586",
+          "station_name": "岐阜",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 3.14,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "gust00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "gust00_rct",
+            "present": true,
+            "station_name_csv": "岐阜（ギフ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV gust00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "52581",
+              "station_name": "大垣",
+              "distance_km": 13.68,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        }
+      },
+      "deferred_unavailable_elements": [
+        "relative_humidity",
+        "station_pressure",
+        "sea_level_pressure",
+        "weather_code",
+        "weather_condition",
+        "instantaneous_temperature_10min_series",
+        "instantaneous_wind_10min_series"
+      ],
+      "product_station_identity": {
+        "unique_station_ids": [
+          "52586"
+        ],
+        "all_products_same_station": true
+      }
+    },
+    "水沢": {
+      "venue_period": {
+        "from": null,
+        "to": null,
+        "venue_latitude": 39.129944,
+        "venue_longitude": 141.170333,
+        "location": null
+      },
+      "product_mappings": {
+        "precipitation": {
+          "status": "SELECTED",
+          "station_id": "33781",
+          "station_name": "江刺",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 5.98,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "precipitation",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "pre1h00_rct",
+            "pre3h00_rct",
+            "pre6h00_rct",
+            "pre12h00_rct",
+            "pre24h00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "pre1h00_rct",
+            "present": true,
+            "station_name_csv": "江刺（エサシ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with precipitation=AVAILABLE, open station period, and present in documented public CSV pre1h00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "33716",
+              "station_name": "北上",
+              "distance_km": 18.36,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "33911",
+              "station_name": "一関",
+              "distance_km": 22.21,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "temperature_extreme": {
+          "status": "SELECTED",
+          "station_id": "33781",
+          "station_name": "江刺",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 5.98,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "temperature",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxtemsadext00_rct",
+            "mntemsadext00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxtemsadext00_rct",
+            "present": true,
+            "station_name_csv": "江刺（エサシ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with temperature=AVAILABLE, open station period, and present in documented public CSV mxtemsadext00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "33716",
+              "station_name": "北上",
+              "distance_km": 18.36,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "33911",
+              "station_name": "一関",
+              "distance_km": 22.21,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "wind_max": {
+          "status": "SELECTED",
+          "station_id": "33781",
+          "station_name": "江刺",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 5.98,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxwsp00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxwsp00_rct",
+            "present": true,
+            "station_name_csv": "江刺（エサシ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV mxwsp00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "33716",
+              "station_name": "北上",
+              "distance_km": 18.36,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "33911",
+              "station_name": "一関",
+              "distance_km": 22.21,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "gust_max": {
+          "status": "SELECTED",
+          "station_id": "33781",
+          "station_name": "江刺",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 5.98,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "gust00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "gust00_rct",
+            "present": true,
+            "station_name_csv": "江刺（エサシ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV gust00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "33716",
+              "station_name": "北上",
+              "distance_km": 18.36,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "33911",
+              "station_name": "一関",
+              "distance_km": 22.21,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        }
+      },
+      "deferred_unavailable_elements": [
+        "relative_humidity",
+        "station_pressure",
+        "sea_level_pressure",
+        "weather_code",
+        "weather_condition",
+        "instantaneous_temperature_10min_series",
+        "instantaneous_wind_10min_series"
+      ],
+      "product_station_identity": {
+        "unique_station_ids": [
+          "33781"
+        ],
+        "all_products_same_station": true
+      }
+    },
+    "川崎": {
+      "venue_period": {
+        "from": null,
+        "to": null,
+        "venue_latitude": 35.532361,
+        "venue_longitude": 139.710667,
+        "location": null
+      },
+      "product_mappings": {
+        "precipitation": {
+          "status": "SELECTED",
+          "station_id": "46061",
+          "station_name": "日吉",
+          "station_type": "PRECIPITATION_ONLY",
+          "station_type_jma": "雨",
+          "distance_km": 5.89,
+          "station_effective_from": "1975-05-16",
+          "station_effective_to": null,
+          "required_element": "precipitation",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "pre1h00_rct",
+            "pre3h00_rct",
+            "pre6h00_rct",
+            "pre12h00_rct",
+            "pre24h00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "pre1h00_rct",
+            "present": true,
+            "station_name_csv": "日吉（ヒヨシ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with precipitation=AVAILABLE, open station period, and present in documented public CSV pre1h00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "44166",
+              "station_name": "羽田",
+              "distance_km": 6.69,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "46106",
+              "station_name": "横浜",
+              "distance_km": 11.74,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "44132",
+              "station_name": "東京",
+              "distance_km": 18.07,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "temperature_extreme": {
+          "status": "SELECTED",
+          "station_id": "44166",
+          "station_name": "羽田",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 6.69,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "temperature",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxtemsadext00_rct",
+            "mntemsadext00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxtemsadext00_rct",
+            "present": true,
+            "station_name_csv": "羽田（ハネダ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with temperature=AVAILABLE, open station period, and present in documented public CSV mxtemsadext00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "46106",
+              "station_name": "横浜",
+              "distance_km": 11.74,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "44132",
+              "station_name": "東京",
+              "distance_km": 18.07,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "wind_max": {
+          "status": "SELECTED",
+          "station_id": "44166",
+          "station_name": "羽田",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 6.69,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxwsp00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxwsp00_rct",
+            "present": true,
+            "station_name_csv": "羽田（ハネダ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV mxwsp00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "46106",
+              "station_name": "横浜",
+              "distance_km": 11.74,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "44132",
+              "station_name": "東京",
+              "distance_km": 18.07,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "gust_max": {
+          "status": "SELECTED",
+          "station_id": "44166",
+          "station_name": "羽田",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 6.69,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "gust00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "gust00_rct",
+            "present": true,
+            "station_name_csv": "羽田（ハネダ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV gust00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "46106",
+              "station_name": "横浜",
+              "distance_km": 11.74,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "44132",
+              "station_name": "東京",
+              "distance_km": 18.07,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        }
+      },
+      "deferred_unavailable_elements": [
+        "relative_humidity",
+        "station_pressure",
+        "sea_level_pressure",
+        "weather_code",
+        "weather_condition",
+        "instantaneous_temperature_10min_series",
+        "instantaneous_wind_10min_series"
+      ],
+      "product_station_identity": {
+        "unique_station_ids": [
+          "44166",
+          "46061"
+        ],
+        "all_products_same_station": false
+      }
+    },
+    "盛岡": {
+      "venue_period": {
+        "from": null,
+        "to": null,
+        "venue_latitude": 39.690822,
+        "venue_longitude": 141.220067,
+        "location": null
+      },
+      "product_mappings": {
+        "precipitation": {
+          "status": "SELECTED",
+          "station_id": "33431",
+          "station_name": "盛岡",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 4.78,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "precipitation",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "pre1h00_rct",
+            "pre3h00_rct",
+            "pre6h00_rct",
+            "pre12h00_rct",
+            "pre24h00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "pre1h00_rct",
+            "present": true,
+            "station_name_csv": "盛岡（モリオカ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with precipitation=AVAILABLE, open station period, and present in documented public CSV pre1h00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "33501",
+              "station_name": "紫波",
+              "distance_km": 17.91,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "temperature_extreme": {
+          "status": "SELECTED",
+          "station_id": "33431",
+          "station_name": "盛岡",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 4.78,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "temperature",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxtemsadext00_rct",
+            "mntemsadext00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxtemsadext00_rct",
+            "present": true,
+            "station_name_csv": "盛岡（モリオカ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with temperature=AVAILABLE, open station period, and present in documented public CSV mxtemsadext00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "33501",
+              "station_name": "紫波",
+              "distance_km": 17.91,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "wind_max": {
+          "status": "SELECTED",
+          "station_id": "33431",
+          "station_name": "盛岡",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 4.78,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxwsp00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxwsp00_rct",
+            "present": true,
+            "station_name_csv": "盛岡（モリオカ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV mxwsp00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "33501",
+              "station_name": "紫波",
+              "distance_km": 17.91,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "gust_max": {
+          "status": "SELECTED",
+          "station_id": "33431",
+          "station_name": "盛岡",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 4.78,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "gust00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "gust00_rct",
+            "present": true,
+            "station_name_csv": "盛岡（モリオカ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV gust00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "33501",
+              "station_name": "紫波",
+              "distance_km": 17.91,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        }
+      },
+      "deferred_unavailable_elements": [
+        "relative_humidity",
+        "station_pressure",
+        "sea_level_pressure",
+        "weather_code",
+        "weather_condition",
+        "instantaneous_temperature_10min_series",
+        "instantaneous_wind_10min_series"
+      ],
+      "product_station_identity": {
+        "unique_station_ids": [
+          "33431"
+        ],
+        "all_products_same_station": true
+      }
+    },
+    "船橋": {
+      "venue_period": {
+        "from": null,
+        "to": null,
+        "venue_latitude": 35.684722,
+        "venue_longitude": 139.997778,
+        "location": null
+      },
+      "product_mappings": {
+        "precipitation": {
+          "status": "SELECTED",
+          "station_id": "45106",
+          "station_name": "船橋",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 5.09,
+          "station_effective_from": "1999-08-03",
+          "station_effective_to": null,
+          "required_element": "precipitation",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "pre1h00_rct",
+            "pre3h00_rct",
+            "pre6h00_rct",
+            "pre12h00_rct",
+            "pre24h00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "pre1h00_rct",
+            "present": true,
+            "station_name_csv": "船橋（フナバシ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with precipitation=AVAILABLE, open station period, and present in documented public CSV pre1h00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "44136",
+              "station_name": "江戸川臨海",
+              "distance_km": 13.2,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "45212",
+              "station_name": "千葉",
+              "distance_km": 13.28,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "temperature_extreme": {
+          "status": "SELECTED",
+          "station_id": "45106",
+          "station_name": "船橋",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 5.09,
+          "station_effective_from": "1999-08-03",
+          "station_effective_to": null,
+          "required_element": "temperature",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxtemsadext00_rct",
+            "mntemsadext00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxtemsadext00_rct",
+            "present": true,
+            "station_name_csv": "船橋（フナバシ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with temperature=AVAILABLE, open station period, and present in documented public CSV mxtemsadext00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "44136",
+              "station_name": "江戸川臨海",
+              "distance_km": 13.2,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "45212",
+              "station_name": "千葉",
+              "distance_km": 13.28,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "wind_max": {
+          "status": "SELECTED",
+          "station_id": "45106",
+          "station_name": "船橋",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 5.09,
+          "station_effective_from": "1999-08-03",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxwsp00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxwsp00_rct",
+            "present": true,
+            "station_name_csv": "船橋（フナバシ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV mxwsp00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "44136",
+              "station_name": "江戸川臨海",
+              "distance_km": 13.2,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "45212",
+              "station_name": "千葉",
+              "distance_km": 13.28,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "gust_max": {
+          "status": "SELECTED",
+          "station_id": "45106",
+          "station_name": "船橋",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 5.09,
+          "station_effective_from": "1999-08-03",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "gust00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "gust00_rct",
+            "present": true,
+            "station_name_csv": "船橋（フナバシ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV gust00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "44136",
+              "station_name": "江戸川臨海",
+              "distance_km": 13.2,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "45212",
+              "station_name": "千葉",
+              "distance_km": 13.28,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        }
+      },
+      "deferred_unavailable_elements": [
+        "relative_humidity",
+        "station_pressure",
+        "sea_level_pressure",
+        "weather_code",
+        "weather_condition",
+        "instantaneous_temperature_10min_series",
+        "instantaneous_wind_10min_series"
+      ],
+      "product_station_identity": {
+        "unique_station_ids": [
+          "45106"
+        ],
+        "all_products_same_station": true
+      }
+    },
+    "浦和": {
+      "venue_period": {
+        "from": null,
+        "to": null,
+        "venue_latitude": 35.857806,
+        "venue_longitude": 139.670389,
+        "location": null
+      },
+      "product_mappings": {
+        "precipitation": {
+          "status": "SELECTED",
+          "station_id": "43241",
+          "station_name": "さいたま",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 7.78,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "precipitation",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "pre1h00_rct",
+            "pre3h00_rct",
+            "pre6h00_rct",
+            "pre12h00_rct",
+            "pre24h00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "pre1h00_rct",
+            "present": true,
+            "station_name_csv": "さいたま（サイタマ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with precipitation=AVAILABLE, open station period, and present in documented public CSV pre1h00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "43256",
+              "station_name": "越谷",
+              "distance_km": 8.28,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "44132",
+              "station_name": "東京",
+              "distance_km": 19.82,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "temperature_extreme": {
+          "status": "SELECTED",
+          "station_id": "43241",
+          "station_name": "さいたま",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 7.78,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "temperature",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxtemsadext00_rct",
+            "mntemsadext00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxtemsadext00_rct",
+            "present": true,
+            "station_name_csv": "さいたま（サイタマ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with temperature=AVAILABLE, open station period, and present in documented public CSV mxtemsadext00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "43256",
+              "station_name": "越谷",
+              "distance_km": 8.28,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "44132",
+              "station_name": "東京",
+              "distance_km": 19.82,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "wind_max": {
+          "status": "SELECTED",
+          "station_id": "43241",
+          "station_name": "さいたま",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 7.78,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxwsp00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxwsp00_rct",
+            "present": true,
+            "station_name_csv": "さいたま（サイタマ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV mxwsp00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "43256",
+              "station_name": "越谷",
+              "distance_km": 8.28,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "44132",
+              "station_name": "東京",
+              "distance_km": 19.82,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "gust_max": {
+          "status": "SELECTED",
+          "station_id": "43241",
+          "station_name": "さいたま",
+          "station_type": "AMEDAS_FOUR_ELEMENT",
+          "station_type_jma": "四",
+          "distance_km": 7.78,
+          "station_effective_from": "1974-11-01",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "gust00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "gust00_rct",
+            "present": true,
+            "station_name_csv": "さいたま（サイタマ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV gust00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "43256",
+              "station_name": "越谷",
+              "distance_km": 8.28,
+              "note": "alternate only; automatic fallback disabled"
+            },
+            {
+              "station_id": "44132",
+              "station_name": "東京",
+              "distance_km": 19.82,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        }
+      },
+      "deferred_unavailable_elements": [
+        "relative_humidity",
+        "station_pressure",
+        "sea_level_pressure",
+        "weather_code",
+        "weather_condition",
+        "instantaneous_temperature_10min_series",
+        "instantaneous_wind_10min_series"
+      ],
+      "product_station_identity": {
+        "unique_station_ids": [
+          "43241"
+        ],
+        "all_products_same_station": true
+      }
+    },
+    "姫路": {
+      "venue_period": {
+        "from": null,
+        "to": null,
+        "venue_latitude": 34.856278,
+        "venue_longitude": 134.701222,
+        "location": null
+      },
+      "product_mappings": {
+        "precipitation": {
+          "status": "SELECTED",
+          "station_id": "63383",
+          "station_name": "姫路",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 3.48,
+          "station_effective_from": "2008-11-21",
+          "station_effective_to": null,
+          "required_element": "precipitation",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "pre1h00_rct",
+            "pre3h00_rct",
+            "pre6h00_rct",
+            "pre12h00_rct",
+            "pre24h00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "pre1h00_rct",
+            "present": true,
+            "station_name_csv": "姫路（ヒメジ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with precipitation=AVAILABLE, open station period, and present in documented public CSV pre1h00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "63321",
+              "station_name": "福崎",
+              "distance_km": 11.27,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "temperature_extreme": {
+          "status": "SELECTED",
+          "station_id": "63383",
+          "station_name": "姫路",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 3.48,
+          "station_effective_from": "2008-11-21",
+          "station_effective_to": null,
+          "required_element": "temperature",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxtemsadext00_rct",
+            "mntemsadext00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxtemsadext00_rct",
+            "present": true,
+            "station_name_csv": "姫路（ヒメジ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with temperature=AVAILABLE, open station period, and present in documented public CSV mxtemsadext00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "63321",
+              "station_name": "福崎",
+              "distance_km": 11.27,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "wind_max": {
+          "status": "SELECTED",
+          "station_id": "63383",
+          "station_name": "姫路",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 3.48,
+          "station_effective_from": "2008-11-21",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "mxwsp00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "mxwsp00_rct",
+            "present": true,
+            "station_name_csv": "姫路（ヒメジ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV mxwsp00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "63321",
+              "station_name": "福崎",
+              "distance_km": 11.27,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        },
+        "gust_max": {
+          "status": "SELECTED",
+          "station_id": "63383",
+          "station_name": "姫路",
+          "station_type": "OFFICIAL",
+          "station_type_jma": "官",
+          "distance_km": 3.48,
+          "station_effective_from": "2008-11-21",
+          "station_effective_to": null,
+          "required_element": "wind_speed",
+          "element_availability": "AVAILABLE",
+          "product_ids": [
+            "gust00_rct"
+          ],
+          "public_csv_presence": {
+            "product_id": "gust00_rct",
+            "present": true,
+            "station_name_csv": "姫路（ヒメジ）",
+            "has_quality_column": true
+          },
+          "selection_reason": "Nearest CANDIDATE with wind_speed=AVAILABLE, open station period, and present in documented public CSV gust00_rct.",
+          "alternates_audit_only": [
+            {
+              "station_id": "63321",
+              "station_name": "福崎",
+              "distance_km": 11.27,
+              "note": "alternate only; automatic fallback disabled"
+            }
+          ],
+          "automatic_fallback": false
+        }
+      },
+      "deferred_unavailable_elements": [
+        "relative_humidity",
+        "station_pressure",
+        "sea_level_pressure",
+        "weather_code",
+        "weather_condition",
+        "instantaneous_temperature_10min_series",
+        "instantaneous_wind_10min_series"
+      ],
+      "product_station_identity": {
+        "unique_station_ids": [
+          "63383"
+        ],
+        "all_products_same_station": true
+      }
+    }
+  },
+  "csv_presence_audit": {
+    "audited_at_utc": "2026-09-22T00:08:21.338867+00:00",
+    "probes": [
+      {
+        "family": "precipitation",
+        "url": "https://www.data.jma.go.jp/stats/data/mdrr/pre_rct/alltable/pre1h00_rct.csv",
+        "status": 200,
+        "bytes": 142038,
+        "sha256": "87a9185106fe0b03818c7062763331dc0e02f1b38b6d5624e5fa1e085ad37e7c",
+        "downloaded_at_utc": "2026-09-22T00:08:14.103333+00:00",
+        "date_header": "Tue, 22 Sep 2026 00:08:13 GMT",
+        "content_type": "text/csv",
+        "n_rows": 1284,
+        "n_stations": 1284,
+        "header": "観測所番号,都道府県,地点,国際地点番号,現在時刻(年),現在時刻(月),現在時刻(日),現在時刻(時),現在時刻(分),現在値(mm),現在値の品質情報,22日の最大値(mm),22日の最大値の品質情報,22日の最大値起時（時）(まで),22日の最大値起時（分）(まで),22日の最大値起時(まで)の品質情報,極値更新,10年未満での極値更新,21日までの観測史上1位の値(mm),21日までの観測史上1位の値の品質情報,21日までの観測史上1位の値の年,21日までの観測史上1位の値の月,21日までの観測史上1位の値の日,21日までの9月の1位の値(mm),21日までの9月の1位の値の品質情報,",
+        "has_quality_column": true
+      },
+      {
+        "family": "temperature_extreme",
+        "url": "https://www.data.jma.go.jp/stats/data/mdrr/tem_rct/alltable/mxtemsadext00_rct.csv",
+        "status": 200,
+        "bytes": 123793,
+        "sha256": "bfb7d440bc279c325e6c798b84042badbf0b9826f76132de7b8c2965ac0b2c15",
+        "downloaded_at_utc": "2026-09-22T00:08:16.294295+00:00",
+        "date_header": "Tue, 22 Sep 2026 00:08:16 GMT",
+        "content_type": "text/csv",
+        "n_rows": 914,
+        "n_stations": 914,
+        "header": "観測所番号,都道府県,地点,国際地点番号,現在時刻(年),現在時刻(月),現在時刻(日),現在時刻(時),現在時刻(分),22日の最高気温(℃),22日の最高気温の品質情報,22日の最高気温起時（時）,22日の最高気温起時（分）,22日の最高気温起時の品質情報,平年差（℃）,前日差（℃）,該当旬（月）,該当旬（旬）,極値更新,10年未満での極値更新,今年最高,今年の最高気温（℃)（21日まで）,今年の最高気温（21日まで）の品質情報,今年の最高気温（21日まで）を観測した起日（年）,今年の最高気温（21日まで）を観測した起日（月）,今年の最高気温（21日まで）を観測した起日（日）,21日までの",
+        "has_quality_column": true
+      },
+      {
+        "family": "wind_max",
+        "url": "https://www.data.jma.go.jp/stats/data/mdrr/wind_rct/alltable/mxwsp00_rct.csv",
+        "status": 200,
+        "bytes": 119877,
+        "sha256": "32c501de4135e3d6f913379fbc73a205c6ec79e894a62bf4123a1a866c2677ce",
+        "downloaded_at_utc": "2026-09-22T00:08:18.316760+00:00",
+        "date_header": "Tue, 22 Sep 2026 00:00:02 GMT",
+        "content_type": "text/csv",
+        "n_rows": 914,
+        "n_stations": 914,
+        "header": "観測所番号,都道府県,地点,国際地点番号,現在時刻(年),現在時刻(月),現在時刻(日),現在時刻(時),現在時刻(分),22日の最大値(m/s),22日の最大値の品質情報,22日の最大値観測時の風向,22日の最大値観測時の風向の品質情報,22日の最大値起時（時）,22日の最大値起時（分）,22日の最大値起時の品質情報,極値更新,10年未満での極値更新,21日までの観測史上1位の値(m/s),21日までの観測史上1位の値の品質情報,21日までの観測史上1位の値観測時の風向,21日までの観測史上1位の値観測時の風向の品質情報,21日までの観測史上1位の値観測時の年,21日までの観測史上1位の値観",
+        "has_quality_column": true
+      },
+      {
+        "family": "gust_max",
+        "url": "https://www.data.jma.go.jp/stats/data/mdrr/wind_rct/alltable/gust00_rct.csv",
+        "status": 200,
+        "bytes": 121338,
+        "sha256": "115d416e84a3b9667949ed41f338d44b6ef904183eca4be1fa5b23e8eed4e7ef",
+        "downloaded_at_utc": "2026-09-22T00:08:20.942009+00:00",
+        "date_header": "Tue, 22 Sep 2026 00:08:20 GMT",
+        "content_type": "text/csv",
+        "n_rows": 914,
+        "n_stations": 914,
+        "header": "観測所番号,都道府県,地点,国際地点番号,現在時刻(年),現在時刻(月),現在時刻(日),現在時刻(時),現在時刻(分),22日の最大値(m/s),22日の最大値の品質情報,22日の最大値観測時の風向,22日の最大値観測時の風向の品質情報,22日の最大値起時（時）,22日の最大値起時（分）,22日の最大値起時の品質情報,極値更新,10年未満での極値更新,21日までの観測史上1位の値(m/s),21日までの観測史上1位の値の品質情報,21日までの観測史上1位の値観測時の風向,21日までの観測史上1位の値観測時の風向の品質情報,21日までの観測史上1位の値観測時の年,21日までの観測史上1位の値観",
+        "has_quality_column": true
+      }
+    ]
+  },
+  "summary": {
+    "venue_count": 15,
+    "selected_counts": {
+      "precipitation": 15,
+      "temperature_extreme": 15,
+      "wind_max": 15,
+      "gust_max": 15
+    },
+    "unresolved_count": 0
+  }
+}
