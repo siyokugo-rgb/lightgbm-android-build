@@ -79,6 +79,17 @@ enum class NarJmaObservedWeatherProduct(
             HOST +
             documentedPath
 
+    val precipitationWindowHours: Int?
+        get() =
+            when (this) {
+                PRE1H00_RCT -> 1
+                PRE3H00_RCT -> 3
+                PRE6H00_RCT -> 6
+                PRE12H00_RCT -> 12
+                PRE24H00_RCT -> 24
+                else -> null
+            }
+
     companion object {
         const val HOST =
             "www.data.jma.go.jp"

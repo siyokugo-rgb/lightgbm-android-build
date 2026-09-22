@@ -116,7 +116,12 @@ race scheduled start より後の観測は、
 
 ## Quality / status codes
 
-Step A 監査で確認した JMA raw quality code を固定する。
+Historical final と LIVE latest public CSV は **別 contract**。
+raw code の意味を共有しない。
+
+### A. HISTORICAL_FINAL_OBSERVED（過去の気象データ・ダウンロード / obsdl）
+
+Step A 監査で確認した historical raw quality code:
 
 | Raw code | Enum | JMA 原義 |
 | --- | --- | --- |
@@ -127,15 +132,33 @@ Step A 監査で確認した JMA raw quality code を固定する。
 | 1 | `MISSING` | 欠測 |
 | 0 | `NOT_APPLICABLE` | 対象外 |
 
+### B. LIVE latest public CSV（最新の気象データ）
+
+`NarJmaObservedLatestQuality`（Step H parser）:
+
+| Raw code | Enum | JMA 原義（latest CSV） |
+| --- | --- | --- |
+| 8 | `NORMAL` | 正常値 |
+| 5 | `SEMI_NORMAL` | 準正常値 |
+| 4 | `INSUFFICIENT_DATA` | 資料不足値 |
+| 3 | `QUESTIONABLE` | 疑問値 |
+| 2 | `UNSUITABLE` | 利用不適値 |
+| 1 | `MISSING_OR_UNREPORTED` | 資料なし・未報告 |
+| 0 | `NOT_STATISTIC` | 統計しない |
+
+重要: latest code **2 = UNSUITABLE**、latest code **3 = QUESTIONABLE**。
+historical code 2（疑問）と **同一 semantic ではない**。
+
 契約:
 
 - raw code は必ず保持する
-- `SEMI_NORMAL` (5) を `NORMAL` (8) と同一扱いしない
+- historical enum と latest enum を混同しない
+- unknown latest code は fail-closed
 - blank / missing / `0` による値補完を禁止する
 
 今回の固定範囲外:
 
-どの code を model feature として使用可能かは決めない。
+どの code を model feature として使用可能かは決めない（`feature_eligibility = NOT_YET_AUTHORIZED` 維持）。
 
 ---
 
@@ -761,6 +784,21 @@ Raw capture is **product-wide** (1 product × 1 capture time = 1 snapshot).
 Venue / station mapping is **not** applied at capture time.
 
 Still out of this Step: typed CSV parser, station row selection, scheduler, Drive backup, feature eligibility change.
+
+### Typed CSV parser (Step H)
+
+Production classes:
+
+- `NarJmaObservedLatestQuality` — LIVE latest CSV quality only
+- `NarJmaObservedWeatherCsvLexical` — bounded Shift_JIS CSV lexical parse
+- `NarJmaObservedWeatherCsvParser` — product-aware typed parse
+- `NarJmaObservedWeatherStationSelector` — exact `station_id` selection (no fallback)
+
+Transport: comma-separated CSV, Shift_JIS, CRLF, header row + data rows.
+Parser does not mutate archived `observed.csv` bytes.
+Station mapping config is not loaded in production parser code (explicit `stationId` API).
+
+Still out of Step H: snapshot PIT selector/reader, mapping asset wiring, feature eligibility.
 
 ---
 
