@@ -818,6 +818,13 @@ Rules:
 
 Still out of Step I: mapping asset wiring, Android instrumentation, feature eligibility.
 
+### Android runtime wiring (Step J)
+
+- Gradle packages `config/nar-jma-observed-live-station-mapping.json` into APK assets as single SoT
+- `NarJmaObservedLiveStationMappingAssetLoader` / Parser / Resolver / RuntimeReader
+- Debug `NarJmaObservedWeatherRuntimeSelfCheck` (Weather実機検証へ Observed section 追加)
+- feature_eligibility remains `NOT_YET_AUTHORIZED` (prediction/model 未接続)
+
 ---
 
 ## Out of scope (Step E / Step F / Step G typed layers)
