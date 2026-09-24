@@ -800,6 +800,24 @@ Station mapping config is not loaded in production parser code (explicit `statio
 
 Still out of Step H: snapshot PIT selector/reader, mapping asset wiring, feature eligibility.
 
+### PIT snapshot selector / reader (Step I)
+
+Production classes:
+
+- `NarJmaObservedWeatherSnapshotSelector` — latest eligible product snapshot by `pit_evidence_at <= prediction_as_of`
+- `NarJmaObservedWeatherSnapshotReader` — re-verify selection, parse `observed.csv`, exact `station_id` row
+
+Rules:
+
+- future day / future `downloadedAt` / future `pitEvidence` → skip without opening `observed.csv`
+- eligible integrity via `verifySnapshot` required (no silent fallback to older snapshot)
+- ranking: max `pitEvidenceAt`, then max `downloadedAt`; ambiguous tie fail-closed
+- Reader re-pins selection identity + raw SHA before parse
+- station missing → null (not corruption); schema/SHA PIT violations → fail-closed
+- no mapping asset load / no venue→station resolution in this Step
+
+Still out of Step I: mapping asset wiring, Android instrumentation, feature eligibility.
+
 ---
 
 ## Out of scope (Step E / Step F / Step G typed layers)
