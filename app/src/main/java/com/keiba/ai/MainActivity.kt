@@ -69,12 +69,20 @@ class MainActivity : Activity() {
                                     this@MainActivity
                                 )
 
+                        val observed =
+                            NarJmaObservedWeatherRuntimeSelfCheck
+                                .run(
+                                    this@MainActivity
+                                )
+
                         val weatherMs =
                             SystemClock
                                 .elapsedRealtime() -
                                 weatherStart
 
                         result.formatDisplay() +
+                            "\n\n" +
+                            observed.formatDisplay() +
                             "\n\nelapsed=${weatherMs}ms"
                     } catch (t: Throwable) {
                         "=== R6 Weather 実機検証 ===\n" +
@@ -178,6 +186,42 @@ class MainActivity : Activity() {
                                 null,
                             targetTemperatureCelsius =
                                 null,
+                            errorClass =
+                                t.javaClass.simpleName,
+                            errorMessage =
+                                t.message
+                        )
+                }
+
+            val observedWeatherResult =
+                try {
+                    NarJmaObservedWeatherRuntimeSelfCheck
+                        .run(
+                            this@MainActivity
+                        )
+                } catch (t: Throwable) {
+                    NarJmaObservedWeatherRuntimeSelfCheck
+                        .Result(
+                            verdict =
+                                NarJmaObservedWeatherRuntimeSelfCheck
+                                    .Verdict.FAIL,
+                            mappingAssetOk = false,
+                            mappingContractOk =
+                                false,
+                            venueCount = null,
+                            kawasakiPrecipStationId =
+                                null,
+                            kawasakiWindStationId =
+                                null,
+                            nagoyaStationId = null,
+                            snapshotSaveOk = false,
+                            pitReaderOk = false,
+                            parserOk = false,
+                            exactStationOk = false,
+                            futureExclusionOk =
+                                false,
+                            productionRootUntouchedOk =
+                                false,
                             errorClass =
                                 t.javaClass.simpleName,
                             errorMessage =
@@ -385,6 +429,9 @@ class MainActivity : Activity() {
             val weatherOk =
                 weatherResult.verdict !=
                     NarForecastWeatherRuntimeSelfCheck
+                        .Verdict.FAIL &&
+                    observedWeatherResult.verdict !=
+                    NarJmaObservedWeatherRuntimeSelfCheck
                         .Verdict.FAIL
 
             val overallOk =
@@ -400,6 +447,9 @@ class MainActivity : Activity() {
                     narDataOk &&
                     weatherResult.verdict ==
                     NarForecastWeatherRuntimeSelfCheck
+                        .Verdict.OK &&
+                    observedWeatherResult.verdict ==
+                    NarJmaObservedWeatherRuntimeSelfCheck
                         .Verdict.OK
 
             val overallLabel =
@@ -419,6 +469,9 @@ class MainActivity : Activity() {
 
                     weatherResult.verdict ==
                         NarForecastWeatherRuntimeSelfCheck
+                            .Verdict.NEEDS_REVIEW ||
+                        observedWeatherResult.verdict ==
+                        NarJmaObservedWeatherRuntimeSelfCheck
                             .Verdict.NEEDS_REVIEW ->
                         "要確認"
 
@@ -523,6 +576,23 @@ class MainActivity : Activity() {
                     }
                 )
 
+                append("\nR6 ObservedWeather=")
+                append(
+                    when (observedWeatherResult.verdict) {
+                        NarJmaObservedWeatherRuntimeSelfCheck
+                            .Verdict.OK ->
+                            "正常"
+
+                        NarJmaObservedWeatherRuntimeSelfCheck
+                            .Verdict.NEEDS_REVIEW ->
+                            "要確認"
+
+                        NarJmaObservedWeatherRuntimeSelfCheck
+                            .Verdict.FAIL ->
+                            "異常"
+                    }
+                )
+
                 append("\nこの検証でのNAR通信=あり")
                 append("\n検証対象=大井 1998/08/06 1R")
 
@@ -565,6 +635,8 @@ class MainActivity : Activity() {
                     summary +
                     "\n\n--- R6 Weather self-check ---\n\n" +
                     weatherResult.formatDisplay() +
+                    "\n\n--- R6 ObservedWeather self-check ---\n\n" +
+                    observedWeatherResult.formatDisplay() +
                     "\nWeather elapsed=${weatherMs}ms" +
                     "\n\n--- 詳細ログ ---\n\n" +
                     lightGbmStatus +

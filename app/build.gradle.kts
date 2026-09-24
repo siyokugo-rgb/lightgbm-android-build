@@ -27,6 +27,38 @@ val copyVenueCoordinateConfig by tasks.registering(Copy::class) {
     }
 }
 
+val observedLiveStationMappingSource =
+    rootProject.file(
+        "config/nar-jma-observed-live-station-mapping.json"
+    )
+
+val generatedObservedLiveStationMappingAssetsDir =
+    layout.buildDirectory.dir(
+        "generated/assets/observedLiveStationMapping"
+    )
+
+val copyObservedLiveStationMappingConfig by tasks.registering(
+    Copy::class
+) {
+    description =
+        "Package single-file JMA observed live station mapping SoT into generated assets"
+    from(observedLiveStationMappingSource)
+    into(generatedObservedLiveStationMappingAssetsDir)
+    rename {
+        "nar-jma-observed-live-station-mapping.json"
+    }
+    onlyIf {
+        observedLiveStationMappingSource.isFile
+    }
+    doFirst {
+        require(
+            observedLiveStationMappingSource.isFile
+        ) {
+            "missing Source of Truth: config/nar-jma-observed-live-station-mapping.json"
+        }
+    }
+}
+
 android {
     namespace = "com.keiba.ai"
     compileSdk = 35
@@ -73,6 +105,9 @@ android {
             assets.srcDir(
                 generatedVenueCoordinateAssetsDir
             )
+            assets.srcDir(
+                generatedObservedLiveStationMappingAssetsDir
+            )
         }
     }
 
@@ -85,6 +120,7 @@ android {
 
 tasks.named("preBuild").configure {
     dependsOn(copyVenueCoordinateConfig)
+    dependsOn(copyObservedLiveStationMappingConfig)
 }
 
 dependencies {
