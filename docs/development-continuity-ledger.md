@@ -147,3 +147,12 @@ NAR を完成・固定後、JRA 専用の Data/PIT/Dataset/Feature/Model を別�
 - **PIT**：過去年月ZIPは2026年に取得した後日原本。2021–24当時に発走前に入手可能だった証拠ではない。horse ID候補の真正性/全主催者coverageも未完。
 - **判定**：60本の当日再取得原本integrityは限定COMPLETE、全324バイト再検証はVERIFY FIRST、Phase08 VERIFY FIRST、過去走4特徴量production BLOCKED。test/OOT未使用、shadowは完成後。
 - **次回開始地点**：本台帳と[詳細監査](./phase08-drive-source-byte-recheck-20261018.md)の固定値を確認し、**1999～2020年264月のみ**を新CLIで順次検証→324月の旧SQLite台帳fingerprintと比較。検査済み60月を理由なく再実装・再調査しない。
+
+### 11.1 原本再検査CLIのCI受入と再現性（2026-10-18）
+
+- **実データ検証（ChatGPT接続のDrive原本を一時コンテナで直接実行）**：1998年12本+2021--2024年48本、計 **60 ZIP / 856,392馬行**の実ZIP SHA-256、内部3CSVのCRC・メンバー・行数がGitHub manifestと一致。1998年元ファイルの一部SHAを手作業転記した不一致2件（199806/199809）はGitHub記載値との再照合で転記ミスと判明し、原ZIPは一致。開発期間の48件は独立に **617,151行すべてPASS**。未調査の264件のZIPバイトをPASS扱いしない。
+- **source-byte replay候補PR**：[PR #34](https://github.com/siyokugo-rgb/lightgbm-android-build/pull/34)。本番モデル・Android・test/OOTに変更なし。
+- **合成・異常系検査の初回CI**：[Actions #39118430286](https://github.com/siyokugo-rgb/lightgbm-android-build/actions/runs/39118430286) **FAILED (43 PASS, 1 ERROR)**。テストの破損ZIPをバイト数不一致にしてしまい、CRCではなくZIP構造例外になっていた。
+- **修正 commit**：`a9a35f9c605c52657f72cce2fb09df355465ffe5`。合成fixtureの破損バイト数を維持し、CRC単体の不一致を検証できるように修正。
+- **修正後CI**：[Actions #39118532297](https://github.com/siyokugo-rgb/lightgbm-android-build/actions/runs/39118532297) **44/44 PASS**（新規7テスト、従来37テストを含む）。CIは **実Drive ZIPを入力していない** ため、実データ60件の監査と同一実行とは表現しない。
+- **終了判定**：原本60件のbyte replay/QAは対象限定COMPLETE。コード+QAのPR統合はマージ結果を確認して判定。**G1/G2/G3、本番4特徴量はBLOCKED / VERIFY FIRSTから変更なし**。
