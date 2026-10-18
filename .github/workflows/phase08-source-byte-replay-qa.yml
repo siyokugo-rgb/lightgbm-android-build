@@ -5,8 +5,11 @@ on:
     paths:
       - tools/nar_v3_source_byte_replay.py
       - tools/test_nar_v3_source_byte_replay.py
+      - tools/test_nar_v3_324_source_integrity_receipt.py
+      - tools/phase08_source_324_integrity_receipt_v1.json
       - .github/workflows/phase08-source-byte-replay-qa.yml
       - docs/phase08-drive-source-byte-recheck-20261018.md
+      - docs/phase08-324-month-original-source-integrity-20261018.md
       - docs/development-continuity-ledger.md
   push:
     branches: [feature/phase08-drive-byte-replay-v1]
@@ -32,6 +35,6 @@ jobs:
           PYTHONPATH: tools
         run: |
           set -euo pipefail
-          python3 -m unittest -v test_nar_v3_source_byte_replay test_nar_v3_internal_horse_id test_nar_v3_build_internal_horse_registry
+          python3 -m unittest -v test_nar_v3_source_byte_replay test_nar_v3_324_source_integrity_receipt test_nar_v3_internal_horse_id test_nar_v3_build_internal_horse_registry
           python3 -m py_compile tools/nar_v3_source_byte_replay.py
           git diff --check
