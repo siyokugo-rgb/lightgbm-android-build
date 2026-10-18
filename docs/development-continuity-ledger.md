@@ -165,3 +165,25 @@ NAR を完成・固定後、JRA 専用の Data/PIT/Dataset/Feature/Model を別�
 - **VERIFY FIRST:** 1999～2020年264月の実バイト再検査、324月を使うSQLite台帳の既存 `6c63a2e5...` fingerprintとの照合。
 - **BLOCKED維持:** 2021～2024年T-60歴史的PIT、誤結合/外部・海外を含む直近走履歴、4特徴量本番採用。後日ZIPのCSV行数一致は historical prediction availability を証明しない。
 - **次回の実行**：本台帳11章と監査 `docs/phase08-drive-source-byte-recheck-20261018.md` を読み、未検証264月だけのsource-byteチェックを進める。以後、G1内部IDの真正性・G2のPIT・G3 coverageを調達する。既存CI PASSを本番機能COMPLETEと混同せず、shadowはアプリ完成後。
+
+## 12. Phase08 NAR ZIP全324か月のバイト整合性 COMPLETE（2026-10-18）
+
+- **作業開始HEAD** `4ec53784d4eaa42982d3a0a169b30f37b20f54a2`、PR #34マージ・44/44 CI完了を確認してから着手。既存内部馬ID方式や月次parserを作り直さない。
+- **実体全検査**：[原本324か月詳細レポート](./phase08-324-month-original-source-integrity-20261018.md)。以前未実施の1999～2020年264か月について、Drive原本実バイトのSHA-256/ZIP 3メンバーCRC/CSV header・行数を検査し、**264/264 PASS、337,831,167 byte、3,717,645馬行**。
+- **合計**：1998～2024年 **324/324 ZIP、415,783,176バイト、4,574,037馬行全件PASS**。SHA digest `581feb17b834f3f9872e21f051e50c2c4095e01ff18924dcd5a71e23dc7939b7`、manifest SHA `7275040fc666407382c28eee47e2ef9882dbfc2781dd42b778ccd0a88c2c26af`。
+- **証拠の固定**：`tools/phase08_source_324_integrity_receipt_v1.json` を受入記録とし、GitHub Actionsには**manifest/記録の契約QA（raw ZIPはCIにない）**を追加する。CIに実原本を取り込んだと誤記しない。
+- **COMPLETEは原本のbyte integrityのみ**。次の必須作業は `nar_v3_build_internal_horse_registry.py` の**全324月実体での再生成→以前のSQLite台帳fingerprint `6c63a2e5...` と件数を照合**すること。こちらは引き続き VERIFY FIRST。
+- **PITは別問題**。G1馬の真正同一性・G2予測前データ版の時刻証明・G3全主催者coverageは未成立。Phase08 VERIFY FIRST、過去走4特徴量本番BLOCKED。2025 TEST/OOT、モデル/Android/Snapshotに変更なし。
+
+### 12.1 二つの元manifestのvintage差を分離（2026-10-18）
+
+[324か月実バイト監査](./phase08-324-month-original-source-integrity-20261018.md)をGitHubでCI化した初回試験により、GitHubとDriveの`months.csv`は**別バイト版**と判明。Drive原本raw SHA256 `7275040f...`、GitHub版Git Blob SHA `3eea220e...`。343行の`checked_at_utc`が異なり、`sha256`差2行は**対象外の202606と202607のみ**。1998～2024年の324行のSHA/サイズ/CSV行数は全件一致。GitHub CIの契約検査はGitHub版Git Blobと対象期間欄をピン留めし、Drive原本のSHAと同一視しない。2025 TEST/2026 OOTのZIP実体は開いていない。初回CIがFAILした事実と修正を監査履歴として保持。4特徴量本番BLOCKEDは不変。
+
+### 12.2 PR #35 のQA受入（2026-10-18）
+
+- [PR #35](https://github.com/siyokugo-rgb/lightgbm-android-build/pull/35)：全324 ZIP実バイト照合の後続証拠固定。初回 [Actions #39120175640](https://github.com/siyokugo-rgb/lightgbm-android-build/actions/runs/39120175640)は **49件中1 FAIL**（異なるDrive/GitHub manifest raw SHAを同一視）。
+- 343行の列別比較で検査時刻の違いと、対象外202606/07のSHA差のみと確定。1998--2024対象324行のZIP SHA/サイズ/馬行数は完全一致。修正コミット `bd9e847b4d42cd8d2bc3ed6c7d8788942cd2db65`。
+- 修正後 [Actions #39120411256](https://github.com/siyokugo-rgb/lightgbm-android-build/actions/runs/39120411256) **49/49 PASS**、Python 3.12 ubuntu-24.04。これはmanifest/receipt整合性のCIであって、Drive ZIP324個をActionsが取り込んだ結果ではない。元のZIP実バイト検査は独立した2026-10-18一時環境の実行結果。
+- **今回の限定COMPLETE:** 1998--2024原本324 ZIP（4,574,037馬行）について実バイトSHA/CRC/構造の再照合完了。旧264月未検査は解消。
+- **次工程 VERIFY FIRST:** 固定出力 `6c63a2e558703be9d4dd789f32b9ba805d21575946f0088561129c5aa7b67432` と同じコードで独自馬ID SQLite台帳を新正本の全324月から再生成し照合する。これはまだ行っていない。更にG1誤結合/G2 historical PIT/G3 JRA・海外含むcoverageは未認証、4特徴量production BLOCKED。
+- shadow検証は完成後、oddsは表示・保存のみ、2025 LOCKED TEST/2026 OOTのZIP実体・モデル選択は触らない。

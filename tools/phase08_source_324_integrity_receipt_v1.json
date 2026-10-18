@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "scope": "PHASE08_ARCHIVED_NAR_MONTHLY_ZIP_INTEGRITY_ONLY",
+  "source_manifest_sha256": "7275040fc666407382c28eee47e2ef9882dbfc2781dd42b778ccd0a88c2c26af",
+  "source_manifest_git_blob_sha": "3eea220e8e2dfe558fcb6c542de4dd94602939a7",
+  "verified_from_month": "199801",
+  "verified_through_month": "202412",
+  "verified_zip_count": 324,
+  "verified_zip_bytes": 415783176,
+  "verified_horselist_rows": 4574037,
+  "monthly_zip_sha256_digest": "581feb17b834f3f9872e21f051e50c2c4095e01ff18924dcd5a71e23dc7939b7",
+  "newly_verified_gap": {
+    "from_month": "199901",
+    "through_month": "202012",
+    "zip_count": 264,
+    "zip_bytes": 337831167,
+    "horselist_rows": 3717645,
+    "monthly_zip_sha256_digest": "321cc61514506f06a713466a218cc4e8f37a5fe5b34630997d2ea3c2cea2a739"
+  },
+  "previously_verified_60": {
+    "zip_count": 60,
+    "zip_bytes": 77952009,
+    "horselist_rows": 856392,
+    "monthly_zip_sha256_digest": "d71a3ade5e6e441aecba78670886f567fa8bb7b7f9e4dd939615b0a3b22d34e5"
+  },
+  "verified_checks": [
+    "original_zip_sha256_against_manifest",
+    "zip_member_crc_all_three",
+    "csv_member_names",
+    "horse_csv_header_and_row_count",
+    "month_no_missing_and_no_duplicate",
+    "2025_and_2026_not_opened"
+  ],
+  "audit_environment": "local ephemeral sandbox Python 3.13.5, Drive raw attachments received 2026-10-18",
+  "drive_original_acquired_after_historical_races": true,
+  "repository_ci_loaded_324_original_zip_bytes": false,
+  "generated_source_manifest_is_historical_asof_evidence": false,
+  "horse_uid_identity_approved": false,
+  "cross_authority_history_coverage_approved": false,
+  "historical_2021_2024_pit_approved": false,
+  "four_horse_features_production_authorized": false,
+  "test_2025_or_oot_2026_training_evaluated": false
+}

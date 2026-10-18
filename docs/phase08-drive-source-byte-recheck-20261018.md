@@ -51,3 +51,7 @@ PYTHONPATH=tools python3 tools/nar_v3_source_byte_replay.py \
 - 原本月次ZIPには結果列が同居するため、PIT証拠なしに予測特徴量へ使用しない。Feature/Model、Android、Snapshot、2025 TEST、2026 OOTは変更しない。
 
 **次工程**：1999～2020年264件の原本バイト検証を段階的に終了し、全324月の固定manifest/SQLite fingerprintを再照合。その後にG1/G2/G3を特徴量別に受け入れ、4特徴量を不当にCOMPLETEへ昇格させない。
+
+## 後続完了記録（2026-10-18）
+
+1999～2020年の264 ZIPを後続作業で実バイト検証し、全324件をPASS。詳細は[全324か月実原本監査](./phase08-324-month-original-source-integrity-20261018.md)へ。**上記当初60件しか検査していない記録は当時のチェックポイントとして保持する**。G1/G2/G3・4特徴量本番は依然未完。
