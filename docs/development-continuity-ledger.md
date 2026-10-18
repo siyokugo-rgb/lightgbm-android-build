@@ -121,9 +121,20 @@ NAR を完成・固定後、JRA 専用の Data/PIT/Dataset/Feature/Model を別�
 ### 10.1 復元実行後のチェックポイント（実施済み）
 
 - **復元コード commit:** `e6d3fd64c8e91fb4f7c205da163b53c8fd691673`。元の5ファイルの**Blob SHA完全一致**（新しい内容への再実装ではない）。
-- **PR:** [#33 Draft](https://github.com/siyokugo-rgb/lightgbm-android-build/pull/33)。コード以外は開発継続台帳・独立QA workflowのみ。
+- **PR:** [#33 MERGED](https://github.com/siyokugo-rgb/lightgbm-android-build/pull/33)。`main`へのマージコミット `747f2a81bc028bdc27186bd553457dd8c16feba8`。コード以外は開発継続台帳・独立QA workflowのみ。
 - **CI 1:** [Actions #39116825855](https://github.com/siyokugo-rgb/lightgbm-android-build/actions/runs/39116825855) 成功、`test_nar_v3_internal_horse_id` + `test_nar_v3_build_internal_horse_registry` **37/37 PASS**。
 - **CI 2:** [Actions #39116844733](https://github.com/siyokugo-rgb/lightgbm-android-build/actions/runs/39116844733) PR用の同じ37件 **37/37 PASS**。
+- **CI 3（マージ直前のPR HEAD）:** [Actions #39116937514](https://github.com/siyokugo-rgb/lightgbm-android-build/actions/runs/39116937514) **SUCCESS**。文書追記後のHEAD `b96b27d51f550706254fd2a84bfe9390544b4f6a` と一緒に受入。新 `main`へのマージ操作そのものに単体テスト結果を捏造しない。
 - **実行環境:** GitHub Actions `ubuntu-24.04` / Python `3.12`、`PYTHONPATH=tools python3 -m unittest -v test_nar_v3_internal_horse_id test_nar_v3_build_internal_horse_registry`、さらに`py_compile`・`git diff --check`・tracked clean checkをPASS。
 - **制限:** 今回の37件は合成・異常系であり、324月ZIP実体をCIで読み直したものでも、旧repoの905件を新repoで再実行したものでもない。馬IDは**CANDIDATE_ONLY**、4特徴量productionは**BLOCKED**、Phase08 **VERIFY FIRST**。
 - **受入後の次作業:** 既存Drive `nar-history` ZIPの現実体がmanifestの `sha256` / `horselist_rows` と一致するか安全に検査し、旧固定 `source_manifest_sha256=7275040fc666407382c28eee47e2ef9882dbfc2781dd42b778ccd0a88c2c26af`、`logical_registry_fingerprint_sha256=6c63a2e558703be9d4dd789f32b9ba805d21575946f0088561129c5aa7b67432` に照合する。検証済み個体識別やhistorical PITを生成したとみなさない。
+
+### 10.2 終了判定（この復元作業のみ）
+
+**COMPLETE:** 独自ID候補の発行器・SQLite台帳生成器・31場分類マップと合成QAの旧repoから正本への**コード移植・PR統合**。原本5ファイルはGit Blob SHAが旧repoと一致し、CI合成37/37 PASS。
+
+**VERIFY FIRST:** Driveの1998–2024年324月ZIP実データから新正本の同一台帳を再生成し、旧registry fingerprintと照合。ソースmanifestは2repoでBlob一致だが、**今回は324ZIP実バイトの再照合をしていない**。
+
+**BLOCKED維持:** 同一馬の真正性・必要な全主催者履歴・2021–24の発走前結果のPIT証明・4特徴量本番採用。Stage #8は VERIFY FIRST。
+
+**次回開始地点:** 新正本 `main` の現HEADと本台帳・PR #33・既存モデル/Android境界の照合→Drive 324 ZIPの再現性照合→不足した同一馬/外部過去走とPIT証拠を個別に埋める。今回作った内部IDコードを再実装しない。Shadowはアプリ完成後の利用時検証であり完成条件にしない。
