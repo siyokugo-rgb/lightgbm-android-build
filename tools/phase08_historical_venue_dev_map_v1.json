@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "records": [
+    {
+      "track": "三条",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "上山",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "中京",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "中津",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "佐賀",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "北見ば",
+      "discipline": "BANEI",
+      "evidence_ref": "https://www.city.obihiro.hokkaido.jp/_res/projects/default_project/_page_/001/005/830/baneivisionr1.pdf | https://www.keiba.go.jp/about/outline/races.html | original NAR racelist 199801-202412: 200m straight races"
+    },
+    {
+      "track": "名古屋",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "園田",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "大井",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "姫路",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "宇都宮",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "岩見ば",
+      "discipline": "BANEI",
+      "evidence_ref": "https://www.city.obihiro.hokkaido.jp/_res/projects/default_project/_page_/001/005/830/baneivisionr1.pdf | https://www.keiba.go.jp/about/outline/races.html | original NAR racelist 199801-202412: 200m straight races"
+    },
+    {
+      "track": "川崎",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "帯広ば",
+      "discipline": "BANEI",
+      "evidence_ref": "https://www.city.obihiro.hokkaido.jp/_res/projects/default_project/_page_/001/005/830/baneivisionr1.pdf | https://www.keiba.go.jp/about/outline/races.html | original NAR racelist 199801-202412: 200m straight races"
+    },
+    {
+      "track": "新潟",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "旭川",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "旭川ば",
+      "discipline": "BANEI",
+      "evidence_ref": "https://www.city.obihiro.hokkaido.jp/_res/projects/default_project/_page_/001/005/830/baneivisionr1.pdf | https://www.keiba.go.jp/about/outline/races.html | original NAR racelist 199801-202412: 200m straight races"
+    },
+    {
+      "track": "札幌",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "水沢",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "浦和",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "益田",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "盛岡",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "福山",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "笠松",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "船橋",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "荒尾",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "足利",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "金沢",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "門別",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "高崎",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    },
+    {
+      "track": "高知",
+      "discipline": "FLAT",
+      "evidence_ref": "https://www.keiba.go.jp/about/outline/races.html | https://www.keiba.go.jp/furlong/2026/20260331_01/ | original NAR racelist 199801-202412: >=760m races, no 200m"
+    }
+  ]
+}
