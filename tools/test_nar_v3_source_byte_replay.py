@@ -41,7 +41,7 @@ class ArchiveReplayReceiptQA(unittest.TestCase):
             data = path.read_bytes()
             needle = "馬A".encode()
             assert needle in data
-            data = data.replace(needle, b"ABC", 1)
+            data = data.replace(needle, b"ABCD", 1)  # Preserve ZIP offsets; break only the member CRC
             path.write_bytes(data)
         self.entries[ym] = {
             "ym": ym, "status": "OK", "bytes": str(path.stat().st_size),
