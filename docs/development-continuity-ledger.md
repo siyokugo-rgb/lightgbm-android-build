@@ -116,3 +116,14 @@ NAR を完成・固定後、JRA 専用の Data/PIT/Dataset/Feature/Model を別�
 - **QA受入:** PR GitHub Actionsで `test_nar_v3_internal_horse_id` と `test_nar_v3_build_internal_horse_registry` の合成正常・負例を独立実行。結果が出るまで VERIFY FIRST。
 - **残課題:** Drive月次ZIP324本との全件再現チェック、2021–24当時利用時刻の証拠（G2）、cross-authority正当性（G1/G3）、Feature個別昇格、モデル/Android parity。第8工程は VERIFY FIRST、4特徴量本番は BLOCKED。
 - **次の作業:** PR単体/異常系CIを確認→旧候補台帳の固定registry fingerprint（既存 `6c63a2e558703be9d4dd789f32b9ba805d21575946f0088561129c5aa7b67432`）と manifest SHAを参照基準にDrive実データ再生成可否判定→重大差がなければ次Gateへ。全件ZIPを今回再読していないことを維持。
+
+
+### 10.1 復元実行後のチェックポイント（実施済み）
+
+- **復元コード commit:** `e6d3fd64c8e91fb4f7c205da163b53c8fd691673`。元の5ファイルの**Blob SHA完全一致**（新しい内容への再実装ではない）。
+- **PR:** [#33 Draft](https://github.com/siyokugo-rgb/lightgbm-android-build/pull/33)。コード以外は開発継続台帳・独立QA workflowのみ。
+- **CI 1:** [Actions #39116825855](https://github.com/siyokugo-rgb/lightgbm-android-build/actions/runs/39116825855) 成功、`test_nar_v3_internal_horse_id` + `test_nar_v3_build_internal_horse_registry` **37/37 PASS**。
+- **CI 2:** [Actions #39116844733](https://github.com/siyokugo-rgb/lightgbm-android-build/actions/runs/39116844733) PR用の同じ37件 **37/37 PASS**。
+- **実行環境:** GitHub Actions `ubuntu-24.04` / Python `3.12`、`PYTHONPATH=tools python3 -m unittest -v test_nar_v3_internal_horse_id test_nar_v3_build_internal_horse_registry`、さらに`py_compile`・`git diff --check`・tracked clean checkをPASS。
+- **制限:** 今回の37件は合成・異常系であり、324月ZIP実体をCIで読み直したものでも、旧repoの905件を新repoで再実行したものでもない。馬IDは**CANDIDATE_ONLY**、4特徴量productionは**BLOCKED**、Phase08 **VERIFY FIRST**。
+- **受入後の次作業:** 既存Drive `nar-history` ZIPの現実体がmanifestの `sha256` / `horselist_rows` と一致するか安全に検査し、旧固定 `source_manifest_sha256=7275040fc666407382c28eee47e2ef9882dbfc2781dd42b778ccd0a88c2c26af`、`logical_registry_fingerprint_sha256=6c63a2e558703be9d4dd789f32b9ba805d21575946f0088561129c5aa7b67432` に照合する。検証済み個体識別やhistorical PITを生成したとみなさない。
