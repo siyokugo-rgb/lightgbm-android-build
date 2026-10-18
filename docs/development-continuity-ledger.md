@@ -138,3 +138,12 @@ NAR を完成・固定後、JRA 専用の Data/PIT/Dataset/Feature/Model を別�
 **BLOCKED維持:** 同一馬の真正性・必要な全主催者履歴・2021–24の発走前結果のPIT証明・4特徴量本番採用。Stage #8は VERIFY FIRST。
 
 **次回開始地点:** 新正本 `main` の現HEADと本台帳・PR #33・既存モデル/Android境界の照合→Drive 324 ZIPの再現性照合→不足した同一馬/外部過去走とPIT証拠を個別に埋める。今回作った内部IDコードを再実装しない。Shadowはアプリ完成後の利用時検証であり完成条件にしない。
+
+## 11. Phase08 Drive原本バイト復旧チェックポイント（2026-10-18）
+
+- **開始前HEAD** `ccc337bc78fdc7b6f6b2ae17c2b8b9b9c4b5fe68`、PR #33統合済み。対象Gateは第8工程の入力データ再現性（G0/G1前段）であり、本番の4特徴量認可ではない。
+- **実施**：[詳細監査](./phase08-drive-source-byte-recheck-20261018.md)。Drive元原本の27年324月の存在/サイズ/重複をGitHubマニフェストと全件照合し **324/324 metadata PASS**。実バイトSHA-256 / ZIP3メンバーCRC / 馬行数は **1998年12か月 + 2021–24年48か月の合計60/60件・856,392馬行PASS**。1999–2020年264月は実バイト未再検査。
+- **ツール**：`tools/nar_v3_source_byte_replay.py` を追加。既存のZIP入力/parser/期間ガードを再利用し、後続のバイト検証を簡単に再現できるようにする。合成QAをPRに接続する。
+- **PIT**：過去年月ZIPは2026年に取得した後日原本。2021–24当時に発走前に入手可能だった証拠ではない。horse ID候補の真正性/全主催者coverageも未完。
+- **判定**：60本の当日再取得原本integrityは限定COMPLETE、全324バイト再検証はVERIFY FIRST、Phase08 VERIFY FIRST、過去走4特徴量production BLOCKED。test/OOT未使用、shadowは完成後。
+- **次回開始地点**：本台帳と[詳細監査](./phase08-drive-source-byte-recheck-20261018.md)の固定値を確認し、**1999～2020年264月のみ**を新CLIで順次検証→324月の旧SQLite台帳fingerprintと比較。検査済み60月を理由なく再実装・再調査しない。
