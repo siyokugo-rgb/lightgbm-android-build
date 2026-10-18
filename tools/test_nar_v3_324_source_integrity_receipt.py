@@ -52,7 +52,7 @@ def assert_receipt_consistent(r, manifest_bytes):
         h=sha256()
         for x in sub:
             assert len(x["sha256"])==64
-            h.update((x["ym"]+":"+x["sha256"]+"\\n").encode("ascii"))
+            h.update((x["ym"]+":"+x["sha256"]+"\n").encode("ascii"))
         return len(sub),sum(int(x["bytes"]) for x in sub),(
             sum(int(x["horselist_rows"]) for x in sub)),h.hexdigest()
     assert r["verified_from_month"]=="199801"
@@ -72,7 +72,7 @@ def assert_receipt_consistent(r, manifest_bytes):
         old["zip_count"],old["zip_bytes"],old["horselist_rows"])
     h=sha256()
     for x in scoped("199801","199812")+scoped("202101","202412"):
-        h.update((x["ym"]+":"+x["sha256"]+"\\n").encode("ascii"))
+        h.update((x["ym"]+":"+x["sha256"]+"\n").encode("ascii"))
     assert h.hexdigest()==old["monthly_zip_sha256_digest"]
     assert len(rows)>324  # Historical archive manifest retains 2025/26, unread.
     assert "202501" not in [x["ym"] for x in scoped("199801","202412")]
