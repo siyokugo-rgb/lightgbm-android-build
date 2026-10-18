@@ -203,3 +203,11 @@ NAR を完成・固定後、JRA 専用の Data/PIT/Dataset/Feature/Model を別�
 - **証拠ファイル**：`tools/phase08_internal_horse_registry_reproduction_v1.json`。GitHub ActionsによるreceiptとソースBlobのCI契約検査は**原本324 ZIP全件再計算ではない**。
 - **判定**：候補ID台帳の**コード規則・集計・決定的fingerprintの再現性は限定COMPLETE**。同一馬の真正性（G1）、過去の当時予測時点証拠（G2）、全主催者網羅性（G3）、過去走4特徴量本番認証は従来通りBLOCKED/VERIFY FIRST、Stage08全体VERIFY FIRST。
 - **次回開始地点**：この§13と§12を確認し、実データの曖昧354/未識別441の**隔離根拠**・同一馬候補の左打切り/移籍/改名を重点審査。候補IDや過去ZIPの全件台帳を再生成し直さない。
+
+### 13.1 監査証拠のCI受入（マージ前）
+
+- [PR #36](https://github.com/siyokugo-rgb/lightgbm-android-build/pull/36) は独自IDの**既存規則による全324か月の独立検算結果**のreceipt/監査記録と、固定fingerprint・ソースBlob検査の合成CIのみを追加する。元の馬ID算出器・SQLite台帳生成器・raw原本は変更していない。
+- [GitHub Actions #39125143927](https://github.com/siyokugo-rgb/lightgbm-android-build/actions/runs/39125143927)：**42/42 PASS**（既存候補ID合成37件＋新receipt/PIT偽昇格負例5件）。
+- [GitHub Actions #39125143831](https://github.com/siyokugo-rgb/lightgbm-android-build/actions/runs/39125143831)：原本integrity receiptの既存**49/49 PASS**。
+- **実データ4,574,037行の処理・旧fingerprint一致**は2026-10-18の一時コンテナにおける別実行。上記2件のActions内で全324 ZIPを取り込んだとは主張しない。
+- **受入は限定COMPLETE**：NAR内部馬ID候補台帳の決定的再現性。**本番4特徴量はBLOCKED、Phase08全体VERIFY FIRST**。次は個体の真の同一性とG2 historical PIT・G3履歴の網羅性に集中し、ここまでのZIP/台帳を再生成し直さない。
