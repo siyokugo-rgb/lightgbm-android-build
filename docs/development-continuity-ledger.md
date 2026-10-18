@@ -70,7 +70,11 @@ NAR を完成・固定後、JRA 専用の Data/PIT/Dataset/Feature/Model を別�
 - 1998--2024、324 か月、4,574,037 行
 - 候補割当 4,573,242、候補 164,934、曖昧 354、未識別 441
 
-この数値は過去作業の証跡として保持するが、2026-10-18 に GitHub public ref 上で該当 commit `d7fc08b9f01e6b156a17065701aeb6c51ffb0f71` は解決できなかった。従って「現行 main に存在する」とは断定しない。到達可能な branch/PR/commit または artifact を回復して照合するまで、実装存在は **VERIFY FIRST** とする。
+**2026-10-18再検証で訂正:** 上記 `d7fc08b9f01e6b156a17065701aeb6c51ffb0f71` は `siyokugo-rgb/keiba-hozON` の `feature/phase08-horse-continuity-pit-guard-v1` で実際に解決できた。以前の「参照不能」という記録は別リポジトリ `lightgbm-android-build` 側で見つからなかったことを取り違えたもの。旧repoのツリーは619エントリ、新しい `lightgbm-android-build/main` は324エントリであり、**両repoの分岐を無視して同じHEADと扱わない**。
+
+`data-manifests/nar-history/months.csv` のGit Blob SHA **`3eea220e8e2dfe558fcb6c542de4dd94602939a7` は両repoで完全一致**。これは**manifestファイルの内容一致**であって月次ZIP324本の全バイトを今回再検証した結果ではない。
+
+旧repoの `nar_v3_internal_horse_id.py`（候補ID計算）、`nar_v3_build_internal_horse_registry.py`（SQLite台帳生成）、対応する合成テスト2本、31表記の競技区分証拠表を**ソースBlob一致の開発用移植候補**として回収。候補IDの独立個体証明・G2 historical PIT・G3全主催者coverageは引き続き未完。正式モデル・Androidや2025 TEST/OOTへの配線禁止。
 
 解除に必要な順序:
 1. 324 monthly ZIP の実体、SHA/CRC、parser/version、行数を再現可能な ledger に固定する。
@@ -102,3 +106,13 @@ NAR を完成・固定後、JRA 専用の Data/PIT/Dataset/Feature/Model を別�
 - 変更範囲: 文書のみ。
 - 今回 Phase08 を解除しない。NAR 完成や shadow 完了も主張しない。
 - 次タスク: reachable な Phase08 branch/artifact と 324-month input manifest を確定し、§6 の解除条件 1 から実証する。
+
+## 10. Phase08 開発用ID基盤の復元作業（2026-10-18）
+
+- **作業開始時 main:** `dc77103855d154a2986911e984f652f421063e40` / [前回マージ済みPR #32](https://github.com/siyokugo-rgb/lightgbm-android-build/pull/32)。
+- **元コード参照元:** `siyokugo-rgb/keiba-hozON@d7fc08b9f01e6b156a17065701aeb6c51ffb0f71`。別repo間の既存実装の回収であり**再実装しない**。旧repoのPhase08 905テストPASSと、新repoの回帰結果を同一視しない。
+- **引継ぎPR:** この台帳を同じPRで更新し、開発専用5ファイル（計算器・台帳生成器・テスト2本・競技区分表）を取り込む。単体テストはソースが全てsynthetic、1998–2024限定、2025/2026拒否、SQLite出力は新規ディレクトリに限定。
+- **移植時の禁止条件:** `app/`、正式 `config/`、baseline9、現在のraw archive、Dataset、モデル、PredictionSnapshot、test/OOTは変更しない。独自ID候補を検証済みグローバルIDへ昇格させない。
+- **QA受入:** PR GitHub Actionsで `test_nar_v3_internal_horse_id` と `test_nar_v3_build_internal_horse_registry` の合成正常・負例を独立実行。結果が出るまで VERIFY FIRST。
+- **残課題:** Drive月次ZIP324本との全件再現チェック、2021–24当時利用時刻の証拠（G2）、cross-authority正当性（G1/G3）、Feature個別昇格、モデル/Android parity。第8工程は VERIFY FIRST、4特徴量本番は BLOCKED。
+- **次の作業:** PR単体/異常系CIを確認→旧候補台帳の固定registry fingerprint（既存 `6c63a2e558703be9d4dd789f32b9ba805d21575946f0088561129c5aa7b67432`）と manifest SHAを参照基準にDrive実データ再生成可否判定→重大差がなければ次Gateへ。全件ZIPを今回再読していないことを維持。

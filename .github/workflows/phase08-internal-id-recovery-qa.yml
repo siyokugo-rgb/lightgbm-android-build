@@ -1,0 +1,45 @@
+name: Phase08 recovered internal horse candidate identity QA
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/nar_v3_internal_horse_id.py'
+      - 'tools/nar_v3_build_internal_horse_registry.py'
+      - 'tools/test_nar_v3_internal_horse_id.py'
+      - 'tools/test_nar_v3_build_internal_horse_registry.py'
+      - 'tools/phase08_historical_venue_dev_map_v1.json'
+      - '.github/workflows/phase08-internal-id-recovery-qa.yml'
+  push:
+    branches: [feature/phase08-restore-internal-horse-id-v1]
+    paths:
+      - 'tools/nar_v3_internal_horse_id.py'
+      - 'tools/nar_v3_build_internal_horse_registry.py'
+      - 'tools/test_nar_v3_internal_horse_id.py'
+      - 'tools/test_nar_v3_build_internal_horse_registry.py'
+      - 'tools/phase08_historical_venue_dev_map_v1.json'
+      - '.github/workflows/phase08-internal-id-recovery-qa.yml'
+permissions:
+  contents: read
+jobs:
+  synthetic-candidate-id-and-registry:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline identity and registry tests (no raw training/test/OOT data)
+        env:
+          PYTHONPATH: tools
+        run: |
+          set -euo pipefail
+          python3 -m unittest -v test_nar_v3_internal_horse_id test_nar_v3_build_internal_horse_registry
+          python3 -m py_compile tools/nar_v3_internal_horse_id.py tools/nar_v3_build_internal_horse_registry.py
+      - name: Verify no production model wiring and clean working tree
+        run: |
+          set -euo pipefail
+          git diff --check
+          test -z "$(git status --porcelain --untracked-files=no)"
