@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "scope": "PHASE08_NAR_INTERNAL_HORSE_CANDIDATE_REGISTRY_REPRODUCTION_DEVELOPMENT_ONLY",
+  "observation_date": "2026-10-18",
+  "regeneration_method": "independent_one_off_python_sqlite_reproduction_of_recovered_GitHub_registry_logic",
+  "repo_main_at_execution": "64adcf6ab851aa09dfe6c4067186f0a071bc768b",
+  "source_manifest_drive_sha256": "7275040fc666407382c28eee47e2ef9882dbfc2781dd42b778ccd0a88c2c26af",
+  "github_manifest_blob_sha": "3eea220e8e2dfe558fcb6c542de4dd94602939a7",
+  "registry_generator_blob_sha": "2587c11d8eceb2f4e07e5bc0a61444fb76138007",
+  "candidate_id_generator_blob_sha": "04f79cb111e7d23ddc8b2abeadcaf3b914eff810",
+  "parser_blob_sha": "f423db2cb39669c94843c82ab2af6ea7694e4ddf",
+  "discipline_map_blob_sha": "7093083868ed0d0bf565a5a86922ed2a076e675d",
+  "first_month": "199801",
+  "last_month": "202412",
+  "months_loaded": 324,
+  "rows_loaded": 4574037,
+  "counts": {
+    "CANDIDATE_ONLY": 4573242,
+    "AMBIGUOUS": 354,
+    "UNMATCHABLE": 441
+  },
+  "unique_candidate_ids": 164934,
+  "entries_fingerprint_sha256": "6c63a2e558703be9d4dd789f32b9ba805d21575946f0088561129c5aa7b67432",
+  "previous_reference_fingerprint_sha256": "6c63a2e558703be9d4dd789f32b9ba805d21575946f0088561129c5aa7b67432",
+  "all_candidate_first_observed_anchors_present": true,
+  "quarantine_reason_counts": {
+    "candidate attributes missing or invalid": 441,
+    "same_birth_pedigree_different_names": 354
+  },
+  "raw_sqlite_file_committed": false,
+  "github_actions_loads_original_324_month_archives": false,
+  "independent_official_horse_uid_certified": false,
+  "cross_authority_complete_history_certified": false,
+  "historical_2021_2024_pit_certified": false,
+  "production_four_history_features_authorized": false,
+  "locked_2025_test_or_2026_oot_used": false
+}

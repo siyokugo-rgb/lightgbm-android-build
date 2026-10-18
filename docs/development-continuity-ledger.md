@@ -194,3 +194,12 @@ NAR を完成・固定後、JRA 専用の Data/PIT/Dataset/Feature/Model を別�
 - **最終PR HEAD CI**：[Actions #39120512963](https://github.com/siyokugo-rgb/lightgbm-android-build/actions/runs/39120512963) **49/49 PASS**。内訳は既存44件＋新規5件で、GitHub manifestに対するreceipt整合・負例回帰。raw ZIP実バイト324本はこのCIには置かない。
 - **工程終了判定**：全324月の保管ZIPの現在版に対するSHA・CRC・CSV原本完全性 **COMPLETE**。独自NAR内部候補ID全324月SQLiteを新正本で再生成して固定fingerprintに一致させる工程は **VERIFY FIRST**。2021--24 historical PIT、同一馬正当性・全権限出走coverage、および過去走4特徴量の本番採用は **BLOCKED** 維持。
 - **次回の起点**：この `main` 最新HEAD・12章とPR #35を確認してから、**324月原本でのSQLite候補台帳再生成**と旧 `entries_fingerprint_sha256=6c63a2e558703be9d4dd789f32b9ba805d21575946f0088561129c5aa7b67432`、164,934候補・4,573,242候補割当・795隔離の完全再現チェックを実施する。全324 ZIPのハッシュを意味なく再検査し直さない。
+
+## 13. Phase08 NAR馬ID候補SQLite 324か月再生成を固定fingerprintに照合（2026-10-18）
+
+- **開始HEAD**：`64adcf6ab851aa09dfe6c4067186f0a071bc768b`。前回§12を読み、324 ZIPバイト検査自体はCOMPLETEとして重複した調達作業をしない。
+- **全実データでの独立検算**：[324か月馬ID候補台帳再現報告](./phase08-internal-horse-id-registry-replay-20261018.md)。入力324月・**4,574,037馬行**、候補割当**4,573,242**、候補ID**164,934**、曖昧**354**、識別不能**441**、候補最古観測key欠損**0**。以前の論理的台帳fingerprint **`6c63a2e558703be9d4dd789f32b9ba805d21575946f0088561129c5aa7b67432` と完全一致**。
+- **実行方式**：保存済みNAR原本ZIPを一時Python/SQLiteへ入力し、GitHubの既存ID生成/隔離/アンカー仕様を忠実に独立実装して照合した。元の `nar_v3_build_internal_horse_registry.py` バイトそのものをローカルで実行したとは主張しない。アプリ/モデルへ接続せずSQLite/原本はGitHubへアップロードしない。
+- **証拠ファイル**：`tools/phase08_internal_horse_registry_reproduction_v1.json`。GitHub ActionsによるreceiptとソースBlobのCI契約検査は**原本324 ZIP全件再計算ではない**。
+- **判定**：候補ID台帳の**コード規則・集計・決定的fingerprintの再現性は限定COMPLETE**。同一馬の真正性（G1）、過去の当時予測時点証拠（G2）、全主催者網羅性（G3）、過去走4特徴量本番認証は従来通りBLOCKED/VERIFY FIRST、Stage08全体VERIFY FIRST。
+- **次回開始地点**：この§13と§12を確認し、実データの曖昧354/未識別441の**隔離根拠**・同一馬候補の左打切り/移籍/改名を重点審査。候補IDや過去ZIPの全件台帳を再生成し直さない。
