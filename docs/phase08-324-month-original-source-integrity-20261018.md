@@ -6,7 +6,7 @@
 
 正本 `siyokugo-rgb/lightgbm-android-build/main`、開始時HEAD `4ec53784d4eaa42982d3a0a169b30f37b20f54a2`。 [前回の60か月監査](./phase08-drive-source-byte-recheck-20261018.md) と、マージ済み[PR #34](https://github.com/siyokugo-rgb/lightgbm-android-build/pull/34)から継続し、**当時未確認と明記した1999～2020年264か月**を重点検証した。既に作った `tools/nar_v3_source_byte_replay.py` は変更・再実装しない。
 
-ユーザーがDriveへ2026-08-27に保存したNAR月別原本コピーを接続し、2026-10-18にローカル一時コンテナ（Python 3.13.5、hashlib/zipfile/csv）で読み直した。原本をGitHubや一般公開場所へ添付・複製・配布せず、証拠数値のみ保存した。GitHub `data-manifests/nar-history/months.csv` と同じ**41,523バイト**のDrive `nar-history/manifests/months.csv` を再取得し、SHA-256 `7275040fc666407382c28eee47e2ef9882dbfc2781dd42b778ccd0a88c2c26af` を照合。Git Blob SHAは `3eea220e8e2dfe558fcb6c542de4dd94602939a7`。
+ユーザーがDriveへ2026-08-27に保存したNAR月別原本コピーを接続し、2026-10-18にローカル一時コンテナ（Python 3.13.5、hashlib/zipfile/csv）で読み直した。原本をGitHubや一般公開場所へ添付・複製・配布せず、証拠数値のみ保存した。GitHub `data-manifests/nar-history/months.csv` と対象月のZIP値が一致するが、検査日時が異なる**41,523バイト**のDrive `nar-history/manifests/months.csv` を再取得し、SHA-256 `7275040fc666407382c28eee47e2ef9882dbfc2781dd42b778ccd0a88c2c26af` を照合。Git Blob SHAは `3eea220e8e2dfe558fcb6c542de4dd94602939a7`。
 
 ## 実バイト実測結果（read-only）
 
@@ -37,3 +37,11 @@
 5. **2025 TEST / 2026 OOT**：Driveの対象ZIPは開かず、モデル選択にも利用していない。shadowは完成後に実アプリを使用しながら行う。
 
 **工程判定**：第8工程VERIFY FIRST、4特徴量のproduction BLOCKED。完了条件はUID/履歴PIT/coverageとFeature個別評価に依存し、単なるZIP整合性の成功では解除されない。
+
+## 重要な追加突合：GitHubとDriveのmanifestはバイト同一ではない
+
+PR #35初回CIで、receiptテストがGitHub側 `months.csv` のraw SHA-256をDrive側の `727504...` と**誤って同一視し FAIL**。マニフェストの343月行を列単位で突合すると、`checked_at_utc` は **343行で異なり**、さらに`sha256`が異なるのは **202606と202607の2行だけ**。残りの `ym/status/bytes/racelist_rows/horselist_rows/payback_rows/error` は343行すべて一致。**1998～2024年の対象324件ではZIP SHA-256を含む全ての実データ欄が一致**したため、対象期間の原ZIP324件の実バイト検査は保持可能。
+
+GitHub版のファイル内容のバージョン確認には正本Git blob SHA-1 `3eea220e8e2dfe558fcb6c542de4dd94602939a7`を使用し、Drive版原本のSHA-256 `7275040fc666407382c28eee47e2ef9882dbfc2781dd42b778ccd0a88c2c26af`は**別々のファイル指紋として固定**。CIが検査するのはGitHub版に含まれる対象期間の月別SHA/サイズ/馬行数・集約receiptであり、Driveの全ZIPを再度ダウンロードするわけではない。
+
+2026年2件のSHA差は**2026 OOT ZIPを開いた証拠ではなくマニフェストのメタデータ差分**。双方の差を無断統合・上書きせず、2026 OOT評価・チューニングには一切使用しない。初回CI失敗を非表示にせず、修正後のCIを独立に再実行する。

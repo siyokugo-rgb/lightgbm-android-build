@@ -174,3 +174,7 @@ NAR を完成・固定後、JRA 専用の Data/PIT/Dataset/Feature/Model を別�
 - **証拠の固定**：`tools/phase08_source_324_integrity_receipt_v1.json` を受入記録とし、GitHub Actionsには**manifest/記録の契約QA（raw ZIPはCIにない）**を追加する。CIに実原本を取り込んだと誤記しない。
 - **COMPLETEは原本のbyte integrityのみ**。次の必須作業は `nar_v3_build_internal_horse_registry.py` の**全324月実体での再生成→以前のSQLite台帳fingerprint `6c63a2e5...` と件数を照合**すること。こちらは引き続き VERIFY FIRST。
 - **PITは別問題**。G1馬の真正同一性・G2予測前データ版の時刻証明・G3全主催者coverageは未成立。Phase08 VERIFY FIRST、過去走4特徴量本番BLOCKED。2025 TEST/OOT、モデル/Android/Snapshotに変更なし。
+
+### 12.1 二つの元manifestのvintage差を分離（2026-10-18）
+
+[324か月実バイト監査](./phase08-324-month-original-source-integrity-20261018.md)をGitHubでCI化した初回試験により、GitHubとDriveの`months.csv`は**別バイト版**と判明。Drive原本raw SHA256 `7275040f...`、GitHub版Git Blob SHA `3eea220e...`。343行の`checked_at_utc`が異なり、`sha256`差2行は**対象外の202606と202607のみ**。1998～2024年の324行のSHA/サイズ/CSV行数は全件一致。GitHub CIの契約検査はGitHub版Git Blobと対象期間欄をピン留めし、Drive原本のSHAと同一視しない。2025 TEST/2026 OOTのZIP実体は開いていない。初回CIがFAILした事実と修正を監査履歴として保持。4特徴量本番BLOCKEDは不変。

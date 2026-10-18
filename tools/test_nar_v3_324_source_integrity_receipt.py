@@ -1,7 +1,7 @@
 """Offline receipt consistency: NOT an Actions replay of any 324 raw ZIP bytes."""
 import copy
 import csv
-from hashlib import sha256
+from hashlib import sha256, sha1
 import json
 from pathlib import Path
 import unittest
@@ -28,7 +28,12 @@ def assert_receipt_consistent(r, manifest_bytes):
     }
     assert r["schema_version"] == 1
     assert r["scope"] == "PHASE08_ARCHIVED_NAR_MONTHLY_ZIP_INTEGRITY_ONLY"
-    assert r["source_manifest_sha256"] == sha256(manifest_bytes).hexdigest()
+    # The Drive manifest and the GitHub manifest are different vintages.
+    # GitHub's exact bytes are pinned by Git BLOB SHA1, while the Drive
+    # original was independently SHA256-checked in the offline raw audit.
+    git_blob=sha1(b"blob "+str(len(manifest_bytes)).encode("ascii")
+                  +b"\x00"+manifest_bytes).hexdigest()
+    assert git_blob==r["source_manifest_git_blob_sha"]
     assert r["source_manifest_sha256"] == (
         "7275040fc666407382c28eee47e2ef9882dbfc2781dd42b778ccd0a88c2c26af")
     assert r["source_manifest_git_blob_sha"] == (
