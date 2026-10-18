@@ -187,3 +187,10 @@ NAR を完成・固定後、JRA 専用の Data/PIT/Dataset/Feature/Model を別�
 - **今回の限定COMPLETE:** 1998--2024原本324 ZIP（4,574,037馬行）について実バイトSHA/CRC/構造の再照合完了。旧264月未検査は解消。
 - **次工程 VERIFY FIRST:** 固定出力 `6c63a2e558703be9d4dd789f32b9ba805d21575946f0088561129c5aa7b67432` と同じコードで独自馬ID SQLite台帳を新正本の全324月から再生成し照合する。これはまだ行っていない。更にG1誤結合/G2 historical PIT/G3 JRA・海外含むcoverageは未認証、4特徴量production BLOCKED。
 - shadow検証は完成後、oddsは表示・保存のみ、2025 LOCKED TEST/2026 OOTのZIP実体・モデル選択は触らない。
+
+### 12.3 マージ後の終了確認
+
+- **PR #35 MERGED**：正本 `main` のマージコミット `5af104091cd6ee952d5a2021b46298be0d8865da`。GitHubでreceipt・QAコード・本台帳を読戻し済み。
+- **最終PR HEAD CI**：[Actions #39120512963](https://github.com/siyokugo-rgb/lightgbm-android-build/actions/runs/39120512963) **49/49 PASS**。内訳は既存44件＋新規5件で、GitHub manifestに対するreceipt整合・負例回帰。raw ZIP実バイト324本はこのCIには置かない。
+- **工程終了判定**：全324月の保管ZIPの現在版に対するSHA・CRC・CSV原本完全性 **COMPLETE**。独自NAR内部候補ID全324月SQLiteを新正本で再生成して固定fingerprintに一致させる工程は **VERIFY FIRST**。2021--24 historical PIT、同一馬正当性・全権限出走coverage、および過去走4特徴量の本番採用は **BLOCKED** 維持。
+- **次回の起点**：この `main` 最新HEAD・12章とPR #35を確認してから、**324月原本でのSQLite候補台帳再生成**と旧 `entries_fingerprint_sha256=6c63a2e558703be9d4dd789f32b9ba805d21575946f0088561129c5aa7b67432`、164,934候補・4,573,242候補割当・795隔離の完全再現チェックを実施する。全324 ZIPのハッシュを意味なく再検査し直さない。
