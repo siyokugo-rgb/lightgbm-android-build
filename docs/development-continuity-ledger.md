@@ -156,3 +156,12 @@ NAR を完成・固定後、JRA 専用の Data/PIT/Dataset/Feature/Model を別�
 - **修正 commit**：`a9a35f9c605c52657f72cce2fb09df355465ffe5`。合成fixtureの破損バイト数を維持し、CRC単体の不一致を検証できるように修正。
 - **修正後CI**：[Actions #39118532297](https://github.com/siyokugo-rgb/lightgbm-android-build/actions/runs/39118532297) **44/44 PASS**（新規7テスト、従来37テストを含む）。CIは **実Drive ZIPを入力していない** ため、実データ60件の監査と同一実行とは表現しない。
 - **終了判定**：原本60件のbyte replay/QAは対象限定COMPLETE。コード+QAのPR統合はマージ結果を確認して判定。**G1/G2/G3、本番4特徴量はBLOCKED / VERIFY FIRSTから変更なし**。
+
+### 11.2 マージ終了記録
+
+- [PR #34](https://github.com/siyokugo-rgb/lightgbm-android-build/pull/34) **MERGED** → 正本 `main` マージHEAD `1095f231aba247b03824b40024ad8011315eb614`。マージ後に `tools/nar_v3_source_byte_replay.py` と台帳を実際に読み戻し確認。
+- マージ前の最終PR HEAD `c84252893f246f78043a71963b9aaca1863d984f` に対して [Actions #39118599493](https://github.com/siyokugo-rgb/lightgbm-android-build/actions/runs/39118599493) **SUCCESS、44/44 PASS**（新規7＋既存37）。これは合成ソース検査のCI。今回実Driveから取得した60件のZIP実測は別実行。
+- **COMPLETE（限定）:** Driveファイルの324月metadata照合、1998年12月＋2021～2024年48月の60 ZIPバイト検証・確認と、それを今後再実施可能にする開発用CLI/QAの正本統合。
+- **VERIFY FIRST:** 1999～2020年264月の実バイト再検査、324月を使うSQLite台帳の既存 `6c63a2e5...` fingerprintとの照合。
+- **BLOCKED維持:** 2021～2024年T-60歴史的PIT、誤結合/外部・海外を含む直近走履歴、4特徴量本番採用。後日ZIPのCSV行数一致は historical prediction availability を証明しない。
+- **次回の実行**：本台帳11章と監査 `docs/phase08-drive-source-byte-recheck-20261018.md` を読み、未検証264月だけのsource-byteチェックを進める。以後、G1内部IDの真正性・G2のPIT・G3 coverageを調達する。既存CI PASSを本番機能COMPLETEと混同せず、shadowはアプリ完成後。
